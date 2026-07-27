@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'edit_participant_page.dart';
 import '../../../../injection_container.dart' as di;
 import '../cubit/person_cubit.dart';
 import '../widgets/person_card.dart';
@@ -59,6 +59,16 @@ class _PersonsListView extends StatelessWidget {
 
                 return PersonCard(
                   person: person,
+                  onEdit: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditParticipantPage(
+                          person: person,
+                        ),
+                      ),
+                    );
+                  },
                   onDelete: () {
                     context.read<PersonCubit>().removePerson(person.id);
                   },

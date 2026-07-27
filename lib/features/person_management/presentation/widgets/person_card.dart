@@ -8,11 +8,13 @@ import '../../domain/entities/person.dart';
 class PersonCard extends StatelessWidget {
   final Person person;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const PersonCard({
     super.key,
     required this.person,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -76,12 +78,24 @@ class PersonCard extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: IconButton(
-          icon: const Icon(
-            Icons.delete_outline,
-            color: Colors.red,
-          ),
-          onPressed: onDelete,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+              ),
+              onPressed: onEdit,
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+              ),
+              onPressed: onDelete,
+            ),
+          ],
         ),
       ),
     );

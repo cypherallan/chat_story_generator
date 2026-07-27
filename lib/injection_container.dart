@@ -2,7 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-
+import 'features/person_management/domain/usecases/update_person.dart';
 import 'core/auth/auth_service.dart';
 import 'core/storage/firebase_storage_service.dart';
 
@@ -32,6 +32,8 @@ Future<void> init() async {
   sl.registerLazySingleton<PersonFirestoreDataSource>(
     () => PersonFirestoreDataSourceImpl(sl()),
   );
+  // register person
+  sl.registerLazySingleton(() => UpdatePerson(sl()));
 
   // Repository
   sl.registerLazySingleton<PersonRepository>(
@@ -48,6 +50,7 @@ Future<void> init() async {
     () => PersonCubit(
       getPersons: sl(),
       addPerson: sl(),
+      updatePerson: sl(),
       deletePerson: sl(),
       storageService: sl(),
     ),

@@ -22,6 +22,19 @@ class PersonRepositoryImpl implements PersonRepository {
   }
 
   @override
+  Future<Either<Failure, Person>> updatePerson(Person person) async {
+    try {
+      final model = PersonModel.fromEntity(person);
+
+      final result = await firestoreDataSource.updatePerson(model);
+
+      return Right(result);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Person>> addPerson(Person person) async {
     try {
       final model = PersonModel.fromEntity(person);

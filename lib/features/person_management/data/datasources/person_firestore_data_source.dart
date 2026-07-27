@@ -6,6 +6,7 @@ abstract class PersonFirestoreDataSource {
   Future<List<PersonModel>> getPersons();
   Future<PersonModel> addPerson(PersonModel person);
   Future<void> deletePerson(String id);
+  Future<PersonModel> updatePerson(PersonModel person);
 }
 
 class PersonFirestoreDataSourceImpl implements PersonFirestoreDataSource {
@@ -34,5 +35,15 @@ class PersonFirestoreDataSourceImpl implements PersonFirestoreDataSource {
   @override
   Future<void> deletePerson(String id) async {
     await firestore.collection(_collection).doc(id).delete();
+  }
+
+  @override
+  Future<PersonModel> updatePerson(PersonModel person) async {
+    await firestore
+        .collection(_collection)
+        .doc(person.id)
+        .update(person.toJson());
+
+    return person;
   }
 }

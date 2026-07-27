@@ -7,7 +7,7 @@ import '../../domain/entities/person.dart';
 import '../../domain/usecases/add_person.dart';
 import '../../domain/usecases/delete_person.dart';
 import '../../domain/usecases/get_persons.dart';
-
+import '../../domain/usecases/update_person.dart';
 part 'person_state.dart';
 
 class PersonCubit extends Cubit<PersonState> {
@@ -15,13 +15,26 @@ class PersonCubit extends Cubit<PersonState> {
   final AddPerson addPerson;
   final DeletePerson deletePerson;
   final FirebaseStorageService storageService;
+  final UpdatePerson updatePerson;
 
   PersonCubit({
     required this.getPersons,
     required this.addPerson,
     required this.deletePerson,
+    required this.updatePerson,
     required this.storageService,
   }) : super(PersonInitial());
+
+  Future<void> editPerson(Person person) async {
+    emit(PersonLoading());
+
+    final result = await updatePerson(person);
+
+    result.fold(
+      (failure) => emit(PersonError(failure.message)),
+      (_) => loadPersons(),
+    );
+  }
 
   Future<void> loadPersons() async {
     emit(PersonLoading());
@@ -48,18 +61,18 @@ class PersonCubit extends Cubit<PersonState> {
     String? imageUrl;
 
     if (avatarPath != null) {
-     imageUrl = await storageService.uploadParticipantImage(
-  avatarPath,
-  onProgress: (progress) {
-    emit(
-      PersonSaving(
-        progress: progress,
-        message:
-            'Uploading image... ${(progress * 100).toStringAsFixed(0)}%',
-      ),
-    );
-  },
-);
+      imageUrl = await storageService.uploadParticipantImage(
+        avatarPath,
+        onProgress: (progress) {
+          emit(
+            PersonSaving(
+              progress: progress,
+              message:
+                  'Uploading image... ${(progress * 100).toStringAsFixed(0)}%',
+            ),
+          );
+        },
+      );
 
       if (imageUrl == null) {
         emit(const PersonError('Failed to upload image.'));

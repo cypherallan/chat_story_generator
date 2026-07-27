@@ -6,4 +6,5 @@ abstract class PersonRepository {
   Future<Either<Failure, List<Person>>> getPersons();
   Future<Either<Failure, Person>> addPerson(Person person);
   Future<Either<Failure, void>> deletePerson(String id);
+  Future<Either<Failure, Person>> updatePerson(Person person);
 }
