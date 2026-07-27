@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'edit_participant_page.dart';
 import '../../../../injection_container.dart' as di;
 import '../cubit/person_cubit.dart';
@@ -18,8 +19,23 @@ class PersonsListPage extends StatelessWidget {
   }
 }
 
-class _PersonsListView extends StatelessWidget {
+class _PersonsListView extends StatefulWidget {
   const _PersonsListView();
+
+  @override
+  State<_PersonsListView> createState() => _PersonsListViewState();
+}
+
+class _PersonsListViewState extends State<_PersonsListView> {
+  final TextEditingController _searchController = TextEditingController();
+
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,57 +44,103 @@ class _PersonsListView extends StatelessWidget {
         title: const Text('Participants'),
         centerTitle: true,
       ),
-      body: BlocBuilder<PersonCubit, PersonState>(
-        builder: (context, state) {
-          if (state is PersonLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+      body: Column(
+        children: [
+          // SEARCH FIELD
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search participants',
+                hintText: 'e.g. Ronaldo',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
 
-          if (state is PersonError) {
-            return Center(
-              child: Text(state.message),
-            );
-          }
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
 
-          if (state is PersonLoaded) {
-            if (state.persons.isEmpty) {
-              return const Center(
-                child: Text(
-                  'No participants yet.\nTap + to create one.',
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
+          // PARTICIPANTS LIST
+          Expanded(
+            child: BlocBuilder<PersonCubit, PersonState>(
+              builder: (context, state) {
+                if (state is PersonLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
 
-            return ListView.builder(
-              itemCount: state.persons.length,
-              itemBuilder: (context, index) {
-                final person = state.persons[index];
+                if (state is PersonError) {
+                  return Center(
+                    child: Text(state.message),
+                  );
+                }
 
-                return PersonCard(
-                  person: person,
-                  onEdit: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EditParticipantPage(
-                          person: person,
-                        ),
+                if (state is PersonLoaded) {
+                  final filteredPersons = state.persons.where((person) {
+                    return person.name.toLowerCase().contains(_searchQuery);
+                  }).toList();
+
+                  if (filteredPersons.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No participants found.',
                       ),
                     );
-                  },
-                  onDelete: () {
-                    context.read<PersonCubit>().removePerson(person.id);
-                  },
-                );
-              },
-            );
-          }
+                  }
 
-          return const SizedBox.shrink();
-        },
+                  return ListView.builder(
+                    itemCount: filteredPersons.length,
+                    itemBuilder: (context, index) {
+                      final person = filteredPersons[index];
+
+                      return PersonCard(
+                        person: person,
+                        onEdit: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider.value(
+                                value: context.read<PersonCubit>(),
+                                child: EditParticipantPage(
+                                  person: person,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        onDelete: () {
+                          context.read<PersonCubit>().removePerson(
+                                person.id,
+                              );
+                        },
+                      );
+                    },
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

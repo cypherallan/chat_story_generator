@@ -79,7 +79,6 @@ class _EditParticipantPageState extends State<EditParticipantPage> {
       // keep existing Firebase image URL unless we later add replacement upload
       avatarPath: _imagePath ?? widget.person.avatarPath,
     );
-
     await context.read<PersonCubit>().editPerson(
           updatedPerson,
         );
