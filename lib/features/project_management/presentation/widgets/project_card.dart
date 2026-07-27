@@ -4,11 +4,13 @@ import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {
   final Project project;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const ProjectCard({
     super.key,
     required this.project,
+    required this.onTap,
     required this.onDelete,
   });
 
@@ -20,6 +22,7 @@ class ProjectCard extends StatelessWidget {
         vertical: 6,
       ),
       child: ListTile(
+        onTap: onTap,
         leading: const CircleAvatar(
           child: Icon(Icons.folder),
         ),

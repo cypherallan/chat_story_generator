@@ -8,6 +8,8 @@ import 'add_project_page.dart';
 
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 
+import '../../../conversations/presentation/pages/conversation_page.dart';
+
 class ProjectsListPage extends StatelessWidget {
   const ProjectsListPage({super.key});
 
@@ -61,6 +63,16 @@ class _ProjectsListView extends StatelessWidget {
 
                 return ProjectCard(
                   project: project,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ConversationPage(
+                          project: project,
+                        ),
+                      ),
+                    );
+                  },
                   onDelete: () {
                     context.read<ProjectCubit>().removeProject(project.id);
                   },
