@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../project_management/domain/entities/project.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../injection_container.dart' as di;
-
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../message_management/presentation/pages/add_message_page.dart';
@@ -97,9 +95,13 @@ class ConversationPage extends StatelessWidget {
 
                             final sender = matchingPersons.first;
 
+                            final isMine =
+                                sender.id != project.participantIds.first;
+
                             return MessageBubble(
                               message: message,
                               sender: sender,
+                              isMine: isMine,
                             );
                           },
                         );
@@ -116,16 +118,16 @@ class ConversationPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await Navigator.push(
+          final created = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
               builder: (_) => MultiBlocProvider(
                 providers: [
-                  BlocProvider(
-                    create: (_) => di.sl<MessageCubit>(),
+                  BlocProvider.value(
+                    value: context.read<MessageCubit>(),
                   ),
-                  BlocProvider(
-                    create: (_) => di.sl<PersonCubit>()..loadPersons(),
+                  BlocProvider.value(
+                    value: context.read<PersonCubit>(),
                   ),
                 ],
                 child: AddMessagePage(
@@ -135,6 +137,10 @@ class ConversationPage extends StatelessWidget {
               ),
             ),
           );
+
+          if (created == true) {
+            context.read<MessageCubit>().loadMessages(project.id);
+          }
         },
         icon: const Icon(Icons.add_comment),
         label: const Text('Add Message'),

@@ -38,7 +38,7 @@ class _AddMessagePageState extends State<AddMessagePage> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_selectedPerson == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -57,13 +57,13 @@ class _AddMessagePageState extends State<AddMessagePage> {
       return;
     }
 
-    context.read<MessageCubit>().createMessage(
+    await context.read<MessageCubit>().createMessage(
           projectId: widget.projectId,
           senderId: _selectedPerson!.id,
           text: _messageController.text.trim(),
         );
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
