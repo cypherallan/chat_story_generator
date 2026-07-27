@@ -7,10 +7,18 @@ import 'features/person_management/domain/usecases/add_person.dart';
 import 'features/person_management/domain/usecases/delete_person.dart';
 import 'features/person_management/domain/usecases/get_persons.dart';
 import 'features/person_management/presentation/cubit/person_cubit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'core/auth/auth_service.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
+
+  sl.registerLazySingleton(
+    () => AuthService(sl()),
+  );
+
   final prefs = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => prefs);
   sl.registerLazySingleton<PersonLocalDataSource>(
