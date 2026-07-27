@@ -68,7 +68,11 @@ class _AddPersonPageState extends State<AddParticipantPage> {
 
           if (state is PersonError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(
+                content: Text(state.message),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
             );
           }
         },

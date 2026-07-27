@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-
+import '../../../../core/errors/error_handler.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/person.dart';
 import '../../domain/repositories/person_repository.dart';
@@ -17,7 +17,7 @@ class PersonRepositoryImpl implements PersonRepository {
       final persons = await firestoreDataSource.getPersons();
       return Right(persons);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ErrorHandler.handle(e));
     }
   }
 
@@ -30,7 +30,7 @@ class PersonRepositoryImpl implements PersonRepository {
 
       return Right(result);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ErrorHandler.handle(e));
     }
   }
 
@@ -41,7 +41,7 @@ class PersonRepositoryImpl implements PersonRepository {
       final result = await firestoreDataSource.addPerson(model);
       return Right(result);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ErrorHandler.handle(e));
     }
   }
 
@@ -51,7 +51,7 @@ class PersonRepositoryImpl implements PersonRepository {
       await firestoreDataSource.deletePerson(id);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ErrorHandler.handle(e));
     }
   }
 }
