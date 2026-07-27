@@ -9,6 +9,7 @@ import 'add_project_page.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 
 import '../../../conversations/presentation/pages/conversation_page.dart';
+import '../../../message_management/presentation/cubit/message_cubit.dart';
 
 class ProjectsListPage extends StatelessWidget {
   const ProjectsListPage({super.key});
@@ -67,8 +68,20 @@ class _ProjectsListView extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ConversationPage(
-                          project: project,
+                        builder: (_) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider(
+                              create: (_) => di.sl<MessageCubit>()
+                                ..loadMessages(project.id),
+                            ),
+                            BlocProvider(
+                              create: (_) =>
+                                  di.sl<PersonCubit>()..loadPersons(),
+                            ),
+                          ],
+                          child: ConversationPage(
+                            project: project,
+                          ),
                         ),
                       ),
                     );

@@ -28,6 +28,18 @@ import 'features/project_management/domain/usecases/update_project.dart';
 
 import 'features/project_management/presentation/cubit/project_cubit.dart';
 
+import 'features/message_management/data/datasources/message_firestore_data_source.dart';
+import 'features/message_management/data/repositories/message_repository_impl.dart';
+
+import 'features/message_management/domain/repositories/message_repository.dart';
+
+import 'features/message_management/domain/usecases/add_message.dart';
+import 'features/message_management/domain/usecases/get_messages.dart';
+import 'features/message_management/domain/usecases/update_message.dart';
+import 'features/message_management/domain/usecases/delete_message.dart';
+
+import 'features/message_management/presentation/cubit/message_cubit.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -51,6 +63,12 @@ Future<void> init() async {
       sl(),
     ),
   );
+  sl.registerLazySingleton<MessageFirestoreDataSource>(
+    () => MessageFirestoreDataSourceImpl(
+      sl(),
+      sl(),
+    ),
+  );
 
   // register person
   sl.registerLazySingleton(() => UpdatePerson(sl()));
@@ -62,6 +80,11 @@ Future<void> init() async {
   sl.registerLazySingleton<ProjectRepository>(
     () => ProjectRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<MessageRepository>(
+    () => MessageRepositoryImpl(
+      sl(),
+    ),
+  );
 
   // Use Cases
   sl.registerLazySingleton(() => GetPersons(sl()));
@@ -71,8 +94,13 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddProject(sl()));
   sl.registerLazySingleton(() => UpdateProject(sl()));
   sl.registerLazySingleton(() => DeleteProject(sl()));
+  sl.registerLazySingleton(() => GetMessages(sl()));
+  sl.registerLazySingleton(() => AddMessage(sl()));
+  sl.registerLazySingleton(() => UpdateMessage(sl()));
+  sl.registerLazySingleton(() => DeleteMessage(sl()));
 
   // Cubit
+  // Person Cubit
   sl.registerFactory(
     () => PersonCubit(
       getPersons: sl(),
@@ -82,12 +110,24 @@ Future<void> init() async {
       storageService: sl(),
     ),
   );
+
+  // Project Cubit
   sl.registerFactory(
     () => ProjectCubit(
       getProjects: sl(),
       addProject: sl(),
       updateProject: sl(),
       deleteProject: sl(),
+    ),
+  );
+
+  //Message Cubit
+  sl.registerFactory(
+    () => MessageCubit(
+      getMessages: sl(),
+      addMessage: sl(),
+      updateMessage: sl(),
+      deleteMessage: sl(),
     ),
   );
 }
