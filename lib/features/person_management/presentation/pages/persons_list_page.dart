@@ -126,10 +126,39 @@ class _PersonsListViewState extends State<_PersonsListView> {
                             ),
                           );
                         },
-                        onDelete: () {
-                          context.read<PersonCubit>().removePerson(
-                                person.id,
+                        onDelete: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Delete Participant'),
+                                content: Text(
+                                  'Are you sure you want to delete ${person.name}?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, false);
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, true);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
                               );
+                            },
+                          );
+
+                          if (confirm == true && context.mounted) {
+                            context.read<PersonCubit>().removePerson(person.id);
+                          }
                         },
                       );
                     },
