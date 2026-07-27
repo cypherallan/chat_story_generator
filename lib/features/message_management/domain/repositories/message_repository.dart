@@ -4,7 +4,7 @@ import '../../../../core/errors/failures.dart';
 import '../entities/message.dart';
 
 abstract class MessageRepository {
-  Future<Either<Failure, List<Message>>> getMessages(
+  Stream<Either<Failure, List<Message>>> getMessages(
     String projectId,
   );
 

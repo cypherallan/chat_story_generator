@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/message_model.dart';
 
 abstract class MessageFirestoreDataSource {
-  Future<List<MessageModel>> getMessages(
+  Stream<List<MessageModel>> getMessages(
     String projectId,
   );
 
@@ -49,19 +49,18 @@ class MessageFirestoreDataSourceImpl implements MessageFirestoreDataSource {
   }
 
   @override
-  Future<List<MessageModel>> getMessages(
+  Stream<List<MessageModel>> getMessages(
     String projectId,
-  ) async {
-    final snapshot =
-        await _messagesCollection(projectId).orderBy('createdAt').get();
-
-    return snapshot.docs
-        .map(
-          (doc) => MessageModel.fromJson(
-            doc.data(),
-          ),
-        )
-        .toList();
+  ) {
+    return _messagesCollection(projectId).orderBy('createdAt').snapshots().map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => MessageModel.fromJson(
+                  doc.data(),
+                ),
+              )
+              .toList(),
+        );
   }
 
   @override

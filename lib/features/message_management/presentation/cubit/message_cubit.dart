@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -16,6 +18,8 @@ class MessageCubit extends Cubit<MessageState> {
   final UpdateMessage updateMessage;
   final DeleteMessage deleteMessage;
 
+  StreamSubscription? _messagesSubscription;
+
   MessageCubit({
     required this.getMessages,
     required this.addMessage,
@@ -23,16 +27,32 @@ class MessageCubit extends Cubit<MessageState> {
     required this.deleteMessage,
   }) : super(MessageInitial());
 
-  Future<void> loadMessages(
+  void loadMessages(
     String projectId,
-  ) async {
+  ) {
     emit(MessageLoading());
 
-    final result = await getMessages(projectId);
+    _messagesSubscription?.cancel();
 
-    result.fold(
-      (failure) => emit(MessageError(failure.message)),
-      (messages) => emit(MessageLoaded(messages)),
+    _messagesSubscription = getMessages(projectId).listen(
+      (result) {
+        result.fold(
+          (failure) {
+            emit(
+              MessageError(
+                failure.message,
+              ),
+            );
+          },
+          (messages) {
+            emit(
+              MessageLoaded(
+                messages,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -52,10 +72,13 @@ class MessageCubit extends Cubit<MessageState> {
     final result = await addMessage(message);
 
     result.fold(
-      (failure) => emit(MessageError(failure.message)),
-      (_) async {
+      (failure) => emit(
+        MessageError(
+          failure.message,
+        ),
+      ),
+      (_) {
         emit(MessageSaved());
-        await loadMessages(projectId);
       },
     );
   }
@@ -66,10 +89,12 @@ class MessageCubit extends Cubit<MessageState> {
     final result = await updateMessage(message);
 
     result.fold(
-      (failure) => emit(MessageError(failure.message)),
-      (_) async {
-        await loadMessages(message.projectId);
-      },
+      (failure) => emit(
+        MessageError(
+          failure.message,
+        ),
+      ),
+      (_) {},
     );
   }
 
@@ -85,10 +110,18 @@ class MessageCubit extends Cubit<MessageState> {
     );
 
     result.fold(
-      (failure) => emit(MessageError(failure.message)),
-      (_) async {
-        await loadMessages(projectId);
-      },
+      (failure) => emit(
+        MessageError(
+          failure.message,
+        ),
+      ),
+      (_) {},
     );
+  }
+
+  @override
+  Future<void> close() {
+    _messagesSubscription?.cancel();
+    return super.close();
   }
 }

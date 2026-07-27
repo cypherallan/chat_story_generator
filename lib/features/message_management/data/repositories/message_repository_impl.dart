@@ -14,20 +14,24 @@ class MessageRepositoryImpl implements MessageRepository {
   );
 
   @override
-  Future<Either<Failure, List<Message>>> getMessages(
+  Stream<Either<Failure, List<Message>>> getMessages(
     String projectId,
-  ) async {
-    try {
-      final messages = await firestoreDataSource.getMessages(projectId);
-
-      return Right(messages);
-    } catch (e) {
-      return Left(
-        CacheFailure(
-          e.toString(),
-        ),
-      );
-    }
+  ) {
+    return firestoreDataSource.getMessages(projectId).map(
+      (messages) {
+        try {
+          return Right<Failure, List<Message>>(
+            messages,
+          );
+        } catch (e) {
+          return Left<Failure, List<Message>>(
+            CacheFailure(
+              e.toString(),
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override
