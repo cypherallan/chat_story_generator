@@ -2,41 +2,36 @@ import 'package:equatable/equatable.dart';
 
 class Project extends Equatable {
   final String id;
-  final String name;
-  final String conversationId;
+  final String title;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final List<String> participantIds;
 
   const Project({
     required this.id,
-    required this.name,
-    required this.conversationId,
+    required this.title,
     required this.createdAt,
-    required this.updatedAt,
+    required this.participantIds,
   });
 
   Project copyWith({
     String? id,
-    String? name,
-    String? conversationId,
+    String? title,
     DateTime? createdAt,
-    DateTime? updatedAt,
+    List<String>? participantIds,
   }) {
     return Project(
       id: id ?? this.id,
-      name: name ?? this.name,
-      conversationId: conversationId ?? this.conversationId,
+      title: title ?? this.title,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      participantIds: participantIds ?? this.participantIds,
     );
   }
 
   @override
   List<Object?> get props => [
         id,
-        name,
-        conversationId,
+        title,
         createdAt,
-        updatedAt,
+        participantIds,
       ];
 }

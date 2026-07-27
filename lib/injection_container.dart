@@ -16,6 +16,18 @@ import 'features/person_management/domain/usecases/get_persons.dart';
 
 import 'features/person_management/presentation/cubit/person_cubit.dart';
 
+import 'features/project_management/data/datasources/project_firestore_data_source.dart';
+import 'features/project_management/data/repositories/project_repository_impl.dart';
+
+import 'features/project_management/domain/repositories/project_repository.dart';
+
+import 'features/project_management/domain/usecases/add_project.dart';
+import 'features/project_management/domain/usecases/get_projects.dart';
+import 'features/project_management/domain/usecases/delete_project.dart';
+import 'features/project_management/domain/usecases/update_project.dart';
+
+import 'features/project_management/presentation/cubit/project_cubit.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -32,6 +44,14 @@ Future<void> init() async {
   sl.registerLazySingleton<PersonFirestoreDataSource>(
     () => PersonFirestoreDataSourceImpl(sl()),
   );
+
+  sl.registerLazySingleton<ProjectFirestoreDataSource>(
+    () => ProjectFirestoreDataSourceImpl(
+      sl(),
+      sl(),
+    ),
+  );
+
   // register person
   sl.registerLazySingleton(() => UpdatePerson(sl()));
 
@@ -39,11 +59,18 @@ Future<void> init() async {
   sl.registerLazySingleton<PersonRepository>(
     () => PersonRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<ProjectRepository>(
+    () => ProjectRepositoryImpl(sl()),
+  );
 
   // Use Cases
   sl.registerLazySingleton(() => GetPersons(sl()));
   sl.registerLazySingleton(() => AddPerson(sl()));
   sl.registerLazySingleton(() => DeletePerson(sl()));
+  sl.registerLazySingleton(() => GetProjects(sl()));
+  sl.registerLazySingleton(() => AddProject(sl()));
+  sl.registerLazySingleton(() => UpdateProject(sl()));
+  sl.registerLazySingleton(() => DeleteProject(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -53,6 +80,14 @@ Future<void> init() async {
       updatePerson: sl(),
       deletePerson: sl(),
       storageService: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => ProjectCubit(
+      getProjects: sl(),
+      addProject: sl(),
+      updateProject: sl(),
+      deleteProject: sl(),
     ),
   );
 }

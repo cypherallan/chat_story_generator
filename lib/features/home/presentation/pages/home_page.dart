@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
+import '../../../project_management/presentation/pages/projects_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -20,11 +21,12 @@ class HomePage extends StatelessWidget {
           children: [
             _HomeCard(
               icon: Icons.chat,
-              title: 'New Project',
+              title: 'Projects',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Coming soon'),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProjectsListPage(),
                   ),
                 );
               },
