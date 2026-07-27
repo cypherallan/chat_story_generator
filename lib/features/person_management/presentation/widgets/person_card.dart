@@ -1,5 +1,8 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
 import '../../domain/entities/person.dart';
 
 class PersonCard extends StatelessWidget {
@@ -14,24 +17,58 @@ class PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget avatar;
+
+    if (person.avatarPath == null || person.avatarPath!.isEmpty) {
+      avatar = CircleAvatar(
+        child: Text(person.name[0].toUpperCase()),
+      );
+    } else if (person.avatarPath!.startsWith('http')) {
+      avatar = CachedNetworkImage(
+        imageUrl: person.avatarPath!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => const CircleAvatar(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          child: Text(person.name[0].toUpperCase()),
+        ),
+      );
+    } else {
+      avatar = CircleAvatar(
+        backgroundImage: FileImage(
+          File(person.avatarPath!),
+        ),
+      );
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundImage: person.avatarPath != null
-              ? FileImage(File(person.avatarPath!))
-              : null,
-          child: person.avatarPath == null
-              ? Text(person.name[0].toUpperCase())
-              : null,
+        leading: SizedBox(
+          width: 48,
+          height: 48,
+          child: avatar,
         ),
         title: Row(
           children: [
-            Text(person.name),
-            if (person.isVerified) ...[
-              const SizedBox(width: 4),
-              const Icon(Icons.verified, size: 16, color: Colors.blue),
-            ],
+            Expanded(
+              child: Text(
+                person.name,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (person.isVerified)
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.verified,
+                  color: Colors.blue,
+                  size: 18,
+                ),
+              ),
           ],
         ),
         subtitle: Text(
@@ -40,7 +77,10 @@ class PersonCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          icon: const Icon(
+            Icons.delete_outline,
+            color: Colors.red,
+          ),
           onPressed: onDelete,
         ),
       ),

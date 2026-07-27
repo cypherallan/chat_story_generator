@@ -25,7 +25,7 @@ class _AddPersonPageState extends State<AddParticipantPage> {
     }
   }
 
-  void _submit() async {
+  Future<void> _submit() async {
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
@@ -45,10 +45,6 @@ class _AddPersonPageState extends State<AddParticipantPage> {
           avatarPath: _imagePath,
           isVerified: _isVerified,
         );
-
-    if (mounted) {
-      Navigator.pop(context);
-    }
   }
 
   @override
@@ -61,61 +57,94 @@ class _AddPersonPageState extends State<AddParticipantPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Participant')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 48,
-                backgroundImage:
-                    _imagePath != null ? FileImage(File(_imagePath!)) : null,
-                child: _imagePath == null
-                    ? const Icon(Icons.camera_alt, size: 32)
-                    : null,
-              ),
+      appBar: AppBar(
+        title: const Text('New Participant'),
+      ),
+      body: BlocConsumer<PersonCubit, PersonState>(
+        listener: (context, state) {
+          if (state is PersonSaved) {
+            Navigator.pop(context);
+          }
+
+          if (state is PersonError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: state is PersonSaving ? null : _pickImage,
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundImage: _imagePath != null
+                        ? FileImage(File(_imagePath!))
+                        : null,
+                    child: _imagePath == null
+                        ? const Icon(Icons.camera_alt, size: 32)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _nameController,
+                  enabled: state is! PersonSaving,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'e.g. Cristiano Ronaldo',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bioController,
+                  enabled: state is! PersonSaving,
+                  decoration: const InputDecoration(
+                    labelText: 'Bio / About',
+                    hintText: 'e.g. Footballer, 5x Ballon d\'Or winner',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Verified Badge'),
+                  subtitle: const Text('Show blue checkmark'),
+                  value: _isVerified,
+                  onChanged: state is PersonSaving
+                      ? null
+                      : (v) => setState(() => _isVerified = v),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: state is PersonSaving ? null : _submit,
+                    child: state is PersonSaving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Character',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'e.g. Cristiano Ronaldo',
-                border: OutlineInputBorder(),
-              ),
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _bioController,
-              decoration: const InputDecoration(
-                labelText: 'Bio / About',
-                hintText: 'e.g. Footballer, 5x Ballon d\'Or winner',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Verified Badge'),
-              subtitle: const Text('Show blue checkmark'),
-              value: _isVerified,
-              onChanged: (v) => setState(() => _isVerified = v),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton(
-                onPressed: _submit,
-                child: const Text('Create Character',
-                    style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
