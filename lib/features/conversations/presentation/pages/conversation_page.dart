@@ -8,6 +8,7 @@ import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../message_management/presentation/pages/add_message_page.dart';
 
 import '../../../message_management/presentation/widgets/message_bubble.dart';
+import '../../../message_management/presentation/widgets/conversation_header.dart';
 
 class ConversationPage extends StatelessWidget {
   final Project project;
@@ -21,28 +22,35 @@ class ConversationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(project.title),
+        titleSpacing: 0,
+        title: BlocBuilder<PersonCubit, PersonState>(
+          builder: (context, state) {
+            if (state is PersonLoaded) {
+              final otherPersonId = project.participantIds.length > 1
+                  ? project.participantIds[1]
+                  : project.participantIds[0];
+
+              final otherPerson = state.persons.firstWhere(
+                (person) => person.id == otherPersonId,
+              );
+
+              return ConversationHeader(
+                person: otherPerson,
+              );
+            }
+
+            return const Text(
+              'Conversation',
+            );
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              project.title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             const SizedBox(height: 12),
-            Text(
-              '${project.participantIds.length} participants',
-              style: const TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-            const Divider(height: 32),
             Expanded(
               child: BlocBuilder<PersonCubit, PersonState>(
                 builder: (context, personState) {
@@ -96,7 +104,7 @@ class ConversationPage extends StatelessWidget {
                             final sender = matchingPersons.first;
 
                             final isMine =
-                                sender.id != project.participantIds.first;
+                                sender.id == project.participantIds.first;
 
                             return MessageBubble(
                               message: message,

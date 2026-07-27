@@ -21,7 +21,7 @@ class HomePage extends StatelessWidget {
           children: [
             _HomeCard(
               icon: Icons.chat,
-              title: 'Projects',
+              title: 'Chats',
               onTap: () {
                 Navigator.push(
                   context,

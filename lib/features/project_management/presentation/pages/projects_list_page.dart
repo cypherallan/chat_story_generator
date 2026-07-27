@@ -30,7 +30,7 @@ class _ProjectsListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Projects'),
+        title: const Text('Chats'),
         centerTitle: true,
       ),
       body: BlocBuilder<ProjectCubit, ProjectState>(
@@ -99,7 +99,7 @@ class _ProjectsListView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('Project'),
+        label: const Text('Chat'),
         onPressed: () {
           Navigator.push(
             context,

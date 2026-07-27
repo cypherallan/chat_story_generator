@@ -46,7 +46,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Project name is required'),
+          content: Text('Chat name is required'),
         ),
       );
       return;
@@ -55,7 +55,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
     if (_selectedParticipants.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Select at least one participant'),
+          content: Text('Select at least one contact'),
         ),
       );
       return;
@@ -73,7 +73,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Project'),
+        title: const Text('New Chat'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -82,7 +82,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Project Name',
+                labelText: 'Chat Name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -90,7 +90,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Choose Participants',
+                'Choose Contacts',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -144,7 +144,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
               child: FilledButton(
                 onPressed: _createProject,
                 child: const Text(
-                  'Create Project',
+                  'Create Chat',
                 ),
               ),
             ),
