@@ -16,6 +16,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   final _titleController = TextEditingController();
 
   final List<String> _selectedParticipants = [];
+  String? _ownerId;
 
   @override
   void initState() {
@@ -40,6 +41,15 @@ class _AddProjectPageState extends State<AddProjectPage> {
     });
   }
 
+  void _selectOwner(String? id) {
+    setState(() {
+      _ownerId = id;
+
+      // Remove owner from contacts if already selected
+      _selectedParticipants.remove(id);
+    });
+  }
+
   void _createProject() {
     final title = _titleController.text.trim();
 
@@ -52,7 +62,16 @@ class _AddProjectPageState extends State<AddProjectPage> {
       return;
     }
 
-    if (_selectedParticipants.isEmpty) {
+    if (_ownerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select who you are'),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedParticipants.isEmpty || _ownerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Select at least one contact'),
@@ -62,9 +81,13 @@ class _AddProjectPageState extends State<AddProjectPage> {
     }
 
     context.read<ProjectCubit>().createProject(
-          title: title,
-          participants: _selectedParticipants,
-        );
+      title: title,
+      ownerId: _ownerId!,
+      participants: [
+        _ownerId!,
+        ..._selectedParticipants,
+      ],
+    );
 
     Navigator.pop(context);
   }
@@ -85,6 +108,29 @@ class _AddProjectPageState extends State<AddProjectPage> {
                 labelText: 'Chat Name',
                 border: OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 24),
+            BlocBuilder<PersonCubit, PersonState>(
+              builder: (context, state) {
+                if (state is! PersonLoaded) {
+                  return const SizedBox();
+                }
+
+                return DropdownButtonFormField<String>(
+                  value: _ownerId,
+                  decoration: const InputDecoration(
+                    labelText: 'You are',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: state.persons.map((person) {
+                    return DropdownMenuItem(
+                      value: person.id,
+                      child: Text(person.name),
+                    );
+                  }).toList(),
+                  onChanged: _selectOwner,
+                );
+              },
             ),
             const SizedBox(height: 24),
             const Align(
@@ -112,6 +158,10 @@ class _AddProjectPageState extends State<AddProjectPage> {
                       itemCount: state.persons.length,
                       itemBuilder: (context, index) {
                         final person = state.persons[index];
+
+                        if (person.id == _ownerId) {
+                          return const SizedBox.shrink();
+                        }
 
                         final selected = _selectedParticipants.contains(
                           person.id,

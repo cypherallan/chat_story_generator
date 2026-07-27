@@ -36,6 +36,7 @@ class ProjectCubit extends Cubit<ProjectState> {
 
   Future<void> createProject({
     required String title,
+    required String ownerId,
     required List<String> participants,
   }) async {
     emit(ProjectLoading());
@@ -44,6 +45,7 @@ class ProjectCubit extends Cubit<ProjectState> {
       id: const Uuid().v4(),
       title: title,
       createdAt: DateTime.now(),
+      ownerId: ownerId,
       participantIds: participants,
     );
 

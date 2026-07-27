@@ -5,6 +5,7 @@ class ProjectModel extends Project {
     required super.id,
     required super.title,
     required super.createdAt,
+    required super.ownerId,
     required super.participantIds,
   });
 
@@ -17,7 +18,10 @@ class ProjectModel extends Project {
       createdAt: DateTime.parse(
         json['createdAt'],
       ),
-      participantIds: List<String>.from(json['participantIds'] ?? []),
+      ownerId: json['ownerId'] ?? '',
+      participantIds: List<String>.from(
+        json['participantIds'] ?? [],
+      ),
     );
   }
 
@@ -26,15 +30,19 @@ class ProjectModel extends Project {
       'id': id,
       'title': title,
       'createdAt': createdAt.toIso8601String(),
+      'ownerId': ownerId,
       'participantIds': participantIds,
     };
   }
 
-  factory ProjectModel.fromEntity(Project project) {
+  factory ProjectModel.fromEntity(
+    Project project,
+  ) {
     return ProjectModel(
       id: project.id,
       title: project.title,
       createdAt: project.createdAt,
+      ownerId: project.ownerId,
       participantIds: project.participantIds,
     );
   }

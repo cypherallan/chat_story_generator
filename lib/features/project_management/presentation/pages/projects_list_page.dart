@@ -51,7 +51,7 @@ class _ProjectsListView extends StatelessWidget {
             if (state.projects.isEmpty) {
               return const Center(
                 child: Text(
-                  'No projects yet.\nTap + to create one.',
+                  'No Chats yet.\nTap + to create one.',
                   textAlign: TextAlign.center,
                 ),
               );
