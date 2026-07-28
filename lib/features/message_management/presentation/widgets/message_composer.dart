@@ -22,6 +22,22 @@ class MessageComposer extends StatefulWidget {
 
 class _MessageComposerState extends State<MessageComposer> {
   final controller = TextEditingController();
+  bool hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    controller.addListener(() {
+      final value = controller.text.trim().isNotEmpty;
+
+      if (value != hasText) {
+        setState(() {
+          hasText = value;
+        });
+      }
+    });
+  }
 
   void _send() {
     final text = controller.text.trim();
@@ -34,6 +50,9 @@ class _MessageComposerState extends State<MessageComposer> {
     );
 
     controller.clear();
+    setState(() {
+      hasText = false;
+    });
   }
 
   @override
@@ -183,11 +202,32 @@ class _MessageComposerState extends State<MessageComposer> {
             const SizedBox(width: 6),
             CircleAvatar(
               radius: 24,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.send,
-                ),
-                onPressed: _send,
+              backgroundColor: Colors.green,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  );
+                },
+                child: hasText
+                    ? IconButton(
+                        key: const ValueKey("send"),
+                        icon: const Icon(
+                          Icons.send,
+                          color: Colors.white,
+                        ),
+                        onPressed: _send,
+                      )
+                    : IconButton(
+                        key: const ValueKey("mic"),
+                        icon: const Icon(
+                          Icons.mic,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {},
+                      ),
               ),
             ),
           ],
