@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'dart:io';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'expression_panel.dart';
+import 'attachment_sheet.dart';
 
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
@@ -26,6 +27,7 @@ class _MessageComposerState extends State<MessageComposer> {
   final FocusNode _focusNode = FocusNode();
 
   bool _showEmoji = false;
+  bool _showAttachments = false;
   bool hasText = false;
 
   @override
@@ -194,17 +196,18 @@ class _MessageComposerState extends State<MessageComposer> {
                         ),
                         IconButton(
                           icon: const Icon(
-                            Icons.emoji_emotions_outlined,
+                            Icons.sentiment_satisfied_alt_outlined,
                           ),
                           onPressed: () {
-                            if (_showEmoji) {
-                              _focusNode.requestFocus();
-                            } else {
-                              _focusNode.unfocus();
-                            }
+                            FocusScope.of(context).unfocus();
 
                             setState(() {
-                              _showEmoji = !_showEmoji;
+                              if (_showAttachments) {
+                                _showAttachments = false;
+                                _showEmoji = true;
+                              } else {
+                                _showEmoji = !_showEmoji;
+                              }
                             });
                           },
                         ),
@@ -224,7 +227,18 @@ class _MessageComposerState extends State<MessageComposer> {
                           icon: const Icon(
                             Icons.attach_file,
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+
+                            setState(() {
+                              if (_showEmoji) {
+                                _showEmoji = false;
+                                _showAttachments = true;
+                              } else {
+                                _showAttachments = !_showAttachments;
+                              }
+                            });
+                          },
                         ),
                         IconButton(
                           icon: const Icon(
@@ -271,15 +285,18 @@ class _MessageComposerState extends State<MessageComposer> {
             ),
           ),
           if (_showEmoji)
-            SizedBox(
+            ExpressionPanel(
+              controller: controller,
+            ),
+          if (_showAttachments)
+            const SizedBox(
               height: 280,
-              child: EmojiPicker(
-                textEditingController: controller,
-                onEmojiSelected: (category, emoji) {},
-              ),
+              child: AttachmentSheet(),
             ),
         ],
       ),
     );
   }
 }
+
+//6913375
