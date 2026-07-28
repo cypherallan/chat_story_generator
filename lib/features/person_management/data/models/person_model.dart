@@ -7,6 +7,10 @@ class PersonModel extends Person {
     super.avatarPath,
     super.bio,
     super.isVerified,
+
+    // NEW
+    super.isOnline,
+    super.lastSeen,
   });
 
   factory PersonModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +20,12 @@ class PersonModel extends Person {
       avatarPath: json['avatarPath'] as String?,
       bio: json['bio'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
+
+      // NEW
+      isOnline: json['isOnline'] as bool? ?? false,
+      lastSeen: json['lastSeen'] != null
+          ? DateTime.parse(json['lastSeen'] as String)
+          : null,
     );
   }
 
@@ -26,6 +36,10 @@ class PersonModel extends Person {
       'avatarPath': avatarPath,
       'bio': bio,
       'isVerified': isVerified,
+
+      // NEW
+      'isOnline': isOnline,
+      'lastSeen': lastSeen?.toIso8601String(),
     };
   }
 
@@ -36,6 +50,10 @@ class PersonModel extends Person {
       avatarPath: person.avatarPath,
       bio: person.bio,
       isVerified: person.isVerified,
+
+      // NEW
+      isOnline: person.isOnline,
+      lastSeen: person.lastSeen,
     );
   }
 }

@@ -10,6 +10,34 @@ class ConversationHeader extends StatelessWidget {
     required this.person,
   });
 
+  String _formatLastSeen(DateTime dateTime) {
+    final now = DateTime.now();
+
+    if (now.difference(dateTime).inMinutes < 1) {
+      return 'just now';
+    }
+
+    if (now.day == dateTime.day &&
+        now.month == dateTime.month &&
+        now.year == dateTime.year) {
+      return 'today at '
+          '${dateTime.hour.toString().padLeft(2, '0')}:'
+          '${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    if (yesterday.day == dateTime.day &&
+        yesterday.month == dateTime.month &&
+        yesterday.year == dateTime.year) {
+      return 'yesterday at '
+          '${dateTime.hour.toString().padLeft(2, '0')}:'
+          '${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     ImageProvider? image;
@@ -63,9 +91,13 @@ class ConversationHeader extends StatelessWidget {
                     ),
                 ],
               ),
-              const Text(
-                'last seen recently',
-                style: TextStyle(
+              Text(
+                person.isOnline
+                    ? 'online'
+                    : person.lastSeen == null
+                        ? 'last seen recently'
+                        : 'last seen ${_formatLastSeen(person.lastSeen!)}',
+                style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
                 ),

@@ -7,12 +7,20 @@ class Person extends Equatable {
   final String? bio;
   final bool isVerified;
 
+  // NEW
+  final bool isOnline;
+  final DateTime? lastSeen;
+
   const Person({
     required this.id,
     required this.name,
     this.avatarPath,
     this.bio,
     this.isVerified = false,
+
+    // NEW
+    this.isOnline = false,
+    this.lastSeen,
   });
 
   Person copyWith({
@@ -21,6 +29,10 @@ class Person extends Equatable {
     String? avatarPath,
     String? bio,
     bool? isVerified,
+
+    // NEW
+    bool? isOnline,
+    DateTime? lastSeen,
   }) {
     return Person(
       id: id ?? this.id,
@@ -28,6 +40,9 @@ class Person extends Equatable {
       avatarPath: avatarPath ?? this.avatarPath,
       bio: bio ?? this.bio,
       isVerified: isVerified ?? this.isVerified,
+
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen ?? this.lastSeen,
     );
   }
 
@@ -38,5 +53,7 @@ class Person extends Equatable {
         avatarPath,
         bio,
         isVerified,
+        isOnline,
+        lastSeen,
       ];
 }

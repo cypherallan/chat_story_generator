@@ -23,6 +23,7 @@ class ConversationPage extends StatefulWidget {
 
 class _ConversationPageState extends State<ConversationPage> {
   late String selectedSenderId;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -85,6 +86,15 @@ class _ConversationPageState extends State<ConversationPage> {
                       }
 
                       if (messageState is MessageLoaded) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(
+                              0,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
+                            );
+                          }
+                        });
                         if (messageState.messages.isEmpty) {
                           return const Center(
                             child: Text(
@@ -96,11 +106,15 @@ class _ConversationPageState extends State<ConversationPage> {
                             ),
                           );
                         }
+                        final messages =
+                            messageState.messages.reversed.toList();
 
                         return ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
                           itemCount: messageState.messages.length,
                           itemBuilder: (context, index) {
-                            final message = messageState.messages[index];
+                            final message = messages[index];
 
                             final sender = personState.persons.firstWhere(
                               (person) => person.id == message.senderId,
@@ -151,6 +165,14 @@ class _ConversationPageState extends State<ConversationPage> {
                         senderId: senderId,
                         text: text,
                       );
+
+                  if (participants.length == 2) {
+                    setState(() {
+                      selectedSenderId = senderId == participants[0].id
+                          ? participants[1].id
+                          : participants[0].id;
+                    });
+                  }
                 },
               );
             },
@@ -158,5 +180,11 @@ class _ConversationPageState extends State<ConversationPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
