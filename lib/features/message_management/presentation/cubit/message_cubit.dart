@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/message.dart';
+import '../../domain/entities/message_status.dart';
 import '../../domain/usecases/add_message.dart';
 import '../../domain/usecases/delete_message.dart';
 import '../../domain/usecases/get_messages.dart';
@@ -27,9 +28,7 @@ class MessageCubit extends Cubit<MessageState> {
     required this.deleteMessage,
   }) : super(MessageInitial());
 
-  void loadMessages(
-    String projectId,
-  ) {
+  void loadMessages(String projectId) {
     emit(MessageLoading());
 
     _messagesSubscription?.cancel();
@@ -38,18 +37,10 @@ class MessageCubit extends Cubit<MessageState> {
       (result) {
         result.fold(
           (failure) {
-            emit(
-              MessageError(
-                failure.message,
-              ),
-            );
+            emit(MessageError(failure.message));
           },
           (messages) {
-            emit(
-              MessageLoaded(
-                messages,
-              ),
-            );
+            emit(MessageLoaded(messages));
           },
         );
       },
@@ -67,31 +58,63 @@ class MessageCubit extends Cubit<MessageState> {
       senderId: senderId,
       text: text,
       createdAt: DateTime.now(),
+      status: MessageStatus.sending,
     );
 
     final result = await addMessage(message);
 
     result.fold(
-      (failure) => emit(
-        MessageError(
-          failure.message,
-        ),
-      ),
-      (_) {},
+      (failure) => emit(MessageError(failure.message)),
+      (_) => _simulateDelivery(message),
     );
   }
 
-  Future<void> editMessage(
-    Message message,
-  ) async {
-    final result = await updateMessage(message);
+  /// Simulated network flow:
+  /// sending → sent (1 sec) → delivered (0.5 sec) → read (1 sec)
+  void _simulateDelivery(Message message) async {
+    await Future.delayed(const Duration(seconds: 1));
+    var result = await updateMessage(
+      message.copyWith(status: MessageStatus.sent),
+    );
+    result.fold((_) {}, (_) {});
 
+    await Future.delayed(const Duration(milliseconds: 500));
+    result = await updateMessage(
+      message.copyWith(status: MessageStatus.delivered),
+    );
+    result.fold((_) {}, (_) {});
+
+    await Future.delayed(const Duration(seconds: 1));
+    result = await updateMessage(
+      message.copyWith(status: MessageStatus.read),
+    );
+    result.fold((_) {}, (_) {});
+  }
+
+  /// Marks every message NOT sent by [currentUserId] as read.
+  Future<void> markMessagesAsRead({
+    required String projectId,
+    required String currentUserId,
+  }) async {
+    if (state is! MessageLoaded) return;
+
+    final messages = (state as MessageLoaded).messages;
+    final unread = messages.where(
+      (m) => m.senderId != currentUserId && m.status != MessageStatus.read,
+    );
+
+    for (final msg in unread) {
+      final result = await updateMessage(
+        msg.copyWith(status: MessageStatus.read),
+      );
+      result.fold((_) {}, (_) {});
+    }
+  }
+
+  Future<void> editMessage(Message message) async {
+    final result = await updateMessage(message);
     result.fold(
-      (failure) => emit(
-        MessageError(
-          failure.message,
-        ),
-      ),
+      (failure) => emit(MessageError(failure.message)),
       (_) {},
     );
   }
@@ -108,11 +131,7 @@ class MessageCubit extends Cubit<MessageState> {
     );
 
     result.fold(
-      (failure) => emit(
-        MessageError(
-          failure.message,
-        ),
-      ),
+      (failure) => emit(MessageError(failure.message)),
       (_) {},
     );
   }

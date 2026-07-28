@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'message_status.dart';
 
 class Message extends Equatable {
   final String id;
@@ -6,6 +7,8 @@ class Message extends Equatable {
   final String senderId;
   final String text;
   final DateTime createdAt;
+  final MessageStatus status;
+  final bool isEdited;
 
   const Message({
     required this.id,
@@ -13,6 +16,8 @@ class Message extends Equatable {
     required this.senderId,
     required this.text,
     required this.createdAt,
+    this.status = MessageStatus.sent,
+    this.isEdited = false,
   });
 
   Message copyWith({
@@ -21,6 +26,8 @@ class Message extends Equatable {
     String? senderId,
     String? text,
     DateTime? createdAt,
+    MessageStatus? status,
+    bool? isEdited,
   }) {
     return Message(
       id: id ?? this.id,
@@ -28,6 +35,8 @@ class Message extends Equatable {
       senderId: senderId ?? this.senderId,
       text: text ?? this.text,
       createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      isEdited: isEdited ?? this.isEdited,
     );
   }
 
@@ -38,5 +47,7 @@ class Message extends Equatable {
         senderId,
         text,
         createdAt,
+        status,
+        isEdited,
       ];
 }

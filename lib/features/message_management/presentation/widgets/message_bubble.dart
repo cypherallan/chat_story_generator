@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/message.dart';
+import '../../domain/entities/message_status.dart';
 import '../../../person_management/domain/entities/person.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -15,21 +16,22 @@ class MessageBubble extends StatelessWidget {
     required this.isMine,
   });
 
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(
-          vertical: 2,
-          horizontal: 8,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 10,
-        ),
+        margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.70,
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          minWidth: 80,
         ),
         decoration: BoxDecoration(
           boxShadow: [
@@ -40,26 +42,97 @@ class MessageBubble extends StatelessWidget {
             ),
           ],
           color: isMine
-              ? const Color(0xffDCF8C6) // WhatsApp green
+              ? const Color(0xffE7FFDB) // WhatsApp outgoing green
               : Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(12),
-            topRight: const Radius.circular(12),
-            bottomLeft: Radius.circular(
-              isMine ? 12 : 0,
-            ),
-            bottomRight: Radius.circular(
-              isMine ? 0 : 12,
-            ),
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isMine ? 16 : 4),
+            bottomRight: Radius.circular(isMine ? 4 : 16),
           ),
         ),
-        child: Text(
-          message.text,
-          style: const TextStyle(
-            fontSize: 16,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.text,
+              style: const TextStyle(
+                fontSize: 15.5,
+                height: 1.3,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (message.isEdited) ...[
+                    Text(
+                      'Edited',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    _formatTime(message.createdAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  if (isMine) ...[
+                    const SizedBox(width: 3),
+                    _MessageTicks(status: message.status),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+class _MessageTicks extends StatelessWidget {
+  final MessageStatus status;
+
+  const _MessageTicks({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (status) {
+      case MessageStatus.sending:
+        return Icon(
+          Icons.schedule,
+          size: 13,
+          color: Colors.grey.shade500,
+        );
+      case MessageStatus.sent:
+        return Icon(
+          Icons.done,
+          size: 15,
+          color: Colors.grey.shade500,
+        );
+      case MessageStatus.delivered:
+        return Icon(
+          Icons.done_all,
+          size: 15,
+          color: Colors.grey.shade500,
+        );
+      case MessageStatus.read:
+        return const Icon(
+          Icons.done_all,
+          size: 15,
+          color: Color(0xff53BDEB), // WhatsApp blue tick
+        );
+    }
   }
 }

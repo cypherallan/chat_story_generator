@@ -28,8 +28,18 @@ class _ConversationPageState extends State<ConversationPage> {
   @override
   void initState() {
     super.initState();
-
     selectedSenderId = widget.project.ownerId;
+
+    // Simulation: mark incoming messages as read after the UI renders
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        context.read<MessageCubit>().markMessagesAsRead(
+              projectId: widget.project.id,
+              currentUserId: widget.project.ownerId,
+            );
+      }
+    });
   }
 
   @override
@@ -50,9 +60,7 @@ class _ConversationPageState extends State<ConversationPage> {
                 (person) => person.id == otherPersonId,
               );
 
-              return ConversationHeader(
-                person: otherPerson,
-              );
+              return ConversationHeader(person: otherPerson);
             }
 
             return const Text('Conversation');
@@ -81,7 +89,12 @@ class _ConversationPageState extends State<ConversationPage> {
                           );
                         }
 
-                        return BlocBuilder<MessageCubit, MessageState>(
+                        return BlocConsumer<MessageCubit, MessageState>(
+                          listener: (context, messageState) {
+                            if (messageState is MessageLoaded) {
+                              _scrollToBottom();
+                            }
+                          },
                           builder: (context, messageState) {
                             if (messageState is MessageLoading) {
                               return const Center(
@@ -96,16 +109,6 @@ class _ConversationPageState extends State<ConversationPage> {
                             }
 
                             if (messageState is MessageLoaded) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (_scrollController.hasClients) {
-                                  _scrollController.animateTo(
-                                    0,
-                                    duration: const Duration(milliseconds: 250),
-                                    curve: Curves.easeOut,
-                                  );
-                                }
-                              });
-
                               if (messageState.messages.isEmpty) {
                                 return const Center(
                                   child: Text(
@@ -121,30 +124,26 @@ class _ConversationPageState extends State<ConversationPage> {
                               final messages =
                                   messageState.messages.reversed.toList();
 
-                              return Container(
-                                color: Colors.transparent,
-                                child: ListView.builder(
-                                  controller: _scrollController,
-                                  reverse: true,
-                                  itemCount: messages.length,
-                                  itemBuilder: (context, index) {
-                                    final message = messages[index];
+                              return ListView.builder(
+                                controller: _scrollController,
+                                reverse: true,
+                                itemCount: messages.length,
+                                itemBuilder: (context, index) {
+                                  final message = messages[index];
 
-                                    final sender =
-                                        personState.persons.firstWhere(
-                                      (person) => person.id == message.senderId,
-                                    );
+                                  final sender = personState.persons.firstWhere(
+                                    (person) => person.id == message.senderId,
+                                  );
 
-                                    final isMine =
-                                        sender.id == widget.project.ownerId;
+                                  final isMine =
+                                      sender.id == widget.project.ownerId;
 
-                                    return MessageBubble(
-                                      message: message,
-                                      sender: sender,
-                                      isMine: isMine,
-                                    );
-                                  },
-                                ),
+                                  return MessageBubble(
+                                    message: message,
+                                    sender: sender,
+                                    isMine: isMine,
+                                  );
+                                },
                               );
                             }
 
@@ -200,6 +199,18 @@ class _ConversationPageState extends State<ConversationPage> {
         ],
       ),
     );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
