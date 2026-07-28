@@ -329,3 +329,14 @@ Extra animations
 Cloud backup
 AI-generated conversations
 Premium participant packs
+
+
+I'd build:
+✅ Emoji picker
+✅ Attachment sheet
+✅ Camera & gallery image messages
+✅ Typing indicator
+✅ Online / Last seen
+✅ Message ticks animation
+✅ Voice notes
+🚀 Finally, the ▶ Play Conversation engine
