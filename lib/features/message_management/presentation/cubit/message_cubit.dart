@@ -77,9 +77,7 @@ class MessageCubit extends Cubit<MessageState> {
           failure.message,
         ),
       ),
-      (_) {
-        emit(MessageSaved());
-      },
+      (_) {},
     );
   }
 

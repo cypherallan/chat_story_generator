@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'dart:io';
 import '../../../person_management/domain/entities/person.dart';
 
 class ConversationHeader extends StatelessWidget {
@@ -12,13 +12,28 @@ class ConversationHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider? image;
+
+    if (person.avatarPath != null) {
+      if (person.avatarPath!.startsWith('http')) {
+        image = NetworkImage(person.avatarPath!);
+      } else {
+        image = FileImage(
+          File(person.avatarPath!),
+        );
+      }
+    }
+
     return Row(
       children: [
         CircleAvatar(
           radius: 22,
-          child: Text(
-            person.name[0].toUpperCase(),
-          ),
+          backgroundImage: image,
+          child: image == null
+              ? Text(
+                  person.name[0].toUpperCase(),
+                )
+              : null,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -27,11 +42,14 @@ class ConversationHeader extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    person.name,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      person.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   if (person.isVerified)
