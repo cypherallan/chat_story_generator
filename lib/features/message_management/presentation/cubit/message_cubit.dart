@@ -72,23 +72,31 @@ class MessageCubit extends Cubit<MessageState> {
   /// Simulated network flow:
   /// sending → sent (1 sec) → delivered (0.5 sec) → read (1 sec)
   void _simulateDelivery(Message message) async {
+    var current = message;
+
     await Future.delayed(const Duration(seconds: 1));
-    var result = await updateMessage(
-      message.copyWith(status: MessageStatus.sent),
+
+    current = current.copyWith(
+      status: MessageStatus.sent,
     );
-    result.fold((_) {}, (_) {});
+
+    await updateMessage(current);
 
     await Future.delayed(const Duration(milliseconds: 500));
-    result = await updateMessage(
-      message.copyWith(status: MessageStatus.delivered),
-    );
-    result.fold((_) {}, (_) {});
 
-    await Future.delayed(const Duration(seconds: 1));
-    result = await updateMessage(
-      message.copyWith(status: MessageStatus.read),
+    current = current.copyWith(
+      status: MessageStatus.delivered,
     );
-    result.fold((_) {}, (_) {});
+
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    current = current.copyWith(
+      status: MessageStatus.read,
+    );
+
+    await updateMessage(current);
+
+    await updateMessage(current);
   }
 
   /// Marks every message NOT sent by [currentUserId] as read.

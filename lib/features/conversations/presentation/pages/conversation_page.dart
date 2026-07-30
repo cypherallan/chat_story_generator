@@ -8,6 +8,7 @@ import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../message_management/presentation/widgets/conversation_header.dart';
 import '../../../message_management/presentation/widgets/message_bubble.dart';
 import '../../../message_management/presentation/widgets/message_composer.dart';
+import '../../../message_management/presentation/widgets/typing_indicator.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -24,6 +25,7 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   late String selectedSenderId;
   final ScrollController _scrollController = ScrollController();
+  bool otherPersonTyping = false;
 
   @override
   void initState() {
@@ -32,7 +34,9 @@ class _ConversationPageState extends State<ConversationPage> {
 
     // Simulation: mark incoming messages as read after the UI renders
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(
+        const Duration(seconds: 2),
+      );
       if (mounted) {
         context.read<MessageCubit>().markMessagesAsRead(
               projectId: widget.project.id,
@@ -160,6 +164,22 @@ class _ConversationPageState extends State<ConversationPage> {
                       return const SizedBox.shrink();
                     }
 
+                    final typingPerson = state.persons.firstWhere(
+                      (person) => person.id == selectedSenderId,
+                    );
+
+                    return TypingIndicator(
+                      visible: otherPersonTyping,
+                      name: typingPerson.name,
+                    );
+                  },
+                ),
+                BlocBuilder<PersonCubit, PersonState>(
+                  builder: (context, state) {
+                    if (state is! PersonLoaded) {
+                      return const SizedBox.shrink();
+                    }
+
                     final participants = state.persons
                         .where(
                           (person) =>
@@ -173,7 +193,22 @@ class _ConversationPageState extends State<ConversationPage> {
                       onSenderChanged: (senderId) {
                         setState(() {
                           selectedSenderId = senderId;
+                          otherPersonTyping = false;
                         });
+                      },
+                      onTypingStarted: () {
+                        if (selectedSenderId != widget.project.ownerId) {
+                          setState(() {
+                            otherPersonTyping = true;
+                          });
+                        }
+                      },
+                      onTypingStopped: () {
+                        if (mounted) {
+                          setState(() {
+                            otherPersonTyping = false;
+                          });
+                        }
                       },
                       onSend: (senderId, text) {
                         context.read<MessageCubit>().createMessage(
@@ -187,6 +222,8 @@ class _ConversationPageState extends State<ConversationPage> {
                             selectedSenderId = senderId == participants[0].id
                                 ? participants[1].id
                                 : participants[0].id;
+
+                            otherPersonTyping = false;
                           });
                         }
                       },

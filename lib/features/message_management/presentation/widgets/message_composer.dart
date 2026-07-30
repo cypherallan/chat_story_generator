@@ -10,12 +10,18 @@ class MessageComposer extends StatefulWidget {
   final ValueChanged<String> onSenderChanged;
   final Function(String senderId, String text) onSend;
 
+  final VoidCallback? onTypingStarted;
+
+  final VoidCallback? onTypingStopped;
+
   const MessageComposer({
     super.key,
     required this.participants,
     required this.selectedSenderId,
     required this.onSenderChanged,
     required this.onSend,
+    this.onTypingStarted,
+    this.onTypingStopped,
   });
 
   @override
@@ -43,6 +49,14 @@ class _MessageComposerState extends State<MessageComposer> {
         });
       }
     });
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        widget.onTypingStarted?.call();
+      } else {
+        widget.onTypingStopped?.call();
+      }
+    });
   }
 
   void _send() {
@@ -56,8 +70,16 @@ class _MessageComposerState extends State<MessageComposer> {
     );
 
     controller.clear();
+
+    _focusNode.unfocus();
+
+    widget.onTypingStopped?.call();
+
     setState(() {
       hasText = false;
+
+      _showEmoji = false;
+      _showAttachments = false;
     });
   }
 
@@ -298,5 +320,3 @@ class _MessageComposerState extends State<MessageComposer> {
     );
   }
 }
-
-//6913375
