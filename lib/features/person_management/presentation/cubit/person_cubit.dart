@@ -116,4 +116,43 @@ class PersonCubit extends Cubit<PersonState> {
       (_) => loadPersons(),
     );
   }
+
+  Future<void> setPersonOnline(String personId) async {
+    if (state is! PersonLoaded) return;
+
+    final persons = List<Person>.from((state as PersonLoaded).persons);
+
+    final index = persons.indexWhere((p) => p.id == personId);
+    if (index == -1) return;
+
+    final updated = persons[index].copyWith(
+      isOnline: true,
+    );
+
+    persons[index] = updated;
+
+    emit(PersonLoaded(persons));
+
+    await updatePerson(updated);
+  }
+
+  Future<void> setPersonOffline(String personId) async {
+    if (state is! PersonLoaded) return;
+
+    final persons = List<Person>.from((state as PersonLoaded).persons);
+
+    final index = persons.indexWhere((p) => p.id == personId);
+    if (index == -1) return;
+
+    final updated = persons[index].copyWith(
+      isOnline: false,
+      lastSeen: DateTime.now(),
+    );
+
+    persons[index] = updated;
+
+    emit(PersonLoaded(persons));
+
+    await updatePerson(updated);
+  }
 }

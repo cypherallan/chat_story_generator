@@ -31,6 +31,9 @@ class _ConversationPageState extends State<ConversationPage> {
   void initState() {
     super.initState();
     selectedSenderId = widget.project.ownerId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PersonCubit>().setPersonOnline(selectedSenderId);
+    });
 
     // Simulation: mark incoming messages as read after the UI renders
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -64,7 +67,10 @@ class _ConversationPageState extends State<ConversationPage> {
                 (person) => person.id == otherPersonId,
               );
 
-              return ConversationHeader(person: otherPerson);
+              return ConversationHeader(
+                person: otherPerson,
+                isTyping: otherPersonTyping,
+              );
             }
 
             return const Text('Conversation');
@@ -164,13 +170,8 @@ class _ConversationPageState extends State<ConversationPage> {
                       return const SizedBox.shrink();
                     }
 
-                    final typingPerson = state.persons.firstWhere(
-                      (person) => person.id == selectedSenderId,
-                    );
-
                     return TypingIndicator(
                       visible: otherPersonTyping,
-                      name: typingPerson.name,
                     );
                   },
                 ),
@@ -191,10 +192,14 @@ class _ConversationPageState extends State<ConversationPage> {
                       participants: participants,
                       selectedSenderId: selectedSenderId,
                       onSenderChanged: (senderId) {
+                        final previous = selectedSenderId;
+
                         setState(() {
                           selectedSenderId = senderId;
-                          otherPersonTyping = false;
                         });
+
+                        context.read<PersonCubit>().setPersonOffline(previous);
+                        context.read<PersonCubit>().setPersonOnline(senderId);
                       },
                       onTypingStarted: () {
                         if (selectedSenderId != widget.project.ownerId) {
@@ -218,13 +223,22 @@ class _ConversationPageState extends State<ConversationPage> {
                             );
 
                         if (participants.length == 2) {
-                          setState(() {
-                            selectedSenderId = senderId == participants[0].id
-                                ? participants[1].id
-                                : participants[0].id;
+                          final previousSender = selectedSenderId;
 
-                            otherPersonTyping = false;
+                          final nextSender = senderId == participants[0].id
+                              ? participants[1].id
+                              : participants[0].id;
+
+                          setState(() {
+                            selectedSenderId = nextSender;
                           });
+
+                          context
+                              .read<PersonCubit>()
+                              .setPersonOffline(previousSender);
+                          context
+                              .read<PersonCubit>()
+                              .setPersonOnline(nextSender);
                         }
                       },
                     );

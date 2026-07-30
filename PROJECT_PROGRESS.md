@@ -341,6 +341,3 @@ I'd build:
 ✅ Voice notes
 🚀 Finally, the ▶ Play Conversation engine
 
-The attachments in order:
-Row 1: Gallery, Camera, Location, contact
-row 2: Document, Poll, Event, AI images

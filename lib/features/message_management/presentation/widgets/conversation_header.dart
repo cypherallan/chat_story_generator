@@ -4,10 +4,12 @@ import '../../../person_management/domain/entities/person.dart';
 
 class ConversationHeader extends StatelessWidget {
   final Person person;
+  final bool isTyping;
 
   const ConversationHeader({
     super.key,
     required this.person,
+    required this.isTyping,
   });
 
   String _formatLastSeen(DateTime dateTime) {
@@ -91,15 +93,27 @@ class ConversationHeader extends StatelessWidget {
                     ),
                 ],
               ),
-              Text(
-                person.isOnline
-                    ? 'online'
-                    : person.lastSeen == null
-                        ? 'last seen recently'
-                        : 'last seen ${_formatLastSeen(person.lastSeen!)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: Text(
+                  isTyping
+                      ? 'typing...'
+                      : person.isOnline
+                          ? 'online'
+                          : person.lastSeen == null
+                              ? 'last seen recently'
+                              : 'last seen ${_formatLastSeen(person.lastSeen!)}',
+                  key: ValueKey(
+                    isTyping
+                        ? 'typing'
+                        : person.isOnline
+                            ? 'online'
+                            : person.lastSeen,
+                  ),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isTyping ? const Color(0xff25D366) : Colors.grey,
+                  ),
                 ),
               ),
             ],
