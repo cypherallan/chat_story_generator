@@ -5,10 +5,12 @@ import '../../../project_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 
-import '../../../message_management/presentation/widgets/conversation_header.dart';
+import '../widgets/conversation_header.dart';
 import '../../../message_management/presentation/widgets/message_bubble.dart';
 import '../../../message_management/presentation/widgets/message_composer.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
+
+import 'conversation_playback_page.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -76,6 +78,38 @@ class _ConversationPageState extends State<ConversationPage> {
             return const Text('Conversation');
           },
         ),
+        actions: [
+          BlocBuilder<MessageCubit, MessageState>(
+            builder: (context, state) {
+              return IconButton(
+                tooltip: "Preview Conversation",
+                icon: const Icon(Icons.play_circle_fill),
+                onPressed: state is! MessageLoaded
+                    ? null
+                    : () {
+                        final personCubit = context.read<PersonCubit>();
+                        final messageCubit = context.read<MessageCubit>();
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MultiBlocProvider(
+                              providers: [
+                                BlocProvider.value(value: personCubit),
+                                BlocProvider.value(value: messageCubit),
+                              ],
+                              child: ConversationPlaybackPage(
+                                project: widget.project,
+                                messages: state.messages,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
