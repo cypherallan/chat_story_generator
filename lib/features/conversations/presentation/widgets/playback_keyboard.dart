@@ -19,6 +19,26 @@ class PlaybackKeyboard extends StatelessWidget {
     required this.emojiKeyboardVisible,
     required this.pressedEmoji,
   });
+  double _emojiPosition(String emoji) {
+    final emojis = [
+      "😀",
+      "😂",
+      "😍",
+      "😎",
+      "😢",
+      "😭",
+      "🔥",
+      "❤️",
+    ];
+
+    final index = emojis.indexOf(emoji);
+
+    if (index == -1) return 0;
+
+    final column = index % 8;
+
+    return column * 45;
+  }
 
   Widget _key(
     String text,
@@ -69,28 +89,49 @@ class PlaybackKeyboard extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       offset: visible ? Offset.zero : const Offset(0, 1),
       child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 250),
-        opacity: visible ? 1 : 0,
-        child: Container(
-          color: const Color(0xffD9DDE3),
-          height: emojiKeyboardVisible ? 300 : null,
-          child: emojiKeyboardVisible
-              ? EmojiPicker(
-                  onEmojiSelected: (category, emoji) {},
-                  config: const Config(
-                    emojiViewConfig: EmojiViewConfig(
-                      columns: 8,
-                      emojiSizeMax: 28,
-                    ),
-                    categoryViewConfig: CategoryViewConfig(),
-                    bottomActionBarConfig: BottomActionBarConfig(
-                      showBackspaceButton: true,
-                    ),
-                  ),
-                )
-              : _buildLetters(),
-        ),
-      ),
+          duration: const Duration(milliseconds: 250),
+          opacity: visible ? 1 : 0,
+          child: Container(
+              color: const Color(0xffD9DDE3),
+              height: emojiKeyboardVisible ? 300 : null,
+              child: emojiKeyboardVisible
+                  ? Stack(
+                      children: [
+                        EmojiPicker(
+                          onEmojiSelected: (category, emoji) {},
+                          config: const Config(
+                            emojiViewConfig: EmojiViewConfig(
+                              columns: 8,
+                              emojiSizeMax: 28,
+                            ),
+                            categoryViewConfig: CategoryViewConfig(),
+                            bottomActionBarConfig: BottomActionBarConfig(
+                              showBackspaceButton: true,
+                            ),
+                          ),
+                        ),
+                        if (pressedEmoji != null)
+                          Positioned(
+                            top: 45,
+                            left: _emojiPosition(pressedEmoji!),
+                            child: IgnorePointer(
+                              child: AnimatedScale(
+                                scale: 0.85,
+                                duration: const Duration(milliseconds: 80),
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black12,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : _buildLetters())),
     );
   }
 

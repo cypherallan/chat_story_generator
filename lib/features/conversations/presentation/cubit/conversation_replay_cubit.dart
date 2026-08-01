@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:characters/characters.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../message_management/domain/entities/message.dart';
@@ -115,7 +116,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   }
 
   List<String> _characters(String text) {
-    return text.runes.map((rune) => String.fromCharCode(rune)).toList();
+    return text.characters.toList();
   }
 
   void _typeOwnerMessage(Message message) {
@@ -177,33 +178,47 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
       final character = characters[characterIndex];
 
-      // Emoji detected
       if (_isEmoji(character)) {
-        currentText += character;
         characterIndex++;
 
+        // Open emoji keyboard
         emit(
           state.copyWith(
-            composerText: currentText,
             emojiKeyboardVisible: true,
             keyboardVisible: false,
-            pressedEmoji: character,
             pressedKey: null,
           ),
         );
 
+        // Simulate finger pressing emoji
         _timer = Timer(
           const Duration(milliseconds: 350),
           () {
             emit(
               state.copyWith(
-                pressedEmoji: null,
+                pressedEmoji: character,
               ),
             );
 
+            // Insert emoji after tap
             _timer = Timer(
-              _nextTypingDelay(),
-              typeNextCharacter,
+              const Duration(milliseconds: 120),
+              () {
+                currentText += character;
+
+                emit(
+                  state.copyWith(
+                    composerText: currentText,
+                    pressedEmoji: null,
+                  ),
+                );
+
+                // Move to next character
+                _timer = Timer(
+                  _nextTypingDelay(),
+                  typeNextCharacter,
+                );
+              },
             );
           },
         );
@@ -248,10 +263,10 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   }
 
   bool _isEmoji(String character) {
-    final code = character.codeUnitAt(0);
+    final rune = character.runes.first;
 
-    return (code >= 0x1F300 && code <= 0x1FAFF) ||
-        (code >= 0x2600 && code <= 0x27BF);
+    return (rune >= 0x1F300 && rune <= 0x1FAFF) ||
+        (rune >= 0x2600 && rune <= 0x27BF);
   }
 
   Duration _nextTypingDelay() {
