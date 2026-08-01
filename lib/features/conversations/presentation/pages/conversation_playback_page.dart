@@ -88,7 +88,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                   PlaybackKeyboard(
                     visible: replayState.keyboardVisible,
                     pressedKey: replayState.pressedKey,
-                    shiftEnabled: false,
+                    shiftEnabled: replayState.shiftEnabled,
                   ),
                 ],
               );

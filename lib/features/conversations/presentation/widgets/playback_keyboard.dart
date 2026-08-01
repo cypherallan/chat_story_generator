@@ -17,9 +17,16 @@ class PlaybackKeyboard extends StatelessWidget {
     String? pressedKey, {
     double flex = 1,
   }) {
-    final displayText = shiftEnabled ? text.toUpperCase() : text.toLowerCase();
+    final isShiftKey = text == "⇧";
 
-    final isPressed = pressedKey == displayText;
+    final displayText = isShiftKey
+        ? text
+        : (shiftEnabled ? text.toUpperCase() : text.toLowerCase());
+
+    final keyPressed =
+        isShiftKey ? false : pressedKey?.toLowerCase() == text.toLowerCase();
+
+    final isPressed = keyPressed;
 
     return Expanded(
       flex: (flex * 10).toInt(),

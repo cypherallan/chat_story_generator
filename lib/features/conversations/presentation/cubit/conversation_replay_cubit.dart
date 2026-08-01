@@ -123,6 +123,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
         composerText: '',
         keyboardVisible: true,
         shiftEnabled: true,
+        pressedKey: "⇧",
       ),
     );
 
@@ -159,8 +160,17 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
       final character = message.text[characterIndex];
 
-      final shouldShift = characterIndex == 0 ||
-          (characterIndex > 0 && message.text[characterIndex - 1] == ' ');
+      final previousCharacter =
+          characterIndex > 0 ? message.text[characterIndex - 1] : '';
+
+      final isSentenceStart = characterIndex == 0 ||
+          previousCharacter == '.' ||
+          previousCharacter == '!' ||
+          previousCharacter == '?';
+
+      final isUppercaseMessage = message.text == message.text.toUpperCase();
+
+      final shouldShift = isUppercaseMessage || isSentenceStart;
 
       currentText += character;
       characterIndex++;
