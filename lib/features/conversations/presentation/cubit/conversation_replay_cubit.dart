@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:characters/characters.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../message_management/domain/entities/message.dart';
 
 part 'conversation_replay_state.dart';
@@ -28,7 +27,18 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
     _ownerId = ownerId;
 
-    emit(const ConversationReplayState());
+    final Set<String> emojiSet = {};
+    for (final message in messages) {
+      for (final char in message.text.characters) {
+        if (_isEmoji(char)) {
+          emojiSet.add(char);
+        }
+      }
+    }
+
+    emit(ConversationReplayState(
+      availableEmojis: emojiSet.toList(),
+    ));
   }
 
   void play() {
@@ -38,6 +48,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
       state.copyWith(
         playing: true,
         paused: false,
+        keyboardVisible: true,
       ),
     );
 
@@ -119,6 +130,15 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     return text.characters.toList();
   }
 
+  void hideKeyboard() {
+    emit(
+      state.copyWith(
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
+      ),
+    );
+  }
+
   void _typeOwnerMessage(Message message) {
     String currentText = '';
 
@@ -158,8 +178,6 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
         emit(
           state.copyWith(
             composerText: '',
-            keyboardVisible: false,
-            emojiKeyboardVisible: false,
             pressedKey: null,
             pressedEmoji: null,
             shiftPressed: false,
@@ -187,36 +205,49 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
             emojiKeyboardVisible: true,
             keyboardVisible: false,
             pressedKey: null,
+            lastPressedEmoji: null,
           ),
         );
 
-        // Simulate finger pressing emoji
+        // Finger DOWN immediately
         _timer = Timer(
-          const Duration(milliseconds: 350),
+          const Duration(milliseconds: 60),
           () {
             emit(
               state.copyWith(
-                pressedEmoji: character,
+                lastPressedEmoji: character,
+                emojiPressCount: state.emojiPressCount + 1,
               ),
             );
 
-            // Insert emoji after tap
+            // Hold — long enough to see the flash
             _timer = Timer(
-              const Duration(milliseconds: 120),
+              const Duration(milliseconds: 180),
               () {
-                currentText += character;
-
+                // Finger UP
                 emit(
                   state.copyWith(
-                    composerText: currentText,
-                    pressedEmoji: null,
+                    lastPressedEmoji: null,
                   ),
                 );
 
-                // Move to next character
+                // Insert emoji
                 _timer = Timer(
-                  _nextTypingDelay(),
-                  typeNextCharacter,
+                  const Duration(milliseconds: 50),
+                  () {
+                    currentText += character;
+
+                    emit(
+                      state.copyWith(
+                        composerText: currentText,
+                      ),
+                    );
+
+                    _timer = Timer(
+                      _nextTypingDelay(),
+                      typeNextCharacter,
+                    );
+                  },
                 );
               },
             );

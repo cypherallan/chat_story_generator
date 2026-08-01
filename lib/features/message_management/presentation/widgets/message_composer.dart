@@ -217,19 +217,26 @@ class _MessageComposerState extends State<MessageComposer> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.sentiment_satisfied_alt_outlined,
+                          icon: Icon(
+                            _showEmoji
+                                ? Icons.keyboard_outlined
+                                : Icons.sentiment_satisfied_alt_outlined,
                           ),
                           onPressed: () {
+                            if (_showEmoji) {
+                              setState(() {
+                                _showEmoji = false;
+                              });
+
+                              FocusScope.of(context).requestFocus(_focusNode);
+                              return;
+                            }
+
                             FocusScope.of(context).unfocus();
 
                             setState(() {
-                              if (_showAttachments) {
-                                _showAttachments = false;
-                                _showEmoji = true;
-                              } else {
-                                _showEmoji = !_showEmoji;
-                              }
+                              _showAttachments = false;
+                              _showEmoji = true;
                             });
                           },
                         ),

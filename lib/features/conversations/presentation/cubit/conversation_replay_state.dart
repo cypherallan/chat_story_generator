@@ -26,6 +26,10 @@ class ConversationReplayState {
   final bool emojiKeyboardVisible;
   final String? pressedEmoji;
 
+  final List<String> availableEmojis;
+  final String? lastPressedEmoji;
+  final int emojiPressCount;
+
   const ConversationReplayState({
     this.visibleMessages = const [],
     this.playing = false,
@@ -42,6 +46,9 @@ class ConversationReplayState {
     this.shiftPressed = false,
     this.emojiKeyboardVisible = false,
     this.pressedEmoji,
+    this.availableEmojis = const [],
+    this.lastPressedEmoji,
+    this.emojiPressCount = 0,
   });
 
   ConversationReplayState copyWith({
@@ -60,6 +67,9 @@ class ConversationReplayState {
     bool? shiftPressed,
     bool? emojiKeyboardVisible,
     String? pressedEmoji,
+    List<String>? availableEmojis,
+    String? lastPressedEmoji,
+    int? emojiPressCount,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -77,6 +87,9 @@ class ConversationReplayState {
       shiftPressed: shiftPressed ?? this.shiftPressed,
       emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
       pressedEmoji: pressedEmoji ?? this.pressedEmoji,
+      availableEmojis: availableEmojis ?? this.availableEmojis,
+      lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
+      emojiPressCount: emojiPressCount ?? this.emojiPressCount,
     );
   }
 }

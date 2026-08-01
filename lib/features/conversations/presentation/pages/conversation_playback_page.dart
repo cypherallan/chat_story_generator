@@ -5,12 +5,11 @@ import '../../../project_management/domain/entities/project.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../conversations/presentation/cubit/conversation_replay_cubit.dart';
-import '../widgets/playback_message_composer.dart';
 
 import '../widgets/playback_header.dart';
 import '../widgets/playback_chat_list.dart';
 import '../widgets/playback_controls.dart';
-import '../widgets/playback_keyboard.dart';
+import '../widgets/playback_bottom_panel.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final Project project;
@@ -58,48 +57,25 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           project: widget.project,
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/chat_wallpaper.png',
-                    fit: BoxFit.cover,
-                  ),
+      body: Column(children: [
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/chat_wallpaper.png',
+                  fit: BoxFit.cover,
                 ),
-                PlaybackChatList(
-                  project: widget.project,
-                  scrollController: _scrollController,
-                ),
-              ],
-            ),
+              ),
+              PlaybackChatList(
+                project: widget.project,
+                scrollController: _scrollController,
+              ),
+            ],
           ),
-          BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
-            builder: (context, replayState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  PlaybackMessageComposer(
-                    text: replayState.composerText,
-                    keyboardVisible: replayState.keyboardVisible,
-                  ),
-                  PlaybackKeyboard(
-                    visible: replayState.keyboardVisible ||
-                        replayState.emojiKeyboardVisible,
-                    pressedKey: replayState.pressedKey,
-                    shiftEnabled: replayState.shiftEnabled,
-                    shiftPressed: replayState.shiftPressed,
-                    emojiKeyboardVisible: replayState.emojiKeyboardVisible,
-                    pressedEmoji: replayState.pressedEmoji,
-                  )
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+        const PlaybackBottomPanel(),
+      ]),
     );
   }
 }
