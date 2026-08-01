@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../message_management/domain/entities/message.dart';
 import '../../../project_management/domain/entities/project.dart';
 
-import '../../../person_management/presentation/cubit/person_cubit.dart';
-
-import '../widgets/conversation_header.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../message_management/presentation/widgets/message_bubble.dart';
 import '../../../conversations/presentation/cubit/conversation_replay_cubit.dart';
+import '../widgets/playback_message_composer.dart';
+
+import '../widgets/playback_header.dart';
+import '../widgets/playback_chat_list.dart';
+import '../widgets/playback_controls.dart';
+import '../widgets/playback_keyboard.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final Project project;
@@ -41,114 +42,55 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
 
     final replayCubit = context.read<ConversationReplayCubit>();
 
-    replayCubit.load(widget.messages);
+    replayCubit.load(
+      widget.messages,
+      widget.project.ownerId,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton:
-          BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
-        builder: (context, replayState) {
-          return FloatingActionButton(
-              child: Icon(
-                replayState.playing ? Icons.pause : Icons.play_arrow,
-              ),
-              onPressed: () {
-                final cubit = context.read<ConversationReplayCubit>();
-
-                if (replayState.playing) {
-                  cubit.pause();
-                } else {
-                  cubit.play();
-                }
-              });
-        },
-      ),
+      floatingActionButton: const PlaybackControls(),
       appBar: AppBar(
         titleSpacing: 0,
-        title: BlocBuilder<PersonCubit, PersonState>(
-          builder: (context, personState) {
-            if (personState is! PersonLoaded) {
-              return const Text("Playback");
-            }
-
-            return BlocBuilder<ConversationReplayCubit,
-                ConversationReplayState>(
-              builder: (context, replayState) {
-                final otherPersonId = widget.project.participantIds.firstWhere(
-                  (id) => id != widget.project.ownerId,
-                );
-
-                final original = personState.persons.firstWhere(
-                  (p) => p.id == otherPersonId,
-                );
-
-                final playbackPerson = original.copyWith(
-                  isOnline: replayState.onlinePersonId == otherPersonId,
-                );
-
-                return ConversationHeader(
-                  person: playbackPerson,
-                  isTyping: replayState.typing &&
-                      replayState.typingPersonId == otherPersonId,
-                );
-              },
-            );
-          },
+        title: PlaybackHeader(
+          project: widget.project,
         ),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/chat_wallpaper.png',
-              fit: BoxFit.cover,
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/chat_wallpaper.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                PlaybackChatList(
+                  project: widget.project,
+                  scrollController: _scrollController,
+                ),
+              ],
             ),
           ),
-          BlocBuilder<PersonCubit, PersonState>(
-            builder: (context, personState) {
-              if (personState is! PersonLoaded) {
-                return const SizedBox();
-              }
-
-              return BlocBuilder<ConversationReplayCubit,
-                  ConversationReplayState>(
-                builder: (context, replayState) {
-                  final messages =
-                      replayState.visibleMessages.reversed.toList();
-
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_scrollController.hasClients) {
-                      _scrollController.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  });
-
-                  return ListView.builder(
-                    controller: _scrollController,
-                    reverse: true,
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[index];
-
-                      final sender = personState.persons.firstWhere(
-                        (p) => p.id == message.senderId,
-                      );
-
-                      final isMine = sender.id == widget.project.ownerId;
-
-                      return MessageBubble(
-                        message: message,
-                        sender: sender,
-                        isMine: isMine,
-                      );
-                    },
-                  );
-                },
+          BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
+            builder: (context, replayState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PlaybackMessageComposer(
+                    text: replayState.composerText,
+                    keyboardVisible: replayState.keyboardVisible,
+                  ),
+                  PlaybackKeyboard(
+                    visible: replayState.keyboardVisible,
+                    pressedKey: replayState.pressedKey,
+                    shiftEnabled: false,
+                  ),
+                ],
               );
             },
           ),

@@ -7,23 +7,25 @@ import '../../../message_management/domain/entities/message.dart';
 part 'conversation_replay_state.dart';
 
 class ConversationReplayCubit extends Cubit<ConversationReplayState> {
-  ConversationReplayCubit()
-      : super(
-          const ConversationReplayState(),
-        );
+  ConversationReplayCubit() : super(const ConversationReplayState());
 
-  List<Message> _messages = [];
+  final List<Message> _messages = [];
+
+  String _ownerId = "";
 
   Timer? _timer;
 
-  void load(List<Message> messages) {
-    _messages = messages;
+  void load(
+    List<Message> messages,
+    String ownerId,
+  ) {
+    _messages
+      ..clear()
+      ..addAll(messages);
 
-    emit(
-      const ConversationReplayState(
-        visibleMessages: [],
-      ),
-    );
+    _ownerId = ownerId;
+
+    emit(const ConversationReplayState());
   }
 
   void play() {
@@ -36,7 +38,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
       ),
     );
 
-    _next();
+    _playNext();
   }
 
   void pause() {
@@ -55,60 +57,120 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
     emit(
       const ConversationReplayState(
-        visibleMessages: [],
-        currentIndex: 0,
-        playing: false,
-        paused: false,
-        finished: false,
-        typing: false,
+        keyboardVisible: false,
       ),
     );
   }
 
-  void _next() {
+  void _playNext() {
     if (!state.playing) return;
 
-    final nextIndex = state.currentIndex;
-
-    if (nextIndex >= _messages.length) {
+    if (state.currentIndex >= _messages.length) {
       emit(
         state.copyWith(
           playing: false,
           finished: true,
           typing: false,
-          onlinePersonId: null,
         ),
       );
       return;
     }
 
-    final message = _messages[nextIndex];
+    final message = _messages[state.currentIndex];
 
+    // OWNER messages will be handled next stage.
+    // OWNER is typing into the composer.
+    if (message.senderId == _ownerId) {
+      _typeOwnerMessage(message);
+      return;
+    }
+
+    // OTHER PERSON starts typing.
     emit(
       state.copyWith(
-        onlinePersonId: message.senderId,
         typing: true,
         typingPersonId: message.senderId,
+        onlinePersonId: message.senderId,
       ),
     );
 
-    final delay = _typingDelay(message.text);
+    _timer = Timer(
+      _typingDelay(message.text),
+      () {
+        final updated = List<Message>.from(state.visibleMessages)..add(message);
 
-    _timer = Timer(delay, () {
-      final updated = List<Message>.from(state.visibleMessages)..add(message);
+        emit(
+          state.copyWith(
+            typing: false,
+            visibleMessages: updated,
+            currentIndex: state.currentIndex + 1,
+          ),
+        );
+
+        _timer = Timer(
+          const Duration(milliseconds: 700),
+          _playNext,
+        );
+      },
+    );
+  }
+
+  void _typeOwnerMessage(Message message) {
+    String currentText = '';
+
+    emit(
+      state.copyWith(
+        composerText: '',
+        keyboardVisible: true,
+        shiftEnabled: true,
+      ),
+    );
+
+    int characterIndex = 0;
+
+    _timer = Timer.periodic(const Duration(milliseconds: 130), (timer) {
+      if (!state.playing) {
+        timer.cancel();
+        return;
+      }
+
+      if (characterIndex >= message.text.length) {
+        timer.cancel();
+
+        final updated = List<Message>.from(state.visibleMessages)..add(message);
+
+        emit(
+          state.copyWith(
+            composerText: '',
+            keyboardVisible: false,
+            pressedKey: null,
+            visibleMessages: updated,
+            currentIndex: state.currentIndex + 1,
+          ),
+        );
+
+        _timer = Timer(
+          const Duration(milliseconds: 500),
+          _playNext,
+        );
+
+        return;
+      }
+
+      final character = message.text[characterIndex];
+
+      final shouldShift = characterIndex == 0 ||
+          (characterIndex > 0 && message.text[characterIndex - 1] == ' ');
+
+      currentText += character;
+      characterIndex++;
 
       emit(
         state.copyWith(
-          typing: false,
-          typingPersonId: null,
-          visibleMessages: updated,
-          currentIndex: nextIndex + 1,
+          composerText: currentText,
+          pressedKey: character,
+          shiftEnabled: shouldShift,
         ),
-      );
-
-      _timer = Timer(
-        const Duration(milliseconds: 700),
-        _next,
       );
     });
   }
@@ -123,5 +185,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     }
 
     return const Duration(seconds: 5);
+  }
+
+  @override
+  Future<void> close() {
+    _timer?.cancel();
+    return super.close();
   }
 }
