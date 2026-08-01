@@ -6,14 +6,25 @@ class ConversationReplayState {
   final bool playing;
   final bool paused;
   final bool finished;
+
   final int currentIndex;
+
   final bool typing;
   final String? typingPersonId;
   final String? onlinePersonId;
+
   final String composerText;
+
   final String? pressedKey;
+
   final bool keyboardVisible;
+
   final bool shiftEnabled;
+  final bool shiftPressed;
+
+  // Emoji playback
+  final bool emojiKeyboardVisible;
+  final String? pressedEmoji;
 
   const ConversationReplayState({
     this.visibleMessages = const [],
@@ -23,11 +34,14 @@ class ConversationReplayState {
     this.currentIndex = 0,
     this.typing = false,
     this.typingPersonId,
-    this.pressedKey,
     this.onlinePersonId,
     this.composerText = '',
+    this.pressedKey,
     this.keyboardVisible = false,
     this.shiftEnabled = true,
+    this.shiftPressed = false,
+    this.emojiKeyboardVisible = false,
+    this.pressedEmoji,
   });
 
   ConversationReplayState copyWith({
@@ -35,28 +49,34 @@ class ConversationReplayState {
     bool? playing,
     bool? paused,
     bool? finished,
-    bool? keyboardVisible,
     int? currentIndex,
     bool? typing,
     String? typingPersonId,
     String? onlinePersonId,
-    String? pressedKey,
     String? composerText,
+    String? pressedKey,
+    bool? keyboardVisible,
     bool? shiftEnabled,
+    bool? shiftPressed,
+    bool? emojiKeyboardVisible,
+    String? pressedEmoji,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
       playing: playing ?? this.playing,
       paused: paused ?? this.paused,
-      pressedKey: pressedKey ?? this.pressedKey,
-      keyboardVisible: keyboardVisible ?? this.keyboardVisible,
       finished: finished ?? this.finished,
       currentIndex: currentIndex ?? this.currentIndex,
       typing: typing ?? this.typing,
-      typingPersonId: typingPersonId,
-      onlinePersonId: onlinePersonId,
+      typingPersonId: typingPersonId ?? this.typingPersonId,
+      onlinePersonId: onlinePersonId ?? this.onlinePersonId,
       composerText: composerText ?? this.composerText,
+      pressedKey: pressedKey ?? this.pressedKey,
+      keyboardVisible: keyboardVisible ?? this.keyboardVisible,
       shiftEnabled: shiftEnabled ?? this.shiftEnabled,
+      shiftPressed: shiftPressed ?? this.shiftPressed,
+      emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
+      pressedEmoji: pressedEmoji ?? this.pressedEmoji,
     );
   }
 }

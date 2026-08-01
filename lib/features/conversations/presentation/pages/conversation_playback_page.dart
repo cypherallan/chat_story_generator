@@ -86,10 +86,14 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                     keyboardVisible: replayState.keyboardVisible,
                   ),
                   PlaybackKeyboard(
-                    visible: replayState.keyboardVisible,
+                    visible: replayState.keyboardVisible ||
+                        replayState.emojiKeyboardVisible,
                     pressedKey: replayState.pressedKey,
                     shiftEnabled: replayState.shiftEnabled,
-                  ),
+                    shiftPressed: replayState.shiftPressed,
+                    emojiKeyboardVisible: replayState.emojiKeyboardVisible,
+                    pressedEmoji: replayState.pressedEmoji,
+                  )
                 ],
               );
             },
