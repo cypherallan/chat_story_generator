@@ -9,6 +9,7 @@ import '../widgets/conversation_header.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../message_management/presentation/widgets/message_bubble.dart';
+import '../../../conversations/presentation/cubit/conversation_replay_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final Project project;
@@ -26,63 +27,45 @@ class ConversationPlaybackPage extends StatefulWidget {
 }
 
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
-  final List<Message> visibleMessages = [];
   final ScrollController _scrollController = ScrollController();
-
-  int currentIndex = 0;
-
-  bool isPlaying = false;
+ 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _playNextMessage() async {
-    if (!isPlaying) return;
 
-    if (currentIndex >= widget.messages.length) {
-      isPlaying = false;
-      return;
-    }
 
-    setState(() {
-      visibleMessages.add(widget.messages[currentIndex]);
-      currentIndex++;
-    });
+  @override
+  void initState() {
+    super.initState();
 
-    await Future.delayed(
-      const Duration(milliseconds: 350),
-    );
+    final replayCubit = context.read<ConversationReplayCubit>();
 
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    }
-
-    await Future.delayed(
-      const Duration(milliseconds: 900),
-    );
-
-    _playNextMessage();
+    replayCubit.load(widget.messages);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.play_arrow),
-        onPressed: () {
-          if (isPlaying) return;
+      floatingActionButton:
+          BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
+        builder: (context, replayState) {
+          return FloatingActionButton(
+            child: Icon(
+              replayState.playing ? Icons.pause : Icons.play_arrow,
+            ),
+            onPressed: () {
+  final cubit = context.read<ConversationReplayCubit>();
 
-          setState(() {
-            isPlaying = true;
-          });
-
-          _playNextMessage();
+  if (replayState.playing) {
+    cubit.pause();
+  } else {
+    cubit.play();
+  }
+}
+          );
         },
       ),
       appBar: AppBar(
@@ -122,25 +105,41 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                 return const SizedBox();
               }
 
-              return ListView.builder(
-                controller: _scrollController,
-                reverse: true,
-                itemCount: visibleMessages.length,
-                itemBuilder: (context, index) {
-                  final messages = visibleMessages.reversed.toList();
+              return BlocBuilder<ConversationReplayCubit,
+                  ConversationReplayState>(
+                builder: (context, replayState) {
+                  final messages =
+                      replayState.visibleMessages.reversed.toList();
 
-                  final message = messages[index];
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  });
 
-                  final sender = personState.persons.firstWhere(
-                    (p) => p.id == message.senderId,
-                  );
+                  return ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
 
-                  final isMine = sender.id == widget.project.ownerId;
+                      final sender = personState.persons.firstWhere(
+                        (p) => p.id == message.senderId,
+                      );
 
-                  return MessageBubble(
-                    message: message,
-                    sender: sender,
-                    isMine: isMine,
+                      final isMine = sender.id == widget.project.ownerId;
+
+                      return MessageBubble(
+                        message: message,
+                        sender: sender,
+                        isMine: isMine,
+                      );
+                    },
                   );
                 },
               );

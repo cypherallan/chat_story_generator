@@ -11,6 +11,7 @@ import '../../../message_management/presentation/widgets/message_composer.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
 
 import 'conversation_playback_page.dart';
+import '../cubit/conversation_replay_cubit.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -91,20 +92,29 @@ class _ConversationPageState extends State<ConversationPage> {
                         final messageCubit = context.read<MessageCubit>();
 
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MultiBlocProvider(
-                              providers: [
-                                BlocProvider.value(value: personCubit),
-                                BlocProvider.value(value: messageCubit),
-                              ],
-                              child: ConversationPlaybackPage(
-                                project: widget.project,
-                                messages: state.messages,
-                              ),
-                            ),
-                          ),
-                        );
+  context,
+  MaterialPageRoute(
+    builder: (_) => MultiBlocProvider(
+      providers: [
+        BlocProvider.value(
+          value: personCubit,
+        ),
+
+        BlocProvider.value(
+          value: messageCubit,
+        ),
+
+        BlocProvider(
+          create: (_) => ConversationReplayCubit(),
+        ),
+      ],
+      child: ConversationPlaybackPage(
+        project: widget.project,
+        messages: state.messages,
+      ),
+    ),
+  ),
+);
                       },
               );
             },
