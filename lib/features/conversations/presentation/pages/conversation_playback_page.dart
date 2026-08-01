@@ -28,14 +28,12 @@ class ConversationPlaybackPage extends StatefulWidget {
 
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   final ScrollController _scrollController = ScrollController();
- 
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-
-
 
   @override
   void initState() {
@@ -53,40 +51,49 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
         builder: (context, replayState) {
           return FloatingActionButton(
-            child: Icon(
-              replayState.playing ? Icons.pause : Icons.play_arrow,
-            ),
-            onPressed: () {
-  final cubit = context.read<ConversationReplayCubit>();
+              child: Icon(
+                replayState.playing ? Icons.pause : Icons.play_arrow,
+              ),
+              onPressed: () {
+                final cubit = context.read<ConversationReplayCubit>();
 
-  if (replayState.playing) {
-    cubit.pause();
-  } else {
-    cubit.play();
-  }
-}
-          );
+                if (replayState.playing) {
+                  cubit.pause();
+                } else {
+                  cubit.play();
+                }
+              });
         },
       ),
       appBar: AppBar(
         titleSpacing: 0,
         title: BlocBuilder<PersonCubit, PersonState>(
-          builder: (context, state) {
-            if (state is! PersonLoaded) {
+          builder: (context, personState) {
+            if (personState is! PersonLoaded) {
               return const Text("Playback");
             }
 
-            final otherPersonId = widget.project.participantIds.firstWhere(
-              (id) => id != widget.project.ownerId,
-            );
+            return BlocBuilder<ConversationReplayCubit,
+                ConversationReplayState>(
+              builder: (context, replayState) {
+                final otherPersonId = widget.project.participantIds.firstWhere(
+                  (id) => id != widget.project.ownerId,
+                );
 
-            final otherPerson = state.persons.firstWhere(
-              (p) => p.id == otherPersonId,
-            );
+                final original = personState.persons.firstWhere(
+                  (p) => p.id == otherPersonId,
+                );
 
-            return ConversationHeader(
-              person: otherPerson,
-              isTyping: false,
+                final playbackPerson = original.copyWith(
+                  isOnline: replayState.onlinePersonId == otherPersonId,
+                );
+
+                return ConversationHeader(
+                  person: playbackPerson,
+                  isTyping: replayState.typing &&
+                      replayState.typingPersonId == otherPersonId,
+                );
+              },
             );
           },
         ),

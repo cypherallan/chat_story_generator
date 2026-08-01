@@ -27,11 +27,12 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   }
 
   void play() {
-    if (state.playing) return;
+    if (state.playing || state.finished) return;
 
     emit(
       state.copyWith(
         playing: true,
+        paused: false,
       ),
     );
 
@@ -44,6 +45,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     emit(
       state.copyWith(
         playing: false,
+        paused: true,
       ),
     );
   }
@@ -54,6 +56,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     emit(
       const ConversationReplayState(
         visibleMessages: [],
+        currentIndex: 0,
+        playing: false,
+        paused: false,
+        finished: false,
+        typing: false,
       ),
     );
   }
@@ -61,16 +68,17 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   void _next() {
     if (!state.playing) return;
 
-    final nextIndex = state.visibleMessages.length;
+    final nextIndex = state.currentIndex;
 
     if (nextIndex >= _messages.length) {
       emit(
         state.copyWith(
           playing: false,
+          finished: true,
           typing: false,
+          onlinePersonId: null,
         ),
       );
-
       return;
     }
 
@@ -78,6 +86,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
     emit(
       state.copyWith(
+        onlinePersonId: message.senderId,
         typing: true,
         typingPersonId: message.senderId,
       ),
@@ -91,7 +100,9 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
       emit(
         state.copyWith(
           typing: false,
+          typingPersonId: null,
           visibleMessages: updated,
+          currentIndex: nextIndex + 1,
         ),
       );
 
