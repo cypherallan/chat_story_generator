@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
-import '../../../project_management/presentation/pages/projects_list_page.dart';
+import '../../../project_management/presentation/pages/projects_list_widget.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -26,7 +26,7 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const ProjectsListPage(),
+                    builder: (_) => const ProjectsListWidget(),
                   ),
                 );
               },

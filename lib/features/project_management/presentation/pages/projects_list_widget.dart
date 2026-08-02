@@ -11,8 +11,8 @@ import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../conversations/presentation/pages/conversation_page.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 
-class ProjectsListPage extends StatelessWidget {
-  const ProjectsListPage({super.key});
+class ProjectsListWidget extends StatelessWidget {
+  const ProjectsListWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
