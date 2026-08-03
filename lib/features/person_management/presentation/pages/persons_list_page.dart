@@ -11,6 +11,8 @@ import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../conversations/presentation/pages/conversation_page.dart';
 
+import 'dart:io';
+
 class PersonsListPage extends StatelessWidget {
   final bool selectionMode;
   final bool addToGroupMode;
@@ -201,7 +203,17 @@ class _PersonsListViewState extends State<_PersonsListView> {
                       if (widget.addToGroupMode) {
                         return ListTile(
                           leading: CircleAvatar(
-                            child: Text(person.name[0].toUpperCase()),
+                            backgroundImage: person.avatarPath != null &&
+                                    person.avatarPath!.isNotEmpty
+                                ? (person.avatarPath!.startsWith('http')
+                                        ? NetworkImage(person.avatarPath!)
+                                        : FileImage(File(person.avatarPath!)))
+                                    as ImageProvider
+                                : null,
+                            child: person.avatarPath == null ||
+                                    person.avatarPath!.isEmpty
+                                ? Text(person.name[0].toUpperCase())
+                                : null,
                           ),
                           title: Text(person.name),
                           subtitle:

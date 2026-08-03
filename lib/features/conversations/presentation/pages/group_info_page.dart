@@ -112,9 +112,24 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           ...members.map(
             (person) => ListTile(
               leading: CircleAvatar(
-                child: Text(person.name[0]),
+                backgroundImage: person.avatarPath != null &&
+                        person.avatarPath!.isNotEmpty
+                    ? (person.avatarPath!.startsWith('http')
+                        ? NetworkImage(person.avatarPath!)
+                        : FileImage(File(person.avatarPath!))) as ImageProvider
+                    : null,
+                child: person.avatarPath == null || person.avatarPath!.isEmpty
+                    ? Text(person.name[0].toUpperCase())
+                    : null,
               ),
               title: Text(person.name),
+              subtitle: person.bio == null || person.bio!.isEmpty
+                  ? null
+                  : Text(
+                      person.bio!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
           ),
           const SizedBox(height: 20),
