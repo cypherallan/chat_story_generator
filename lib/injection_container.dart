@@ -128,6 +128,8 @@ Future<void> init() async {
       addMessage: sl(),
       updateMessage: sl(),
       deleteMessage: sl(),
+      getProjects: sl(),
+      updateProject: sl(),
     ),
   );
 }

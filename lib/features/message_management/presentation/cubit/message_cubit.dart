@@ -10,6 +10,8 @@ import '../../domain/usecases/add_message.dart';
 import '../../domain/usecases/delete_message.dart';
 import '../../domain/usecases/get_messages.dart';
 import '../../domain/usecases/update_message.dart';
+import '../../../project_management/domain/usecases/update_project.dart';
+import '../../../project_management/domain/usecases/get_projects.dart';
 
 part 'message_state.dart';
 
@@ -18,6 +20,8 @@ class MessageCubit extends Cubit<MessageState> {
   final AddMessage addMessage;
   final UpdateMessage updateMessage;
   final DeleteMessage deleteMessage;
+  final GetProjects getProjects;
+  final UpdateProject updateProject;
 
   StreamSubscription? _messagesSubscription;
 
@@ -26,6 +30,8 @@ class MessageCubit extends Cubit<MessageState> {
     required this.addMessage,
     required this.updateMessage,
     required this.deleteMessage,
+    required this.getProjects,
+    required this.updateProject,
   }) : super(MessageInitial());
 
   void loadMessages(String projectId) {
@@ -65,7 +71,10 @@ class MessageCubit extends Cubit<MessageState> {
 
     result.fold(
       (failure) => emit(MessageError(failure.message)),
-      (_) => _simulateDelivery(message),
+      (_) async {
+        await _updateProjectPreview(message);
+        _simulateDelivery(message);
+      },
     );
   }
 
@@ -141,6 +150,31 @@ class MessageCubit extends Cubit<MessageState> {
     result.fold(
       (failure) => emit(MessageError(failure.message)),
       (_) {},
+    );
+  }
+
+  Future<void> _updateProjectPreview(Message message) async {
+    final result = await getProjects();
+
+    result.fold(
+      (_) {},
+      (projects) async {
+        final index = projects.indexWhere(
+          (p) => p.id == message.projectId,
+        );
+
+        if (index == -1) return;
+
+        final project = projects[index];
+
+        final updated = project.copyWith(
+          lastMessage: message.text,
+          lastMessageTime: message.createdAt,
+          lastSenderId: message.senderId,
+        );
+
+        await updateProject(updated);
+      },
     );
   }
 

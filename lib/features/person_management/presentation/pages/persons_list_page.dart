@@ -7,20 +7,42 @@ import '../cubit/person_cubit.dart';
 import '../widgets/person_card.dart';
 import 'add_participant_page.dart';
 
+import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../message_management/presentation/cubit/message_cubit.dart';
+import '../../../conversations/presentation/pages/conversation_page.dart';
+
 class PersonsListPage extends StatelessWidget {
-  const PersonsListPage({super.key});
+  final bool selectionMode;
+
+  const PersonsListPage({
+    super.key,
+    this.selectionMode = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<PersonCubit>()..loadPersons(),
-      child: const _PersonsListView(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(
+          value: context.read<PersonCubit>(),
+        ),
+        BlocProvider.value(
+          value: context.read<ProjectCubit>(),
+        ),
+      ],
+      child: _PersonsListView(
+        selectionMode: selectionMode,
+      ),
     );
   }
 }
 
 class _PersonsListView extends StatefulWidget {
-  const _PersonsListView();
+  final bool selectionMode;
+
+  const _PersonsListView({
+    required this.selectionMode,
+  });
 
   @override
   State<_PersonsListView> createState() => _PersonsListViewState();
@@ -30,6 +52,54 @@ class _PersonsListViewState extends State<_PersonsListView> {
   final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';
+  Future<String?> _selectOwner(
+    BuildContext context,
+    String contactId,
+  ) async {
+    final state = context.read<PersonCubit>().state;
+
+    if (state is! PersonLoaded) {
+      return null;
+    }
+
+    final owners = state.persons.where((p) => p.id != contactId).toList();
+
+    return showModalBottomSheet<String>(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              const Text(
+                "You are",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...owners.map(
+                (person) => ListTile(
+                  leading: CircleAvatar(
+                    child: Text(
+                      person.name[0].toUpperCase(),
+                    ),
+                  ),
+                  title: Text(person.name),
+                  onTap: () {
+                    Navigator.pop(context, person.id);
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -41,43 +111,38 @@ class _PersonsListViewState extends State<_PersonsListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Participants'),
-        centerTitle: true,
+        toolbarHeight: 72,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Select contact"),
+            BlocBuilder<PersonCubit, PersonState>(
+              builder: (context, state) {
+                if (state is PersonLoaded) {
+                  return Text(
+                    "${state.persons.length} contacts",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
+        actions: const [
+          Icon(Icons.search),
+          SizedBox(width: 18),
+          Icon(Icons.more_vert),
+          SizedBox(width: 12),
+        ],
       ),
       body: Column(
         children: [
-          // SEARCH FIELD
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Search participants',
-                hintText: 'e.g. Ronaldo',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
-            ),
-          ),
-
-          // PARTICIPANTS LIST
+          // CONTACTS LIST
           Expanded(
             child: BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
@@ -98,10 +163,16 @@ class _PersonsListViewState extends State<_PersonsListView> {
                     return person.name.toLowerCase().contains(_searchQuery);
                   }).toList();
 
+                  filteredPersons.sort(
+                    (a, b) => a.name.toLowerCase().compareTo(
+                          b.name.toLowerCase(),
+                        ),
+                  );
+
                   if (filteredPersons.isEmpty) {
                     return const Center(
                       child: Text(
-                        'No participants found.',
+                        'No Contacts found.',
                       ),
                     );
                   }
@@ -113,6 +184,47 @@ class _PersonsListViewState extends State<_PersonsListView> {
 
                       return PersonCard(
                         person: person,
+                        onMessage: () async {
+                          final senderId = await _selectOwner(
+                            context,
+                            person.id,
+                          );
+
+                          if (senderId == null) return;
+
+                          final project = await context
+                              .read<ProjectCubit>()
+                              .openOrCreatePrivateChat(
+                                ownerId: senderId,
+                                contactId: person.id,
+                                contactName: person.name,
+                              );
+
+                          if (!mounted) return;
+
+                          await context.read<ProjectCubit>().loadProjects();
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MultiBlocProvider(
+                                providers: [
+                                  BlocProvider(
+                                    create: (_) => di.sl<MessageCubit>()
+                                      ..loadMessages(project.id),
+                                  ),
+                                  BlocProvider(
+                                    create: (_) =>
+                                        di.sl<PersonCubit>()..loadPersons(),
+                                  ),
+                                ],
+                                child: ConversationPage(
+                                  project: project,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                         onEdit: () {
                           Navigator.push(
                             context,
@@ -131,7 +243,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
                             context: context,
                             builder: (context) {
                               return AlertDialog(
-                                title: const Text('Delete Participant'),
+                                title: const Text('Delete Contact'),
                                 content: Text(
                                   'Are you sure you want to delete ${person.name}?',
                                 ),
@@ -171,7 +283,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -183,8 +295,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
             ),
           );
         },
-        icon: const Icon(Icons.add),
-        label: const Text('Participant'),
+        child: const Icon(Icons.add),
       ),
     );
   }

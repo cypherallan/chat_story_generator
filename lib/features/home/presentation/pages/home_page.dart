@@ -1,103 +1,129 @@
 import 'package:flutter/material.dart';
-import '../../../person_management/presentation/pages/persons_list_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../injection_container.dart' as di;
+
+import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../project_management/presentation/pages/add_project_page.dart';
 import '../../../project_management/presentation/pages/projects_list_widget.dart';
+
+import '../../../person_management/presentation/cubit/person_cubit.dart';
+import '../../../person_management/presentation/pages/persons_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chat Story Generator'),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: [
-            _HomeCard(
-              icon: Icons.chat,
-              title: 'Chats',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ProjectsListWidget(),
-                  ),
-                );
-              },
-            ),
-            _HomeCard(
-              icon: Icons.people,
-              title: 'People',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PersonsListPage(),
-                  ),
-                );
-              },
-            ),
-            _HomeCard(
-              icon: Icons.folder_copy,
-              title: 'Drafts',
-              onTap: () {},
-            ),
-            _HomeCard(
-              icon: Icons.video_library,
-              title: 'Exports',
-              onTap: () {},
-            ),
-            _HomeCard(
-              icon: Icons.settings,
-              title: 'Settings',
-              onTap: () {},
-            ),
-          ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => di.sl<ProjectCubit>()..loadProjects(),
         ),
-      ),
-    );
-  }
-}
+        BlocProvider(
+          create: (_) => di.sl<PersonCubit>()..loadPersons(),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          return DefaultTabController(
+            length: 4,
+            child: Scaffold(
+              appBar: AppBar(
+                title: const Text("WhatsApp"),
+                actions: [
+                  const Icon(Icons.camera_alt_outlined),
+                  const SizedBox(width: 18),
+                  const Icon(Icons.search),
+                  const SizedBox(width: 18),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'contacts':
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MultiBlocProvider(
+                                providers: [
+                                  BlocProvider.value(
+                                    value: context.read<PersonCubit>(),
+                                  ),
+                                  BlocProvider.value(
+                                    value: context.read<ProjectCubit>(),
+                                  ),
+                                ],
+                                child: const PersonsListPage(),
+                              ),
+                            ),
+                          );
+                          break;
 
-class _HomeCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const _HomeCard({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                        case 'settings':
+                          // TODO
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'new_group',
+                        child: Text('New group'),
+                      ),
+                      PopupMenuItem(
+                        value: 'new_broadcast',
+                        child: Text('New broadcast'),
+                      ),
+                      PopupMenuItem(
+                        value: 'contacts',
+                        child: Text('Contacts'),
+                      ),
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Text('Settings'),
+                      ),
+                    ],
+                  ),
+                ],
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(text: "Chats"),
+                    Tab(text: "Updates"),
+                    Tab(text: "Communities"),
+                    Tab(text: "Calls"),
+                  ],
+                ),
+              ),
+              body: const TabBarView(
+                children: [
+                  ProjectsListWidget(),
+                  Center(child: Text("Updates")),
+                  Center(child: Text("Communities")),
+                  Center(child: Text("Calls")),
+                ],
+              ),
+              floatingActionButton: FloatingActionButton(
+                child: const Icon(Icons.chat),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MultiBlocProvider(
+                        providers: [
+                          BlocProvider.value(
+                            value: context.read<ProjectCubit>(),
+                          ),
+                          BlocProvider.value(
+                            value: context.read<PersonCubit>(),
+                          ),
+                        ],
+                        child: const AddProjectPage(),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -21,8 +21,6 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   void initState() {
     super.initState();
-
-    context.read<PersonCubit>().loadPersons();
   }
 
   @override

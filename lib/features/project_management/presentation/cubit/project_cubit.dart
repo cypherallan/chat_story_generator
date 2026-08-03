@@ -60,6 +60,53 @@ class ProjectCubit extends Cubit<ProjectState> {
     );
   }
 
+  Future<Project> openOrCreatePrivateChat({
+    required String ownerId,
+    required String contactId,
+    required String contactName,
+  }) async {
+    final result = await getProjects();
+
+    return await result.fold(
+      (_) async {
+        throw Exception("Unable to load chats");
+      },
+      (projects) async {
+        for (final project in projects) {
+          if (project.ownerId != ownerId) continue;
+
+          if (project.participantIds.length != 2) continue;
+
+          final containsOwner = project.participantIds.contains(ownerId);
+
+          final containsContact = project.participantIds.contains(contactId);
+
+          if (containsOwner && containsContact) {
+            return project;
+          }
+        }
+
+        final project = Project(
+          id: const Uuid().v4(),
+          title: contactName,
+          createdAt: DateTime.now(),
+          ownerId: ownerId,
+          participantIds: [
+            ownerId,
+            contactId,
+          ],
+        );
+
+        final save = await addProject(project);
+
+        return save.fold(
+          (_) => throw Exception("Unable to create chat"),
+          (_) => project,
+        );
+      },
+    );
+  }
+
   Future<void> editProject(Project project) async {
     emit(ProjectLoading());
 
