@@ -6,12 +6,14 @@ import '../../../project_management/domain/entities/project.dart';
 class ConversationHeader extends StatelessWidget {
   final Person? person;
   final Project? project;
+  final List<Person>? persons;
   final bool isTyping;
 
   const ConversationHeader({
     super.key,
     this.person,
     this.project,
+    this.persons,
     required this.isTyping,
   });
 
@@ -41,6 +43,29 @@ class ConversationHeader extends StatelessWidget {
     }
 
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+  }
+
+  String _groupParticipants() {
+    if (project == null || persons == null) {
+      return '';
+    }
+
+    final names = persons!
+        .where(
+          (person) => project!.participantIds.contains(person.id),
+        )
+        .map((person) => person.name)
+        .toList();
+
+    if (names.isEmpty) {
+      return '';
+    }
+
+    if (names.length <= 3) {
+      return names.join(', ');
+    }
+
+    return '${names.take(3).join(', ')}, +${names.length - 3}';
   }
 
   @override
@@ -104,7 +129,7 @@ class ConversationHeader extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 child: Text(
                   isGroup
-                      ? '${project!.participantIds.length} participants'
+                      ? _groupParticipants()
                       : isTyping
                           ? 'typing...'
                           : person!.isOnline

@@ -59,10 +59,15 @@ class _ConversationPageState extends State<ConversationPage> {
                 final isGroup = widget.project.participantIds.length > 2;
 
                 if (isGroup) {
-                  return ConversationHeader(
-                    project: widget.project,
-                    isTyping: otherPersonTyping,
-                  );
+                  if (state is PersonLoaded) {
+                    return ConversationHeader(
+                      project: widget.project,
+                      persons: state.persons,
+                      isTyping: otherPersonTyping,
+                    );
+                  }
+
+                  return const Text('Conversation');
                 }
 
                 if (state is PersonLoaded) {
