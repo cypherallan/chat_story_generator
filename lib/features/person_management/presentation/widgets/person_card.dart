@@ -11,12 +11,17 @@ class PersonCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onMessage;
 
+  final bool showAddButton;
+  final VoidCallback? onAdd;
+
   const PersonCard({
     super.key,
     required this.person,
     required this.onDelete,
     required this.onEdit,
-    required this.onMessage
+    required this.onMessage,
+    this.showAddButton = false,
+    this.onAdd,
   });
 
   @override
@@ -80,21 +85,27 @@ class PersonCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: onMessage,
-                          child: const Padding(
-                            padding: EdgeInsets.all(2),
-                            child: Icon(
-                              Icons.message_outlined,
-                              size: 18,
-                              color: Colors.green,
+                      if (showAddButton)
+                        TextButton(
+                          onPressed: onAdd,
+                          child: const Text("Add"),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: onMessage,
+                            child: const Padding(
+                              padding: EdgeInsets.all(2),
+                              child: Icon(
+                                Icons.message_outlined,
+                                size: 18,
+                                color: Colors.green,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                       if (person.isVerified)
                         const Padding(
                           padding: EdgeInsets.only(left: 4),

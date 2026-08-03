@@ -13,6 +13,7 @@ import '../../../message_management/presentation/widgets/typing_indicator.dart';
 import 'conversation_playback_page.dart';
 import '../cubit/conversation_replay_cubit.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../conversations/presentation/pages/group_info_page.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -60,10 +61,33 @@ class _ConversationPageState extends State<ConversationPage> {
 
                 if (isGroup) {
                   if (state is PersonLoaded) {
-                    return ConversationHeader(
-                      project: widget.project,
-                      persons: state.persons,
-                      isTyping: otherPersonTyping,
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MultiBlocProvider(
+                              providers: [
+                                BlocProvider.value(
+                                  value: context.read<PersonCubit>(),
+                                ),
+                                BlocProvider.value(
+                                  value: context.read<ProjectCubit>(),
+                                ),
+                              ],
+                              child: GroupInfoPage(
+                                project: widget.project,
+                                persons: state.persons,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: ConversationHeader(
+                        project: widget.project,
+                        persons: state.persons,
+                        isTyping: otherPersonTyping,
+                      ),
                     );
                   }
 

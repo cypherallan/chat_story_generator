@@ -13,10 +13,14 @@ import '../../../conversations/presentation/pages/conversation_page.dart';
 
 class PersonsListPage extends StatelessWidget {
   final bool selectionMode;
+  final bool addToGroupMode;
+  final List<String> excludedIds;
 
   const PersonsListPage({
     super.key,
     this.selectionMode = false,
+    this.addToGroupMode = false,
+    this.excludedIds = const [],
   });
 
   @override
@@ -32,6 +36,8 @@ class PersonsListPage extends StatelessWidget {
       ],
       child: _PersonsListView(
         selectionMode: selectionMode,
+        addToGroupMode: addToGroupMode,
+        excludedIds: excludedIds,
       ),
     );
   }
@@ -39,9 +45,13 @@ class PersonsListPage extends StatelessWidget {
 
 class _PersonsListView extends StatefulWidget {
   final bool selectionMode;
+  final bool addToGroupMode;
+  final List<String> excludedIds;
 
   const _PersonsListView({
     required this.selectionMode,
+    required this.addToGroupMode,
+    required this.excludedIds,
   });
 
   @override
@@ -50,6 +60,7 @@ class _PersonsListView extends StatefulWidget {
 
 class _PersonsListViewState extends State<_PersonsListView> {
   final TextEditingController _searchController = TextEditingController();
+  final List<String> _selectedIds = [];
 
   String _searchQuery = '';
   Future<String?> _selectOwner(
@@ -160,7 +171,13 @@ class _PersonsListViewState extends State<_PersonsListView> {
 
                 if (state is PersonLoaded) {
                   final filteredPersons = state.persons.where((person) {
-                    return person.name.toLowerCase().contains(_searchQuery);
+                    if (widget.excludedIds.contains(person.id)) {
+                      return false;
+                    }
+
+                    return person.name
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase());
                   }).toList();
 
                   filteredPersons.sort(
@@ -181,6 +198,44 @@ class _PersonsListViewState extends State<_PersonsListView> {
                     itemCount: filteredPersons.length,
                     itemBuilder: (context, index) {
                       final person = filteredPersons[index];
+                      if (widget.addToGroupMode) {
+                        return ListTile(
+                          leading: CircleAvatar(
+                            child: Text(person.name[0].toUpperCase()),
+                          ),
+                          title: Text(person.name),
+                          subtitle:
+                              person.bio == null ? null : Text(person.bio!),
+                          trailing: FilledButton(
+                            child: const Text("Add"),
+                            onPressed: () {
+                              Navigator.pop(context, person.id);
+                            },
+                          ),
+                        );
+                      }
+                      if (widget.selectionMode) {
+                        final selected = _selectedIds.contains(person.id);
+
+                        return CheckboxListTile(
+                          value: selected,
+                          secondary: CircleAvatar(
+                            child: Text(person.name[0].toUpperCase()),
+                          ),
+                          title: Text(person.name),
+                          subtitle:
+                              person.bio == null ? null : Text(person.bio!),
+                          onChanged: (_) {
+                            setState(() {
+                              if (selected) {
+                                _selectedIds.remove(person.id);
+                              } else {
+                                _selectedIds.add(person.id);
+                              }
+                            });
+                          },
+                        );
+                      }
 
                       return PersonCard(
                         person: person,
@@ -251,15 +306,13 @@ class _PersonsListViewState extends State<_PersonsListView> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context, false);
-                                    },
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
                                     child: const Text('Cancel'),
                                   ),
                                   TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context, true);
-                                    },
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
                                     style: TextButton.styleFrom(
                                       foregroundColor: Colors.red,
                                     ),
@@ -285,20 +338,27 @@ class _PersonsListViewState extends State<_PersonsListView> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: context.read<PersonCubit>(),
-                child: const AddParticipantPage(),
-              ),
+      floatingActionButton: widget.selectionMode
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pop(context, _selectedIds);
+              },
+              child: const Icon(Icons.check),
+            )
+          : FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<PersonCubit>(),
+                      child: const AddParticipantPage(),
+                    ),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
             ),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
