@@ -55,6 +55,7 @@ class PlaybackChatList extends StatelessWidget {
                   message: message,
                   sender: sender,
                   isMine: isMine,
+                  isGroup: project.participantIds.length > 2,
                 );
               },
             );

@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class AddProjectPage extends StatefulWidget {
   const AddProjectPage({super.key});
@@ -14,6 +16,9 @@ class AddProjectPage extends StatefulWidget {
 
 class _AddProjectPageState extends State<AddProjectPage> {
   final _titleController = TextEditingController();
+  File? _groupImage;
+
+  final ImagePicker _picker = ImagePicker();
 
   final List<String> _selectedParticipants = [];
   String? _ownerId;
@@ -48,6 +53,18 @@ class _AddProjectPageState extends State<AddProjectPage> {
     });
   }
 
+  Future<void> _pickGroupImage() async {
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _groupImage = File(pickedFile.path);
+      });
+    }
+  }
+
   void _createProject() {
     final title = _titleController.text.trim();
 
@@ -79,13 +96,14 @@ class _AddProjectPageState extends State<AddProjectPage> {
     }
 
     context.read<ProjectCubit>().createProject(
-      title: title,
-      ownerId: _ownerId!,
-      participants: [
-        _ownerId!,
-        ..._selectedParticipants,
-      ],
-    );
+          title: title,
+          ownerId: _ownerId!,
+          participants: [
+            _ownerId!,
+            ..._selectedParticipants,
+          ],
+          groupImagePath: _groupImage?.path,
+        );
 
     Navigator.pop(context);
   }
@@ -100,6 +118,21 @@ class _AddProjectPageState extends State<AddProjectPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            GestureDetector(
+              onTap: _pickGroupImage,
+              child: CircleAvatar(
+                radius: 45,
+                backgroundImage:
+                    _groupImage != null ? FileImage(_groupImage!) : null,
+                child: _groupImage == null
+                    ? const Icon(
+                        Icons.camera_alt,
+                        size: 35,
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(

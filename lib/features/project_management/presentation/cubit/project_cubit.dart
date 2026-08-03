@@ -38,6 +38,7 @@ class ProjectCubit extends Cubit<ProjectState> {
     required String title,
     required String ownerId,
     required List<String> participants,
+    String? groupImagePath,
   }) async {
     emit(ProjectLoading());
 

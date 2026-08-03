@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'dart:io';
 import '../../domain/entities/message.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'message_status_icon.dart';
@@ -8,18 +8,32 @@ class MessageBubble extends StatelessWidget {
   final Message message;
   final Person sender;
   final bool isMine;
+  final bool isGroup;
 
   const MessageBubble({
     super.key,
     required this.message,
     required this.sender,
     required this.isMine,
+    required this.isGroup,
   });
 
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+
+  ImageProvider? _getAvatarImage() {
+    if (sender.avatarPath == null || sender.avatarPath!.isEmpty) {
+      return null;
+    }
+
+    if (sender.avatarPath!.startsWith('http')) {
+      return NetworkImage(sender.avatarPath!);
+    }
+
+    return FileImage(File(sender.avatarPath!));
   }
 
   @override
@@ -55,6 +69,35 @@ class MessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (isGroup && !isMine) ...[
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundImage: _getAvatarImage(),
+                    child:
+                        sender.avatarPath == null || sender.avatarPath!.isEmpty
+                            ? Text(
+                                sender.name[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                              )
+                            : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    sender.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             Text(
               message.text,
               style: const TextStyle(

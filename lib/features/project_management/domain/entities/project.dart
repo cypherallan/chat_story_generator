@@ -5,6 +5,7 @@ class Project extends Equatable {
   final String id;
 
   final String title;
+  final String? groupImagePath;
 
   final DateTime createdAt;
 
@@ -34,6 +35,7 @@ class Project extends Equatable {
     required this.createdAt,
     required this.ownerId,
     required this.participantIds,
+    this.groupImagePath,
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
@@ -50,6 +52,7 @@ class Project extends Equatable {
     DateTime? createdAt,
     String? ownerId,
     List<String>? participantIds,
+    String? groupImagePath,
     String? lastMessage,
     DateTime? lastMessageTime,
     String? lastSenderId,
@@ -65,6 +68,7 @@ class Project extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       ownerId: ownerId ?? this.ownerId,
       participantIds: participantIds ?? this.participantIds,
+      groupImagePath: groupImagePath ?? this.groupImagePath,
       lastMessage: lastMessage ?? this.lastMessage,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       lastSenderId: lastSenderId ?? this.lastSenderId,
@@ -83,6 +87,7 @@ class Project extends Equatable {
         createdAt,
         ownerId,
         participantIds,
+        groupImagePath,
         lastMessage,
         lastMessageTime,
         lastSenderId,

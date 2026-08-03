@@ -67,6 +67,7 @@ class ConversationBody extends StatelessWidget {
                       message: message,
                       sender: sender,
                       isMine: sender.id == ownerId,
+                      isGroup: persons.length > 2,
                     );
                   },
                 ),

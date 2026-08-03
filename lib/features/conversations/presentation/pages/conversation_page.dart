@@ -56,6 +56,30 @@ class _ConversationPageState extends State<ConversationPage> {
             titleSpacing: 0,
             title: BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
+                final isGroup = widget.project.participantIds.length > 2;
+
+                if (isGroup) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.project.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${widget.project.participantIds.length} participants',
+                        style: const TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
                 if (state is PersonLoaded) {
                   final otherPersonId =
                       widget.project.participantIds.firstWhere(
@@ -193,6 +217,9 @@ class _ConversationPageState extends State<ConversationPage> {
                                         message: message,
                                         sender: sender,
                                         isMine: isMine,
+                                        isGroup: widget
+                                                .project.participantIds.length >
+                                            2,
                                       );
                                     },
                                   );

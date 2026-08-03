@@ -93,20 +93,26 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                 itemBuilder: (context, index) {
                   final project = projects[index];
 
-                  final otherPersonId = project.participantIds.firstWhere(
-                    (id) => id != project.ownerId,
-                    orElse: () => project.ownerId,
-                  );
+                  final bool isGroup = project.participantIds.length > 2;
 
-                  final Person otherPerson = personState.persons.firstWhere(
-                    (p) => p.id == otherPersonId,
-                  );
+                  Person? otherPerson;
+
+                  if (!isGroup) {
+                    final otherPersonId = project.participantIds.firstWhere(
+                      (id) => id != project.ownerId,
+                      orElse: () => project.ownerId,
+                    );
+
+                    otherPerson = personState.persons.firstWhere(
+                      (p) => p.id == otherPersonId,
+                    );
+                  }
 
                   final chat = ChatListItem(
                     project: project,
-                    chatName: otherPerson.name,
-                    avatarPath: otherPerson.avatarPath,
-                    verified: otherPerson.isVerified,
+                    chatName: isGroup ? project.title : otherPerson!.name,
+                    avatarPath: isGroup ? null : otherPerson!.avatarPath,
+                    verified: isGroup ? false : otherPerson!.isVerified,
                     lastMessage: project.lastMessage,
                     lastMessageTime: project.lastMessageTime,
                     lastMessageStatus: project.lastMessageStatus,
