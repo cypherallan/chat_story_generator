@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../message_management/domain/entities/message_status.dart';
 
 class Project extends Equatable {
   final String id;
@@ -17,6 +18,7 @@ class Project extends Equatable {
   final DateTime? lastMessageTime;
 
   final String? lastSenderId;
+  final MessageStatus? lastMessageStatus;
 
   final int unreadCount;
 
@@ -35,6 +37,7 @@ class Project extends Equatable {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.lastMessageStatus,
     this.unreadCount = 0,
     this.pinned = false,
     this.muted = false,
@@ -50,6 +53,7 @@ class Project extends Equatable {
     String? lastMessage,
     DateTime? lastMessageTime,
     String? lastSenderId,
+    MessageStatus? lastMessageStatus,
     int? unreadCount,
     bool? pinned,
     bool? muted,
@@ -64,6 +68,7 @@ class Project extends Equatable {
       lastMessage: lastMessage ?? this.lastMessage,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       lastSenderId: lastSenderId ?? this.lastSenderId,
+      lastMessageStatus: lastMessageStatus ?? this.lastMessageStatus,
       unreadCount: unreadCount ?? this.unreadCount,
       pinned: pinned ?? this.pinned,
       muted: muted ?? this.muted,
@@ -81,6 +86,7 @@ class Project extends Equatable {
         lastMessage,
         lastMessageTime,
         lastSenderId,
+        lastMessageStatus,
         unreadCount,
         pinned,
         muted,

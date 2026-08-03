@@ -1,4 +1,5 @@
 import '../../domain/entities/project.dart';
+import '../../../message_management/domain/entities/message_status.dart';
 
 class ProjectModel extends Project {
   const ProjectModel({
@@ -10,6 +11,7 @@ class ProjectModel extends Project {
     super.lastMessage,
     super.lastMessageTime,
     super.lastSenderId,
+    super.lastMessageStatus,
     super.unreadCount,
     super.pinned,
     super.muted,
@@ -29,6 +31,11 @@ class ProjectModel extends Project {
       ),
       lastMessage: json['lastMessage'] ?? '',
       lastSenderId: json['lastSenderId'],
+      lastMessageStatus: json['lastMessageStatus'] != null
+          ? MessageStatus.values.firstWhere(
+              (e) => e.name == json['lastMessageStatus'],
+            )
+          : null,
       lastMessageTime: json['lastMessageTime'] != null
           ? DateTime.parse(json['lastMessageTime'])
           : null,
@@ -48,6 +55,7 @@ class ProjectModel extends Project {
       'participantIds': participantIds,
       'lastMessage': lastMessage,
       'lastSenderId': lastSenderId,
+      'lastMessageStatus': lastMessageStatus?.name,
       'lastMessageTime': lastMessageTime?.toIso8601String(),
       'unreadCount': unreadCount,
       'pinned': pinned,
@@ -67,6 +75,7 @@ class ProjectModel extends Project {
       participantIds: project.participantIds,
       lastMessage: project.lastMessage,
       lastSenderId: project.lastSenderId,
+      lastMessageStatus: project.lastMessageStatus,
       lastMessageTime: project.lastMessageTime,
       unreadCount: project.unreadCount,
       pinned: project.pinned,

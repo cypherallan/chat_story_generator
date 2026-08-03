@@ -209,13 +209,15 @@ class _PersonsListViewState extends State<_PersonsListView> {
                             MaterialPageRoute(
                               builder: (_) => MultiBlocProvider(
                                 providers: [
+                                  BlocProvider.value(
+                                    value: context.read<ProjectCubit>(),
+                                  ),
                                   BlocProvider(
                                     create: (_) => di.sl<MessageCubit>()
                                       ..loadMessages(project.id),
                                   ),
-                                  BlocProvider(
-                                    create: (_) =>
-                                        di.sl<PersonCubit>()..loadPersons(),
+                                  BlocProvider.value(
+                                    value: context.read<PersonCubit>(),
                                   ),
                                 ],
                                 child: ConversationPage(

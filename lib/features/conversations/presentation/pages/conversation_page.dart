@@ -38,19 +38,6 @@ class _ConversationPageState extends State<ConversationPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PersonCubit>().setPersonOnline(selectedSenderId);
     });
-
-    // Simulation: mark incoming messages as read after the UI renders
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(
-        const Duration(seconds: 2),
-      );
-      if (mounted) {
-        context.read<MessageCubit>().markMessagesAsRead(
-              projectId: widget.project.id,
-              currentUserId: widget.project.ownerId,
-            );
-      }
-    });
   }
 
   @override
@@ -264,6 +251,11 @@ class _ConversationPageState extends State<ConversationPage> {
                               setState(() {
                                 otherPersonTyping = true;
                               });
+
+                              context.read<MessageCubit>().markMessagesAsRead(
+                                    projectId: widget.project.id,
+                                    currentUserId: widget.project.ownerId,
+                                  );
                             }
                           },
                           onTypingStopped: () {

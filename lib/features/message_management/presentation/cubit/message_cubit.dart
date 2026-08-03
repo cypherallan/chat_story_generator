@@ -78,8 +78,6 @@ class MessageCubit extends Cubit<MessageState> {
     );
   }
 
-  /// Simulated network flow:
-  /// sending → sent (1 sec) → delivered (0.5 sec) → read (1 sec)
   void _simulateDelivery(Message message) async {
     var current = message;
 
@@ -90,6 +88,7 @@ class MessageCubit extends Cubit<MessageState> {
     );
 
     await updateMessage(current);
+    await _updateProjectPreview(current);
 
     await Future.delayed(const Duration(milliseconds: 500));
 
@@ -97,15 +96,8 @@ class MessageCubit extends Cubit<MessageState> {
       status: MessageStatus.delivered,
     );
 
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    current = current.copyWith(
-      status: MessageStatus.read,
-    );
-
     await updateMessage(current);
-
-    await updateMessage(current);
+    await _updateProjectPreview(current);
   }
 
   /// Marks every message NOT sent by [currentUserId] as read.
@@ -116,15 +108,27 @@ class MessageCubit extends Cubit<MessageState> {
     if (state is! MessageLoaded) return;
 
     final messages = (state as MessageLoaded).messages;
-    final unread = messages.where(
-      (m) => m.senderId != currentUserId && m.status != MessageStatus.read,
+
+    final messagesToRead = messages.where(
+      (m) =>
+          m.projectId == projectId &&
+          m.senderId == currentUserId &&
+          m.status == MessageStatus.delivered,
     );
 
-    for (final msg in unread) {
-      final result = await updateMessage(
-        msg.copyWith(status: MessageStatus.read),
+    for (final message in messagesToRead) {
+      final updatedMessage = message.copyWith(
+        status: MessageStatus.read,
       );
-      result.fold((_) {}, (_) {});
+
+      final result = await updateMessage(updatedMessage);
+
+      result.fold(
+        (_) {},
+        (_) async {
+          await _updateProjectPreview(updatedMessage);
+        },
+      );
     }
   }
 
@@ -171,6 +175,7 @@ class MessageCubit extends Cubit<MessageState> {
           lastMessage: message.text,
           lastMessageTime: message.createdAt,
           lastSenderId: message.senderId,
+          lastMessageStatus: message.status,
         );
 
         await updateProject(updated);

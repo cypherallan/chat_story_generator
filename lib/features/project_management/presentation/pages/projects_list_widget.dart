@@ -88,6 +88,8 @@ class _ProjectsListBody extends StatelessWidget {
                     verified: otherPerson.isVerified,
                     lastMessage: project.lastMessage,
                     lastMessageTime: project.lastMessageTime,
+                    lastMessageStatus: project.lastMessageStatus,
+                    isLastMessageMine: project.lastSenderId == project.ownerId,
                     unreadCount: project.unreadCount,
                   );
 
@@ -99,6 +101,9 @@ class _ProjectsListBody extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (_) => MultiBlocProvider(
                             providers: [
+                              BlocProvider.value(
+                                value: context.read<ProjectCubit>(),
+                              ),
                               BlocProvider(
                                 create: (_) => di.sl<MessageCubit>()
                                   ..loadMessages(project.id),

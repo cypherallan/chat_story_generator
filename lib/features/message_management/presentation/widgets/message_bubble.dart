@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/message.dart';
-import '../../domain/entities/message_status.dart';
 import '../../../person_management/domain/entities/person.dart';
+import 'message_status_icon.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -89,7 +89,9 @@ class MessageBubble extends StatelessWidget {
                   ),
                   if (isMine) ...[
                     const SizedBox(width: 3),
-                    _MessageTicks(status: message.status),
+                    MessageStatusIcon(
+                      status: message.status,
+                    ),
                   ],
                 ],
               ),
@@ -98,41 +100,5 @@ class MessageBubble extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _MessageTicks extends StatelessWidget {
-  final MessageStatus status;
-
-  const _MessageTicks({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    switch (status) {
-      case MessageStatus.sending:
-        return Icon(
-          Icons.schedule,
-          size: 13,
-          color: Colors.grey.shade500,
-        );
-      case MessageStatus.sent:
-        return Icon(
-          Icons.done,
-          size: 15,
-          color: Colors.grey.shade500,
-        );
-      case MessageStatus.delivered:
-        return Icon(
-          Icons.done_all,
-          size: 15,
-          color: Colors.grey.shade500,
-        );
-      case MessageStatus.read:
-        return const Icon(
-          Icons.done_all,
-          size: 15,
-          color: Color(0xff53BDEB), // WhatsApp blue tick
-        );
-    }
   }
 }

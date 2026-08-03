@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../models/chat_list_item.dart';
+import '../../../message_management/domain/entities/message_status.dart';
 
 class ChatListItemWidget extends StatelessWidget {
   final ChatListItem chat;
@@ -62,6 +63,10 @@ class ChatListItemWidget extends StatelessWidget {
             child: Text(
               chat.chatName,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           if (chat.verified)
@@ -83,10 +88,22 @@ class ChatListItemWidget extends StatelessWidget {
                 fontStyle: FontStyle.italic,
               ),
             )
-          : Text(
-              chat.lastMessage,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          : Row(
+              children: [
+                if (chat.isLastMessageMine) ...[
+                  _ChatPreviewTicks(
+                    status: chat.lastMessageStatus,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Expanded(
+                  child: Text(
+                    chat.lastMessage,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -130,5 +147,50 @@ class ChatListItemWidget extends StatelessWidget {
     }
 
     return "${time.day}/${time.month}";
+  }
+}
+
+class _ChatPreviewTicks extends StatelessWidget {
+  final MessageStatus? status;
+
+  const _ChatPreviewTicks({
+    required this.status,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == null) {
+      return const SizedBox.shrink();
+    }
+
+    switch (status!) {
+      case MessageStatus.sending:
+        return Icon(
+          Icons.schedule,
+          size: 14,
+          color: Colors.grey.shade500,
+        );
+
+      case MessageStatus.sent:
+        return Icon(
+          Icons.done,
+          size: 16,
+          color: Colors.grey.shade500,
+        );
+
+      case MessageStatus.delivered:
+        return Icon(
+          Icons.done_all,
+          size: 16,
+          color: Colors.grey.shade500,
+        );
+
+      case MessageStatus.read:
+        return const Icon(
+          Icons.done_all,
+          size: 16,
+          color: Color(0xff53BDEB),
+        );
+    }
   }
 }
