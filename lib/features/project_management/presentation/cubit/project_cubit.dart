@@ -48,6 +48,7 @@ class ProjectCubit extends Cubit<ProjectState> {
       createdAt: DateTime.now(),
       ownerId: ownerId,
       participantIds: participants,
+      groupImagePath: groupImagePath,
     );
 
     final result = await addProject(project);

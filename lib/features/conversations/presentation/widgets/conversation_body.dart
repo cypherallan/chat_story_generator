@@ -7,6 +7,8 @@ import '../../../message_management/presentation/widgets/message_bubble.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
 import 'conversation_header.dart';
 
+import '../../../project_management/domain/entities/project.dart';
+
 class ConversationBody extends StatelessWidget {
   final List<Message> messages;
   final List<Person> persons;
@@ -17,6 +19,7 @@ class ConversationBody extends StatelessWidget {
   final ScrollController scrollController;
 
   final Widget? bottomWidget;
+  final Project? project;
 
   const ConversationBody({
     super.key,
@@ -26,13 +29,18 @@ class ConversationBody extends StatelessWidget {
     required this.scrollController,
     required this.otherPersonTyping,
     this.bottomWidget,
+    this.project,
   });
 
   @override
   Widget build(BuildContext context) {
-    final otherPerson = persons.firstWhere(
-      (p) => p.id != ownerId,
-    );
+    final isGroup = project != null && project!.participantIds.length > 2;
+
+    final otherPerson = isGroup
+        ? null
+        : persons.firstWhere(
+            (p) => p.id != ownerId,
+          );
 
     final visibleMessages = messages.reversed.toList();
 
@@ -49,6 +57,7 @@ class ConversationBody extends StatelessWidget {
             children: [
               ConversationHeader(
                 person: otherPerson,
+                project: project,
                 isTyping: otherPersonTyping,
               ),
               Expanded(

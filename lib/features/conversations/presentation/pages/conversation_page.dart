@@ -59,24 +59,9 @@ class _ConversationPageState extends State<ConversationPage> {
                 final isGroup = widget.project.participantIds.length > 2;
 
                 if (isGroup) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.project.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '${widget.project.participantIds.length} participants',
-                        style: const TextStyle(
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                  return ConversationHeader(
+                    project: widget.project,
+                    isTyping: otherPersonTyping,
                   );
                 }
 

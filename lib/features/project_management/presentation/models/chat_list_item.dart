@@ -24,6 +24,7 @@ class ChatListItem {
   final bool isTyping;
 
   final bool isOnline;
+  final String? groupImagePath;
 
   const ChatListItem({
     required this.project,
@@ -39,5 +40,6 @@ class ChatListItem {
     this.verified = false,
     this.isTyping = false,
     this.isOnline = false,
+    this.groupImagePath,
   });
 }

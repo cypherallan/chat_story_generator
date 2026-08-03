@@ -8,6 +8,7 @@ class ProjectModel extends Project {
     required super.createdAt,
     required super.ownerId,
     required super.participantIds,
+    super.groupImagePath,
     super.lastMessage,
     super.lastMessageTime,
     super.lastSenderId,
@@ -29,6 +30,7 @@ class ProjectModel extends Project {
       participantIds: List<String>.from(
         json['participantIds'] ?? [],
       ),
+      groupImagePath: json['groupImagePath'],
       lastMessage: json['lastMessage'] ?? '',
       lastSenderId: json['lastSenderId'],
       lastMessageStatus: json['lastMessageStatus'] != null
@@ -53,6 +55,7 @@ class ProjectModel extends Project {
       'createdAt': createdAt.toIso8601String(),
       'ownerId': ownerId,
       'participantIds': participantIds,
+      'groupImagePath': groupImagePath,
       'lastMessage': lastMessage,
       'lastSenderId': lastSenderId,
       'lastMessageStatus': lastMessageStatus?.name,
@@ -73,6 +76,7 @@ class ProjectModel extends Project {
       createdAt: project.createdAt,
       ownerId: project.ownerId,
       participantIds: project.participantIds,
+      groupImagePath: project.groupImagePath,
       lastMessage: project.lastMessage,
       lastSenderId: project.lastSenderId,
       lastMessageStatus: project.lastMessageStatus,

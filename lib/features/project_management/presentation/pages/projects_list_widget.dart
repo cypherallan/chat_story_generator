@@ -112,6 +112,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     project: project,
                     chatName: isGroup ? project.title : otherPerson!.name,
                     avatarPath: isGroup ? null : otherPerson!.avatarPath,
+                    groupImagePath: project.groupImagePath,
                     verified: isGroup ? false : otherPerson!.isVerified,
                     lastMessage: project.lastMessage,
                     lastMessageTime: project.lastMessageTime,

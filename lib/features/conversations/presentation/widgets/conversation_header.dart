@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../../../person_management/domain/entities/person.dart';
+import '../../../project_management/domain/entities/project.dart';
 
 class ConversationHeader extends StatelessWidget {
-  final Person person;
+  final Person? person;
+  final Project? project;
   final bool isTyping;
 
   const ConversationHeader({
     super.key,
-    required this.person,
+    this.person,
+    this.project,
     required this.isTyping,
   });
 
@@ -44,13 +47,17 @@ class ConversationHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     ImageProvider? image;
 
-    if (person.avatarPath != null) {
-      if (person.avatarPath!.startsWith('http')) {
-        image = NetworkImage(person.avatarPath!);
+    final isGroup = project != null;
+
+    final displayName = isGroup ? project!.title : person?.name ?? 'Unknown';
+
+    final avatarPath = isGroup ? project!.groupImagePath : person?.avatarPath;
+
+    if (avatarPath != null) {
+      if (avatarPath.startsWith('http')) {
+        image = NetworkImage(avatarPath);
       } else {
-        image = FileImage(
-          File(person.avatarPath!),
-        );
+        image = FileImage(File(avatarPath));
       }
     }
 
@@ -61,7 +68,7 @@ class ConversationHeader extends StatelessWidget {
           backgroundImage: image,
           child: image == null
               ? Text(
-                  person.name[0].toUpperCase(),
+                  displayName[0].toUpperCase(),
                 )
               : null,
         ),
@@ -74,7 +81,7 @@ class ConversationHeader extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      person.name,
+                      displayName,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 17,
@@ -82,7 +89,7 @@ class ConversationHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (person.isVerified)
+                  if (!isGroup && person!.isVerified)
                     const Padding(
                       padding: EdgeInsets.only(left: 4),
                       child: Icon(
@@ -96,19 +103,23 @@ class ConversationHeader extends StatelessWidget {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: Text(
-                  isTyping
-                      ? 'typing...'
-                      : person.isOnline
-                          ? 'online'
-                          : person.lastSeen == null
-                              ? 'last seen recently'
-                              : 'last seen ${_formatLastSeen(person.lastSeen!)}',
+                  isGroup
+                      ? '${project!.participantIds.length} participants'
+                      : isTyping
+                          ? 'typing...'
+                          : person!.isOnline
+                              ? 'online'
+                              : person!.lastSeen == null
+                                  ? 'last seen recently'
+                                  : 'last seen ${_formatLastSeen(person!.lastSeen!)}',
                   key: ValueKey(
-                    isTyping
-                        ? 'typing'
-                        : person.isOnline
-                            ? 'online'
-                            : person.lastSeen,
+                    isGroup
+                        ? 'group'
+                        : isTyping
+                            ? 'typing'
+                            : person!.isOnline
+                                ? 'online'
+                                : person!.lastSeen,
                   ),
                   style: TextStyle(
                     fontSize: 12,

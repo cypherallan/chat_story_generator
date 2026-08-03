@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../models/chat_list_item.dart';
 import '../../../message_management/domain/entities/message_status.dart';
+import '../../../shared/widgets/profile_avatar.dart';
 
 class ChatListItemWidget extends StatelessWidget {
   final ChatListItem chat;
@@ -21,16 +20,6 @@ class ChatListItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider? image;
-
-    if (chat.avatarPath != null && chat.avatarPath!.isNotEmpty) {
-      if (chat.avatarPath!.startsWith('http')) {
-        image = NetworkImage(chat.avatarPath!);
-      } else {
-        image = FileImage(File(chat.avatarPath!));
-      }
-    }
-
     final timeText = _formatTime(chat.lastMessageTime);
 
     return ListTile(
@@ -41,10 +30,10 @@ class ChatListItemWidget extends StatelessWidget {
       selectedTileColor: Colors.blue.withOpacity(0.15),
       leading: Stack(
         children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundImage: image,
-            child: image == null ? Text(chat.chatName[0].toUpperCase()) : null,
+          ProfileAvatar(
+            imagePath: chat.groupImagePath ?? chat.avatarPath,
+            name: chat.chatName,
+            radius: 28,
           ),
 
           // Online indicator
