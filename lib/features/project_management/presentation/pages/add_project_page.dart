@@ -54,7 +54,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Chat name is required'),
+          content: Text('Group name is required'),
         ),
       );
       return;
@@ -94,7 +94,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Chat'),
+        title: const Text('New Group'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -103,7 +103,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Chat Name',
+                labelText: 'Group Name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -192,7 +192,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
               child: FilledButton(
                 onPressed: _createProject,
                 child: const Text(
-                  'Create Chat',
+                  'Create Group',
                 ),
               ),
             ),
