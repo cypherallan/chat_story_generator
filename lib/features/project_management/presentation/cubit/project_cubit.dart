@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/usecases/add_project.dart';
 import '../../domain/usecases/delete_project.dart';
+import '../../domain/usecases/delete_projects.dart';
 import '../../domain/usecases/get_projects.dart';
 import '../../domain/usecases/update_project.dart';
 
@@ -15,12 +16,14 @@ class ProjectCubit extends Cubit<ProjectState> {
   final AddProject addProject;
   final UpdateProject updateProject;
   final DeleteProject deleteProject;
+  final DeleteProjects deleteProjects;
 
   ProjectCubit({
     required this.getProjects,
     required this.addProject,
     required this.updateProject,
     required this.deleteProject,
+    required this.deleteProjects,
   }) : super(ProjectInitial());
 
   Future<void> loadProjects() async {
@@ -80,7 +83,6 @@ class ProjectCubit extends Cubit<ProjectState> {
           if (project.participantIds.length != 2) continue;
 
           final containsOwner = project.participantIds.contains(ownerId);
-
           final containsContact = project.participantIds.contains(contactId);
 
           if (containsOwner && containsContact) {
@@ -127,6 +129,19 @@ class ProjectCubit extends Cubit<ProjectState> {
     emit(ProjectLoading());
 
     final result = await deleteProject(id);
+
+    result.fold(
+      (failure) => emit(ProjectError(failure.message)),
+      (_) => loadProjects(),
+    );
+  }
+
+  Future<void> removeProjects(
+    List<String> ids,
+  ) async {
+    emit(ProjectLoading());
+
+    final result = await deleteProjects(ids);
 
     result.fold(
       (failure) => emit(ProjectError(failure.message)),

@@ -76,8 +76,40 @@ class _HomePageState extends State<HomePage> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
-                          onPressed: () {
-                            // TODO: delete selected chats
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text('Delete chat'),
+                                content: Text(
+                                  selectedChatIds.length == 1
+                                      ? 'Delete selected chat?'
+                                      : 'Delete ${selectedChatIds.length} chats?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmed != true) return;
+
+                            final cubit = context.read<ProjectCubit>();
+
+                            await cubit.removeProjects(
+                              selectedChatIds.toList(),
+                            );
+
+                            clearSelection();
                           },
                         ),
                         IconButton(

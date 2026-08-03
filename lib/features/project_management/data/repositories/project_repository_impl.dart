@@ -44,6 +44,23 @@ class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   @override
+  Future<Either<Failure, Project>> updateProject(
+    Project project,
+  ) async {
+    try {
+      final model = ProjectModel.fromEntity(project);
+
+      final result = await firestoreDataSource.updateProject(model);
+
+      return Right(result);
+    } catch (e) {
+      return Left(
+        CacheFailure(e.toString()),
+      );
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteProject(
     String id,
   ) async {
@@ -59,15 +76,13 @@ class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   @override
-  Future<Either<Failure, Project>> updateProject(
-    Project project,
+  Future<Either<Failure, void>> deleteProjects(
+    List<String> ids,
   ) async {
     try {
-      final model = ProjectModel.fromEntity(project);
+      await firestoreDataSource.deleteProjects(ids);
 
-      final result = await firestoreDataSource.updateProject(model);
-
-      return Right(result);
+      return const Right(null);
     } catch (e) {
       return Left(
         CacheFailure(e.toString()),

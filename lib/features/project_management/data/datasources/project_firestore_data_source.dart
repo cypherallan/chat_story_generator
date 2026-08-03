@@ -17,6 +17,10 @@ abstract class ProjectFirestoreDataSource {
   Future<void> deleteProject(
     String id,
   );
+
+  Future<void> deleteProjects(
+    List<String> ids,
+  );
 }
 
 class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
@@ -77,6 +81,27 @@ class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
   Future<void> deleteProject(
     String id,
   ) async {
-    await _projectsCollection.doc(id).delete();
+    await deleteProjects([id]);
+  }
+
+  @override
+  Future<void> deleteProjects(
+    List<String> ids,
+  ) async {
+    final batch = firestore.batch();
+
+    for (final id in ids) {
+      final projectRef = _projectsCollection.doc(id);
+
+      final messages = await projectRef.collection('messages').get();
+
+      for (final doc in messages.docs) {
+        batch.delete(doc.reference);
+      }
+
+      batch.delete(projectRef);
+    }
+
+    await batch.commit();
   }
 }

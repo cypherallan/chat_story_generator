@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../../../project_management/domain/entities/project.dart';
 
@@ -78,9 +80,9 @@ class ConversationHeader extends StatelessWidget {
 
     final avatarPath = isGroup ? project!.groupImagePath : person?.avatarPath;
 
-    if (avatarPath != null) {
+    if (avatarPath != null && avatarPath.isNotEmpty) {
       if (avatarPath.startsWith('http')) {
-        image = NetworkImage(avatarPath);
+        image = CachedNetworkImageProvider(avatarPath);
       } else {
         image = FileImage(File(avatarPath));
       }

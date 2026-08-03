@@ -10,8 +10,7 @@ import 'add_participant_page.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../conversations/presentation/pages/conversation_page.dart';
-
-import 'dart:io';
+import '../widgets/person_avatar.dart';
 
 class PersonsListPage extends StatelessWidget {
   final bool selectionMode;
@@ -95,10 +94,9 @@ class _PersonsListViewState extends State<_PersonsListView> {
               const SizedBox(height: 12),
               ...owners.map(
                 (person) => ListTile(
-                  leading: CircleAvatar(
-                    child: Text(
-                      person.name[0].toUpperCase(),
-                    ),
+                  leading: PersonAvatar(
+                    person: person,
+                    radius: 20,
                   ),
                   title: Text(person.name),
                   onTap: () {
@@ -202,18 +200,9 @@ class _PersonsListViewState extends State<_PersonsListView> {
                       final person = filteredPersons[index];
                       if (widget.addToGroupMode) {
                         return ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: person.avatarPath != null &&
-                                    person.avatarPath!.isNotEmpty
-                                ? (person.avatarPath!.startsWith('http')
-                                        ? NetworkImage(person.avatarPath!)
-                                        : FileImage(File(person.avatarPath!)))
-                                    as ImageProvider
-                                : null,
-                            child: person.avatarPath == null ||
-                                    person.avatarPath!.isEmpty
-                                ? Text(person.name[0].toUpperCase())
-                                : null,
+                          leading: PersonAvatar(
+                            person: person,
+                            radius: 22,
                           ),
                           title: Text(person.name),
                           subtitle:
@@ -231,8 +220,9 @@ class _PersonsListViewState extends State<_PersonsListView> {
 
                         return CheckboxListTile(
                           value: selected,
-                          secondary: CircleAvatar(
-                            child: Text(person.name[0].toUpperCase()),
+                          secondary: PersonAvatar(
+                            person: person,
+                            radius: 20,
                           ),
                           title: Text(person.name),
                           subtitle:

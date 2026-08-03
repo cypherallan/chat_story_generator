@@ -1,8 +1,5 @@
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-
+import 'person_avatar.dart';
 import '../../domain/entities/person.dart';
 
 class PersonCard extends StatelessWidget {
@@ -26,33 +23,6 @@ class PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget avatar;
-
-    if (person.avatarPath == null || person.avatarPath!.isEmpty) {
-      avatar = CircleAvatar(
-        child: Text(person.name[0].toUpperCase()),
-      );
-    } else if (person.avatarPath!.startsWith('http')) {
-      avatar = CachedNetworkImage(
-        imageUrl: person.avatarPath!,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          backgroundImage: imageProvider,
-        ),
-        placeholder: (context, url) => const CircleAvatar(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-        errorWidget: (context, url, error) => CircleAvatar(
-          child: Text(person.name[0].toUpperCase()),
-        ),
-      );
-    } else {
-      avatar = CircleAvatar(
-        backgroundImage: FileImage(
-          File(person.avatarPath!),
-        ),
-      );
-    }
-
     return InkWell(
       onTap: onEdit,
       onLongPress: onDelete,
@@ -63,10 +33,10 @@ class PersonCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 52,
-              height: 52,
-              child: avatar,
+            const SizedBox(width: 2),
+            PersonAvatar(
+              person: person,
+              radius: 26,
             ),
             const SizedBox(width: 14),
             Expanded(

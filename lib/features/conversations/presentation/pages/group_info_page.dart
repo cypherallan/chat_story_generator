@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
+import '../../../person_management/presentation/widgets/person_avatar.dart';
 
 class GroupInfoPage extends StatefulWidget {
   final Project project;
@@ -73,22 +74,36 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           Center(
             child: GestureDetector(
               onTap: _changeImage,
-              child: CircleAvatar(
-                radius: 55,
-                backgroundImage: _newImage != null
-                    ? FileImage(_newImage!)
-                    : widget.project.groupImagePath != null
-                        ? FileImage(
-                            File(widget.project.groupImagePath!),
-                          )
-                        : null,
-                child:
-                    widget.project.groupImagePath == null && _newImage == null
+              child: Builder(
+                builder: (_) {
+                  ImageProvider? image;
+
+                  if (_newImage != null) {
+                    image = FileImage(_newImage!);
+                  } else if (widget.project.groupImagePath != null &&
+                      widget.project.groupImagePath!.isNotEmpty) {
+                    if (widget.project.groupImagePath!.startsWith('http')) {
+                      image = CachedNetworkImageProvider(
+                        widget.project.groupImagePath!,
+                      );
+                    } else {
+                      image = FileImage(
+                        File(widget.project.groupImagePath!),
+                      );
+                    }
+                  }
+
+                  return CircleAvatar(
+                    radius: 55,
+                    backgroundImage: image,
+                    child: image == null
                         ? const Icon(
                             Icons.camera_alt,
                             size: 40,
                           )
                         : null,
+                  );
+                },
               ),
             ),
           ),
@@ -111,16 +126,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           const SizedBox(height: 10),
           ...members.map(
             (person) => ListTile(
-              leading: CircleAvatar(
-                backgroundImage: person.avatarPath != null &&
-                        person.avatarPath!.isNotEmpty
-                    ? (person.avatarPath!.startsWith('http')
-                        ? NetworkImage(person.avatarPath!)
-                        : FileImage(File(person.avatarPath!))) as ImageProvider
-                    : null,
-                child: person.avatarPath == null || person.avatarPath!.isEmpty
-                    ? Text(person.name[0].toUpperCase())
-                    : null,
+              leading: PersonAvatar(
+                person: person,
+                radius: 22,
               ),
               title: Text(person.name),
               subtitle: person.bio == null || person.bio!.isEmpty

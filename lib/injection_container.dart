@@ -40,6 +40,8 @@ import 'features/message_management/domain/usecases/delete_message.dart';
 
 import 'features/message_management/presentation/cubit/message_cubit.dart';
 
+import 'features/project_management/domain/usecases/delete_projects.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -94,6 +96,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddProject(sl()));
   sl.registerLazySingleton(() => UpdateProject(sl()));
   sl.registerLazySingleton(() => DeleteProject(sl()));
+  sl.registerLazySingleton(() => DeleteProjects(sl()));
   sl.registerLazySingleton(() => GetMessages(sl()));
   sl.registerLazySingleton(() => AddMessage(sl()));
   sl.registerLazySingleton(() => UpdateMessage(sl()));
@@ -118,6 +121,7 @@ Future<void> init() async {
       addProject: sl(),
       updateProject: sl(),
       deleteProject: sl(),
+      deleteProjects: sl(),
     ),
   );
 

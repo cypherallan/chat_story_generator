@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -20,12 +21,11 @@ class ProfileAvatar extends StatelessWidget {
 
     if (imagePath != null && imagePath!.isNotEmpty) {
       if (imagePath!.startsWith('http')) {
-        image = NetworkImage(imagePath!);
+        image = CachedNetworkImageProvider(imagePath!);
       } else {
         image = FileImage(File(imagePath!));
       }
     }
-
     return CircleAvatar(
       radius: radius,
       backgroundImage: image,
