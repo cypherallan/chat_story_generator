@@ -8,11 +8,15 @@ import '../../../message_management/domain/entities/message_status.dart';
 class ChatListItemWidget extends StatelessWidget {
   final ChatListItem chat;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool isSelected;
 
   const ChatListItemWidget({
     super.key,
     required this.chat,
     required this.onTap,
+    required this.onLongPress,
+    required this.isSelected,
   });
 
   @override
@@ -31,6 +35,10 @@ class ChatListItemWidget extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
+      onLongPress: onLongPress,
+      selected: isSelected,
+      // ignore: deprecated_member_use
+      selectedTileColor: Colors.blue.withOpacity(0.15),
       leading: Stack(
         children: [
           CircleAvatar(
@@ -38,7 +46,9 @@ class ChatListItemWidget extends StatelessWidget {
             backgroundImage: image,
             child: image == null ? Text(chat.chatName[0].toUpperCase()) : null,
           ),
-          if (chat.isOnline)
+
+          // Online indicator
+          if (chat.isOnline && !isSelected)
             Positioned(
               right: 0,
               bottom: 0,
@@ -52,6 +62,30 @@ class ChatListItemWidget extends StatelessWidget {
                     width: 2,
                   ),
                   shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+          // Selection indicator
+          if (isSelected)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.check,
+                  size: 16,
+                  color: Colors.white,
                 ),
               ),
             ),

@@ -14,17 +14,38 @@ import '../models/chat_list_item.dart';
 import '../../../../injection_container.dart' as di;
 
 class ProjectsListWidget extends StatelessWidget {
-  const ProjectsListWidget({super.key});
+  final Set<String> selectedChatIds;
+  final Function(String) onChatSelected;
+
+  const ProjectsListWidget({
+    super.key,
+    required this.selectedChatIds,
+    required this.onChatSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const _ProjectsListBody();
+    return _ProjectsListBody(
+      selectedChatIds: selectedChatIds,
+      onChatSelected: onChatSelected,
+    );
   }
 }
 
-class _ProjectsListBody extends StatelessWidget {
-  const _ProjectsListBody();
+class _ProjectsListBody extends StatefulWidget {
+  final Set<String> selectedChatIds;
+  final Function(String) onChatSelected;
 
+  const _ProjectsListBody({
+    required this.selectedChatIds,
+    required this.onChatSelected,
+  });
+
+  @override
+  State<_ProjectsListBody> createState() => _ProjectsListBodyState();
+}
+
+class _ProjectsListBodyState extends State<_ProjectsListBody> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PersonCubit, PersonState>(
@@ -95,7 +116,16 @@ class _ProjectsListBody extends StatelessWidget {
 
                   return ChatListItemWidget(
                     chat: chat,
+                    isSelected: widget.selectedChatIds.contains(project.id),
+                    onLongPress: () {
+                      widget.onChatSelected(project.id);
+                    },
                     onTap: () async {
+                      if (widget.selectedChatIds.isNotEmpty) {
+                        widget.onChatSelected(project.id);
+                        return;
+                      }
+
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
