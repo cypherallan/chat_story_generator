@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../person_management/domain/entities/person.dart';
-import 'dart:io';
 import 'expression_panel.dart';
 import 'attachment_sheet.dart';
+import '../../domain/entities/message.dart';
 
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
@@ -11,7 +11,8 @@ class MessageComposer extends StatefulWidget {
   final Function(String senderId, String text) onSend;
 
   final VoidCallback? onTypingStarted;
-
+  final Message? replyingTo;
+  final VoidCallback? onCancelReply;
   final VoidCallback? onTypingStopped;
 
   const MessageComposer({
@@ -22,6 +23,8 @@ class MessageComposer extends StatefulWidget {
     required this.onSend,
     this.onTypingStarted,
     this.onTypingStopped,
+    this.replyingTo,
+    this.onCancelReply,
   });
 
   @override
@@ -96,6 +99,52 @@ class _MessageComposerState extends State<MessageComposer> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.replyingTo != null)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 40,
+                    color: const Color(0xff25D366),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Replying",
+                          style: TextStyle(
+                            color: Color(0xff25D366),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          widget.replyingTo!.text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onCancelReply,
+                  ),
+                ],
+              ),
+            ),
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 8,
@@ -150,19 +199,12 @@ class _MessageComposerState extends State<MessageComposer> {
                                 (person) =>
                                     person.id == widget.selectedSenderId,
                               );
-
                               ImageProvider? image;
 
-                              if (currentPerson.avatarPath != null) {
-                                if (currentPerson.avatarPath!
-                                    .startsWith('http')) {
-                                  image =
-                                      NetworkImage(currentPerson.avatarPath!);
-                                } else {
-                                  image = FileImage(
-                                    File(currentPerson.avatarPath!),
-                                  );
-                                }
+                              if (currentPerson.avatarPath != null &&
+                                  currentPerson.avatarPath!
+                                      .startsWith('http')) {
+                                image = NetworkImage(currentPerson.avatarPath!);
                               }
 
                               return AnimatedSwitcher(

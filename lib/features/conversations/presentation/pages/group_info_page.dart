@@ -86,10 +86,6 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                       image = CachedNetworkImageProvider(
                         widget.project.groupImagePath!,
                       );
-                    } else {
-                      image = FileImage(
-                        File(widget.project.groupImagePath!),
-                      );
                     }
                   }
 

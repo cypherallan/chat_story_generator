@@ -60,6 +60,7 @@ class _AddMessagePageState extends State<AddMessagePage> {
     await context.read<MessageCubit>().createMessage(
           projectId: widget.projectId,
           senderId: _selectedPerson!.id,
+          senderName: _selectedPerson!.name,
           text: _messageController.text.trim(),
         );
 

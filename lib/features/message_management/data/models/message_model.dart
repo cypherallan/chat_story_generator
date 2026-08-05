@@ -10,6 +10,10 @@ class MessageModel extends Message {
     required super.createdAt,
     super.status = MessageStatus.sent,
     super.isEdited = false,
+    super.replyToMessageId,
+    super.replyToSenderId,
+    super.replyToSenderName,
+    super.replyToText,
   });
 
   factory MessageModel.fromEntity(Message message) {
@@ -21,6 +25,10 @@ class MessageModel extends Message {
       createdAt: message.createdAt,
       status: message.status,
       isEdited: message.isEdited,
+      replyToMessageId: message.replyToMessageId,
+      replyToSenderId: message.replyToSenderId,
+      replyToSenderName: message.replyToSenderName,
+      replyToText: message.replyToText,
     );
   }
 
@@ -35,6 +43,10 @@ class MessageModel extends Message {
         (json['status'] as String?) ?? 'sent',
       ),
       isEdited: (json['isEdited'] as bool?) ?? false,
+      replyToMessageId: json['replyToMessageId'] as String?,
+      replyToSenderId: json['replyToSenderId'] as String?,
+      replyToSenderName: json['replyToSenderName'] as String?,
+      replyToText: json['replyToText'] as String?,
     );
   }
 
@@ -47,6 +59,10 @@ class MessageModel extends Message {
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,
       'isEdited': isEdited,
+      'replyToMessageId': replyToMessageId,
+      'replyToSenderId': replyToSenderId,
+      'replyToSenderName': replyToSenderName,
+      'replyToText': replyToText,
     };
   }
 }

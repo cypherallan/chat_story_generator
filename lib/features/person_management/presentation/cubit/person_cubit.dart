@@ -25,10 +25,31 @@ class PersonCubit extends Cubit<PersonState> {
     required this.storageService,
   }) : super(PersonInitial());
 
-  Future<void> editPerson(Person person) async {
+  Future<void> editPerson(
+    Person person, {
+    String? newImagePath,
+  }) async {
     emit(PersonLoading());
 
-    final result = await updatePerson(person);
+    var updatedPerson = person;
+
+    if (newImagePath != null) {
+      final imageUrl = await storageService.uploadParticipantImage(
+        newImagePath,
+        onProgress: (_) {},
+      );
+
+      if (imageUrl == null) {
+        emit(const PersonError('Failed to upload image.'));
+        return;
+      }
+
+      updatedPerson = person.copyWith(
+        avatarPath: imageUrl,
+      );
+    }
+
+    final result = await updatePerson(updatedPerson);
 
     result.fold(
       (failure) => emit(PersonError(failure.message)),

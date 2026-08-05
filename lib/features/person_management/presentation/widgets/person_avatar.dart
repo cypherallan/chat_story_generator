@@ -17,18 +17,18 @@ class PersonAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (person.avatarPath == null || person.avatarPath!.isEmpty) {
+    final path = person.avatarPath;
+
+    if (path == null || path.isEmpty) {
       return CircleAvatar(
         radius: radius,
-        child: Text(
-          person.name[0].toUpperCase(),
-        ),
+        child: Text(person.name[0].toUpperCase()),
       );
     }
 
-    if (person.avatarPath!.startsWith('http')) {
+    if (path.startsWith('http')) {
       return CachedNetworkImage(
-        imageUrl: person.avatarPath!,
+        imageUrl: path,
         imageBuilder: (_, imageProvider) => CircleAvatar(
           radius: radius,
           backgroundImage: imageProvider,
@@ -45,18 +45,25 @@ class PersonAvatar extends StatelessWidget {
         ),
         errorWidget: (_, __, ___) => CircleAvatar(
           radius: radius,
-          child: Text(
-            person.name[0].toUpperCase(),
-          ),
+          child: Text(person.name[0].toUpperCase()),
+        ),
+      );
+    }
+
+    final file = File(path);
+
+    if (file.existsSync()) {
+      return CircleAvatar(
+        radius: radius,
+        child: Text(
+          person.name[0].toUpperCase(),
         ),
       );
     }
 
     return CircleAvatar(
       radius: radius,
-      backgroundImage: FileImage(
-        File(person.avatarPath!),
-      ),
+      child: Text(person.name[0].toUpperCase()),
     );
   }
 }

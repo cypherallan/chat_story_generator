@@ -74,13 +74,12 @@ class _EditParticipantPageState extends State<EditParticipantPage> {
           ? null
           : _bioController.text.trim(),
       isVerified: _isVerified,
-
-      // For now:
-      // keep existing Firebase image URL unless we later add replacement upload
-      avatarPath: _imagePath ?? widget.person.avatarPath,
+      avatarPath: widget.person.avatarPath,
     );
+
     await context.read<PersonCubit>().editPerson(
           updatedPerson,
+          newImagePath: _imagePath,
         );
 
     if (mounted) {

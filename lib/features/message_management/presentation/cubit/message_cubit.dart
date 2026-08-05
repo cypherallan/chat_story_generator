@@ -56,7 +56,9 @@ class MessageCubit extends Cubit<MessageState> {
   Future<void> createMessage({
     required String projectId,
     required String senderId,
+    required String senderName,
     required String text,
+    Message? replyingTo,
   }) async {
     final message = Message(
       id: const Uuid().v4(),
@@ -65,6 +67,10 @@ class MessageCubit extends Cubit<MessageState> {
       text: text,
       createdAt: DateTime.now(),
       status: MessageStatus.sending,
+      replyToMessageId: replyingTo?.id,
+      replyToSenderId: replyingTo?.senderId,
+      replyToSenderName: replyingTo?.replyToSenderName ?? senderName,
+      replyToText: replyingTo?.text,
     );
 
     final result = await addMessage(message);

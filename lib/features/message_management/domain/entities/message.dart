@@ -9,6 +9,10 @@ class Message extends Equatable {
   final DateTime createdAt;
   final MessageStatus status;
   final bool isEdited;
+  final String? replyToMessageId;
+  final String? replyToSenderId;
+  final String? replyToSenderName;
+  final String? replyToText;
 
   const Message({
     required this.id,
@@ -18,8 +22,11 @@ class Message extends Equatable {
     required this.createdAt,
     this.status = MessageStatus.sent,
     this.isEdited = false,
+    this.replyToMessageId,
+    this.replyToSenderId,
+    this.replyToSenderName,
+    this.replyToText,
   });
-
   Message copyWith({
     String? id,
     String? projectId,
@@ -28,6 +35,10 @@ class Message extends Equatable {
     DateTime? createdAt,
     MessageStatus? status,
     bool? isEdited,
+    String? replyToMessageId,
+    String? replyToSenderId,
+    String? replyToSenderName,
+    String? replyToText,
   }) {
     return Message(
       id: id ?? this.id,
@@ -37,6 +48,10 @@ class Message extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       isEdited: isEdited ?? this.isEdited,
+      replyToMessageId: replyToMessageId ?? this.replyToMessageId,
+      replyToSenderId: replyToSenderId ?? this.replyToSenderId,
+      replyToSenderName: replyToSenderName ?? this.replyToSenderName,
+      replyToText: replyToText ?? this.replyToText,
     );
   }
 
@@ -49,5 +64,9 @@ class Message extends Equatable {
         createdAt,
         status,
         isEdited,
+        replyToMessageId,
+        replyToSenderId,
+        replyToSenderName,
+        replyToText,
       ];
 }
