@@ -15,6 +15,7 @@ class MessageModel extends Message {
     super.replyToSenderId,
     super.replyToSenderName,
     super.replyToText,
+    super.reactions = const {},
   });
 
   factory MessageModel.fromEntity(Message message) {
@@ -31,6 +32,7 @@ class MessageModel extends Message {
       replyToSenderId: message.replyToSenderId,
       replyToSenderName: message.replyToSenderName,
       replyToText: message.replyToText,
+      reactions: message.reactions,
     );
   }
 
@@ -50,6 +52,9 @@ class MessageModel extends Message {
       replyToSenderId: json['replyToSenderId'] as String?,
       replyToSenderName: json['replyToSenderName'] as String?,
       replyToText: json['replyToText'] as String?,
+      reactions: Map<String, String>.from(
+        json['reactions'] ?? {},
+      ),
     );
   }
 
@@ -67,6 +72,7 @@ class MessageModel extends Message {
       'replyToSenderId': replyToSenderId,
       'replyToSenderName': replyToSenderName,
       'replyToText': replyToText,
+      'reactions': reactions,
     };
   }
 }

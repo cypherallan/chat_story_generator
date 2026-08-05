@@ -15,6 +15,7 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../conversations/presentation/pages/group_info_page.dart';
 import '../../../message_management/domain/entities/message.dart';
+import '../../../message_management/presentation/widgets/reaction_picker.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -35,6 +36,7 @@ class _ConversationPageState extends State<ConversationPage> {
   bool otherPersonTyping = false;
   final Set<String> selectedMessageIds = {};
   Message? replyingTo;
+  String? reactionMessageId;
   String? highlightedMessageId;
 
   bool get isSelectionMode => selectedMessageIds.isNotEmpty;
@@ -180,7 +182,33 @@ class _ConversationPageState extends State<ConversationPage> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.emoji_emotions_outlined),
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (selectedMessageIds.length != 1) return;
+
+                        final messageId = selectedMessageIds.first;
+
+                        final messageCubit = context.read<MessageCubit>();
+
+                        await showDialog(
+                          context: context,
+                          builder: (dialogContext) {
+                            return Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: ReactionPicker(
+                                onSelected: (emoji) {
+                                  messageCubit.toggleReaction(
+                                    messageId: messageId,
+                                    userId: widget.project.ownerId,
+                                    emoji: emoji,
+                                  );
+
+                                  Navigator.pop(dialogContext);
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.reply),

@@ -14,6 +14,7 @@ class Message extends Equatable {
   final String? replyToSenderId;
   final String? replyToSenderName;
   final String? replyToText;
+  final Map<String, String> reactions;
 
   const Message({
     required this.id,
@@ -28,6 +29,7 @@ class Message extends Equatable {
     this.replyToSenderId,
     this.replyToSenderName,
     this.replyToText,
+    this.reactions = const {},
   });
   Message copyWith({
     String? id,
@@ -42,6 +44,7 @@ class Message extends Equatable {
     String? replyToSenderId,
     String? replyToSenderName,
     String? replyToText,
+    Map<String, String>? reactions,
   }) {
     return Message(
       id: id ?? this.id,
@@ -56,6 +59,7 @@ class Message extends Equatable {
       replyToSenderId: replyToSenderId ?? this.replyToSenderId,
       replyToSenderName: replyToSenderName ?? this.replyToSenderName,
       replyToText: replyToText ?? this.replyToText,
+      reactions: reactions ?? this.reactions,
     );
   }
 
@@ -73,5 +77,6 @@ class Message extends Equatable {
         replyToSenderId,
         replyToSenderName,
         replyToText,
+        reactions,
       ];
 }

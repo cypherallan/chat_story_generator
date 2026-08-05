@@ -146,6 +146,74 @@ class MessageCubit extends Cubit<MessageState> {
     );
   }
 
+  Future<void> addReaction({
+    required String messageId,
+    required String userId,
+    required String emoji,
+  }) async {
+    if (state is! MessageLoaded) return;
+
+    final messages = (state as MessageLoaded).messages;
+
+    final message = messages.firstWhere(
+      (m) => m.id == messageId,
+    );
+
+    final updatedReactions = Map<String, String>.from(
+      message.reactions,
+    );
+
+    updatedReactions[userId] = emoji;
+
+    final updatedMessage = message.copyWith(
+      reactions: updatedReactions,
+    );
+
+    final result = await updateMessage(updatedMessage);
+
+    result.fold(
+      (failure) => emit(MessageError(failure.message)),
+      (_) {},
+    );
+  }
+
+  Future<void> toggleReaction({
+    required String messageId,
+    required String userId,
+    required String emoji,
+  }) async {
+    if (state is! MessageLoaded) return;
+
+    final messages = (state as MessageLoaded).messages;
+
+    final message = messages.firstWhere(
+      (m) => m.id == messageId,
+    );
+
+    final updatedReactions = Map<String, String>.from(
+      message.reactions,
+    );
+
+    if (updatedReactions[userId] == emoji) {
+      // Remove reaction if user taps the same emoji again
+      updatedReactions.remove(userId);
+    } else {
+      // Add/change reaction
+      updatedReactions[userId] = emoji;
+    }
+
+    final updatedMessage = message.copyWith(
+      reactions: updatedReactions,
+    );
+
+    final result = await updateMessage(updatedMessage);
+
+    result.fold(
+      (failure) => emit(MessageError(failure.message)),
+      (_) {},
+    );
+  }
+
   Future<void> removeMessage({
     required String projectId,
     required String messageId,

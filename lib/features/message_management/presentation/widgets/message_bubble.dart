@@ -94,160 +94,195 @@ class _MessageBubbleState extends State<MessageBubble>
       onLongPress: widget.onLongPress,
       child: Align(
         alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 1000),
-          margin: const EdgeInsets.symmetric(
-            vertical: 2,
-            horizontal: 8,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 6,
-          ),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * .75,
-            minWidth: 80,
-          ),
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? const Color(0x3325D366)
-                : widget.isMine
-                    ? const Color(0xffE7FFDB)
-                    : Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(.05),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              )
-            ],
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(widget.isMine ? 16 : 4),
-              bottomRight: Radius.circular(widget.isMine ? 4 : 16),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+        child: Stack(
+            clipBehavior: Clip.none,
+            alignment:
+                widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
             children: [
-              if (widget.isGroup && !widget.isMine)
-                Row(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 1000),
+                margin: const EdgeInsets.symmetric(
+                  vertical: 2,
+                  horizontal: 8,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * .75,
+                  minWidth: 80,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? const Color(0x3325D366)
+                      : widget.isMine
+                          ? const Color(0xffE7FFDB)
+                          : Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(.05),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    )
+                  ],
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(widget.isMine ? 16 : 4),
+                    bottomRight: Radius.circular(widget.isMine ? 4 : 16),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundImage: _getAvatarImage(),
-                      child: widget.sender.avatarPath == null ||
-                              widget.sender.avatarPath!.isEmpty
-                          ? Text(
-                              widget.sender.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 12,
+                    if (widget.isGroup && !widget.isMine)
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundImage: _getAvatarImage(),
+                            child: widget.sender.avatarPath == null ||
+                                    widget.sender.avatarPath!.isEmpty
+                                ? Text(
+                                    widget.sender.name[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.sender.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                              fontSize: 13,
+                            ),
+                          )
+                        ],
+                      ),
+                    if (!widget.message.isDeleted &&
+                        widget.message.replyToText != null)
+                      GestureDetector(
+                        onTap: widget.onReplyTap,
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: const Border(
+                              left: BorderSide(
+                                color: Color(0xff25D366),
+                                width: 4,
                               ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.message.replyToSenderName ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff25D366),
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                widget.message.replyToText!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     Text(
-                      widget.sender.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                        fontSize: 13,
+                      widget.message.text,
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        height: 1.3,
+                        color: widget.message.isDeleted
+                            ? Colors.grey
+                            : Colors.black87,
+                        fontStyle: widget.message.isDeleted
+                            ? FontStyle.italic
+                            : FontStyle.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.message.isEdited)
+                            const Text(
+                              "Edited",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatTime(
+                              widget.message.createdAt,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          if (widget.isMine && !widget.message.isDeleted) ...[
+                            const SizedBox(width: 3),
+                            MessageStatusIcon(
+                              status: widget.message.status,
+                            )
+                          ]
+                        ],
                       ),
                     )
                   ],
                 ),
-              if (!widget.message.isDeleted &&
-                  widget.message.replyToText != null)
-                GestureDetector(
-                  onTap: widget.onReplyTap,
+              ),
+              if (widget.message.reactions.isNotEmpty)
+                Positioned(
+                  bottom: -12,
+                  left: widget.isMine ? null : 12,
+                  right: widget.isMine ? 12 : null,
                   child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: const Border(
-                        left: BorderSide(
-                          color: Color(0xff25D366),
-                          width: 4,
-                        ),
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.message.replyToSenderName ?? '',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff25D366),
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          widget.message.replyToText!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                          ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 2,
                         ),
                       ],
                     ),
-                  ),
-                ),
-              Text(
-                widget.message.text,
-                style: TextStyle(
-                  fontSize: 15.5,
-                  height: 1.3,
-                  color:
-                      widget.message.isDeleted ? Colors.grey : Colors.black87,
-                  fontStyle: widget.message.isDeleted
-                      ? FontStyle.italic
-                      : FontStyle.normal,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.message.isEdited)
-                      const Text(
-                        "Edited",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatTime(
-                        widget.message.createdAt,
-                      ),
+                    child: Text(
+                      widget.message.reactions.values.join(' '),
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
+                        fontSize: 16,
                       ),
                     ),
-                    if (widget.isMine && !widget.message.isDeleted) ...[
-                      const SizedBox(width: 3),
-                      MessageStatusIcon(
-                        status: widget.message.status,
-                      )
-                    ]
-                  ],
+                  ),
                 ),
-              )
-            ],
-          ),
-        ),
+            ]),
       ),
     );
   }
