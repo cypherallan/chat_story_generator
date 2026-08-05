@@ -217,7 +217,49 @@ class _ConversationPageState extends State<ConversationPage> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (selectedMessageIds.isEmpty) return;
+
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text("Delete message"),
+                              content: Text(
+                                selectedMessageIds.length == 1
+                                    ? "Delete this message?"
+                                    : "Delete these ${selectedMessageIds.length} messages?",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text("Cancel"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Delete"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirm != true) return;
+
+                        final messageCubit = context.read<MessageCubit>();
+
+                        for (final id in selectedMessageIds) {
+                          await messageCubit.removeMessage(
+                            projectId: widget.project.id,
+                            messageId: id,
+                          );
+                        }
+
+                        setState(() {
+                          selectedMessageIds.clear();
+                        });
+                      },
                     ),
                     PopupMenuButton(
                       itemBuilder: (_) => const [
