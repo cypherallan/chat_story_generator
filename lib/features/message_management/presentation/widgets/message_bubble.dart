@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/entities/message.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'message_status_icon.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final Message message;
   final Person sender;
   final bool isMine;
   final bool isGroup;
   final bool isSelected;
+  final bool isHighlighted;
+
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onReplyTap;
 
   const MessageBubble({
     super.key,
@@ -19,23 +23,65 @@ class MessageBubble extends StatelessWidget {
     required this.isMine,
     required this.isGroup,
     this.isSelected = false,
+    this.isHighlighted = false,
     this.onTap,
     this.onLongPress,
+    this.onReplyTap,
   });
+
+  @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..addListener(() {
+        setState(() {});
+      });
+
+    if (widget.isHighlighted) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isHighlighted && !oldWidget.isHighlighted) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
+
     return '$hour:$minute';
   }
 
   ImageProvider? _getAvatarImage() {
-    if (sender.avatarPath == null || sender.avatarPath!.isEmpty) {
+    if (widget.sender.avatarPath == null || widget.sender.avatarPath!.isEmpty) {
       return null;
     }
 
-    if (sender.avatarPath!.startsWith('http')) {
-      return NetworkImage(sender.avatarPath!);
+    if (widget.sender.avatarPath!.startsWith('http')) {
+      return NetworkImage(widget.sender.avatarPath!);
     }
 
     return null;
@@ -44,51 +90,58 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Align(
-        alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 1000),
+          margin: const EdgeInsets.symmetric(
+            vertical: 2,
+            horizontal: 8,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
+            maxWidth: MediaQuery.of(context).size.width * .75,
             minWidth: 80,
           ),
           decoration: BoxDecoration(
-            color: isSelected
+            color: widget.isSelected
                 ? const Color(0x3325D366)
-                : isMine
+                : widget.isMine
                     ? const Color(0xffE7FFDB)
                     : Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(.05),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
-              ),
+              )
             ],
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(isMine ? 16 : 4),
-              bottomRight: Radius.circular(isMine ? 4 : 16),
+              bottomLeft: Radius.circular(widget.isMine ? 16 : 4),
+              bottomRight: Radius.circular(widget.isMine ? 4 : 16),
             ),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (isGroup && !isMine) ...[
+              if (widget.isGroup && !widget.isMine)
                 Row(
                   children: [
                     CircleAvatar(
                       radius: 14,
                       backgroundImage: _getAvatarImage(),
-                      child: sender.avatarPath == null ||
-                              sender.avatarPath!.isEmpty
+                      child: widget.sender.avatarPath == null ||
+                              widget.sender.avatarPath!.isEmpty
                           ? Text(
-                              sender.name[0].toUpperCase(),
+                              widget.sender.name[0].toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 12,
                               ),
@@ -97,69 +150,60 @@ class MessageBubble extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      sender.name,
+                      widget.sender.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
                         fontSize: 13,
                       ),
-                    ),
+                    )
                   ],
                 ),
-                const SizedBox(height: 4),
-              ],
-              if (message.replyToText != null) ...[
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: const Border(
-                      left: BorderSide(
-                        color: Color(0xff25D366),
-                        width: 4,
+              if (widget.message.replyToText != null)
+                GestureDetector(
+                  onTap: widget.onReplyTap,
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: const Border(
+                        left: BorderSide(
+                          color: Color(0xff25D366),
+                          width: 4,
+                        ),
                       ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (message.replyToSenderName != null)
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          message.replyToSenderId == message.senderId
-                              ? "You"
-                              : message.replyToSenderName!,
+                          widget.message.replyToSenderName ?? '',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xff25D366),
                             fontSize: 12,
                           ),
                         ),
-                      const SizedBox(height: 2),
-                      Text(
-                        message.replyToText!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.black87,
+                        Text(
+                          widget.message.replyToText!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ],
               Text(
-                message.text,
+                widget.message.text,
                 style: const TextStyle(
                   fontSize: 15.5,
                   height: 1.3,
-                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 2),
@@ -167,34 +211,34 @@ class MessageBubble extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if (message.isEdited) ...[
-                      Text(
-                        'Edited',
+                    if (widget.message.isEdited)
+                      const Text(
+                        "Edited",
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey.shade500,
+                          color: Colors.grey,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                    ],
+                    const SizedBox(width: 4),
                     Text(
-                      _formatTime(message.createdAt),
-                      style: TextStyle(
+                      _formatTime(
+                        widget.message.createdAt,
+                      ),
+                      style: const TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: Colors.grey,
                       ),
                     ),
-                    if (isMine) ...[
+                    if (widget.isMine) ...[
                       const SizedBox(width: 3),
                       MessageStatusIcon(
-                        status: message.status,
-                      ),
-                    ],
+                        status: widget.message.status,
+                      )
+                    ]
                   ],
                 ),
-              ),
+              )
             ],
           ),
         ),

@@ -31,9 +31,11 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   late String selectedSenderId;
   final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _messageKeys = {};
   bool otherPersonTyping = false;
   final Set<String> selectedMessageIds = {};
   Message? replyingTo;
+  String? highlightedMessageId;
 
   bool get isSelectionMode => selectedMessageIds.isNotEmpty;
 
@@ -50,6 +52,33 @@ class _ConversationPageState extends State<ConversationPage> {
   void clearMessageSelection() {
     setState(() {
       selectedMessageIds.clear();
+    });
+  }
+
+  void _scrollToMessage(String messageId) {
+    final key = _messageKeys[messageId];
+
+    if (key?.currentContext == null) return;
+
+    Scrollable.ensureVisible(
+      key!.currentContext!,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      alignment: 0.5,
+    ).then((_) {
+      if (!mounted) return;
+
+      setState(() {
+        highlightedMessageId = messageId;
+      });
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() {
+            highlightedMessageId = null;
+          });
+        }
+      });
     });
   }
 
@@ -313,23 +342,50 @@ class _ConversationPageState extends State<ConversationPage> {
                                       final isMine =
                                           sender.id == widget.project.ownerId;
 
-                                      return MessageBubble(
-                                        isSelected: selectedMessageIds
-                                            .contains(message.id),
-                                        onLongPress: () {
-                                          toggleMessageSelection(message.id);
-                                        },
-                                        onTap: () {
-                                          if (isSelectionMode) {
-                                            toggleMessageSelection(message.id);
-                                          }
-                                        },
-                                        message: message,
-                                        sender: sender,
-                                        isMine: isMine,
-                                        isGroup: widget
-                                                .project.participantIds.length >
-                                            2,
+                                      return KeyedSubtree(
+                                        key: _messageKeys.putIfAbsent(
+                                          message.id,
+                                          () => GlobalKey(),
+                                        ),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                              milliseconds: 1000),
+                                          curve: Curves.easeOut,
+                                          color:
+                                              highlightedMessageId == message.id
+                                                  ? const Color(0xffA8E6A1)
+                                                  : Colors.transparent,
+                                          child: MessageBubble(
+                                            isSelected: selectedMessageIds
+                                                .contains(message.id),
+                                            isHighlighted:
+                                                highlightedMessageId ==
+                                                    message.id,
+                                            onLongPress: () {
+                                              toggleMessageSelection(
+                                                  message.id);
+                                            },
+                                            onTap: () {
+                                              if (isSelectionMode) {
+                                                toggleMessageSelection(
+                                                    message.id);
+                                              }
+                                            },
+                                            onReplyTap:
+                                                message.replyToMessageId == null
+                                                    ? null
+                                                    : () {
+                                                        _scrollToMessage(message
+                                                            .replyToMessageId!);
+                                                      },
+                                            message: message,
+                                            sender: sender,
+                                            isMine: isMine,
+                                            isGroup: widget.project
+                                                    .participantIds.length >
+                                                2,
+                                          ),
+                                        ),
                                       );
                                     },
                                   );
