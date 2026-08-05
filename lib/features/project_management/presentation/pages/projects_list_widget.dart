@@ -147,6 +147,10 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                         return;
                       }
 
+                      await context
+                          .read<ProjectCubit>()
+                          .clearUnreadCount(project.id);
+
                       await Navigator.push(
                         context,
                         MaterialPageRoute(

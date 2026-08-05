@@ -404,6 +404,25 @@ class _ConversationPageState extends State<ConversationPage> {
                                     itemBuilder: (context, index) {
                                       final message = messages[index];
 
+                                      final previousMessage = index > 0
+                                          ? messages[index - 1]
+                                          : null;
+
+                                      final nextMessage =
+                                          index < messages.length - 1
+                                              ? messages[index + 1]
+                                              : null;
+
+                                      final isFirstInGroup =
+                                          previousMessage == null ||
+                                              previousMessage.senderId !=
+                                                  message.senderId;
+
+                                      final isLastInGroup =
+                                          nextMessage == null ||
+                                              nextMessage.senderId !=
+                                                  message.senderId;
+
                                       final sender =
                                           personState.persons.firstWhere(
                                         (person) =>
@@ -412,7 +431,6 @@ class _ConversationPageState extends State<ConversationPage> {
 
                                       final isMine =
                                           sender.id == widget.project.ownerId;
-
                                       return KeyedSubtree(
                                         key: _messageKeys.putIfAbsent(
                                           message.id,
@@ -427,6 +445,7 @@ class _ConversationPageState extends State<ConversationPage> {
                                                   ? const Color(0xffA8E6A1)
                                                   : Colors.transparent,
                                           child: MessageBubble(
+                                            key: ValueKey(message.id),
                                             isSelected: selectedMessageIds
                                                 .contains(message.id),
                                             isHighlighted:
@@ -435,6 +454,20 @@ class _ConversationPageState extends State<ConversationPage> {
                                             onLongPress: () {
                                               toggleMessageSelection(
                                                   message.id);
+                                            },
+                                            onSwipeReply: () {
+                                              final originalSender = personState
+                                                  .persons
+                                                  .firstWhere(
+                                                (p) => p.id == message.senderId,
+                                              );
+
+                                              setState(() {
+                                                replyingTo = message.copyWith(
+                                                  replyToSenderName:
+                                                      originalSender.name,
+                                                );
+                                              });
                                             },
                                             onTap: () {
                                               if (isSelectionMode) {
@@ -455,6 +488,8 @@ class _ConversationPageState extends State<ConversationPage> {
                                             isGroup: widget.project
                                                     .participantIds.length >
                                                 2,
+                                            isFirstInGroup: isFirstInGroup,
+                                            isLastInGroup: isLastInGroup,
                                           ),
                                         ),
                                       );

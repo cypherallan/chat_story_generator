@@ -71,12 +71,24 @@ class ConversationBody extends StatelessWidget {
                     final sender = persons.firstWhere(
                       (p) => p.id == message.senderId,
                     );
+                    final messageAbove = index < messages.length - 1
+                        ? messages[index + 1]
+                        : null;
 
+                    final messageBelow = index > 0 ? messages[index - 1] : null;
+
+                    final isFirstInGroup = messageAbove == null ||
+                        messageAbove.senderId != message.senderId;
+
+                    final isLastInGroup = messageBelow == null ||
+                        messageBelow.senderId != message.senderId;
                     return MessageBubble(
                       message: message,
                       sender: sender,
                       isMine: sender.id == ownerId,
                       isGroup: persons.length > 2,
+                      isFirstInGroup: isFirstInGroup,
+                      isLastInGroup: isLastInGroup,
                     );
                   },
                 ),

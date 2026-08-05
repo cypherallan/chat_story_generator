@@ -262,6 +262,9 @@ class MessageCubit extends Cubit<MessageState> {
           lastMessageTime: message.createdAt,
           lastSenderId: message.senderId,
           lastMessageStatus: message.status,
+          unreadCount: message.senderId == project.ownerId
+              ? project.unreadCount
+              : project.unreadCount + 1,
         );
 
         await updateProject(updated);

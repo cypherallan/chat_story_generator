@@ -50,12 +50,23 @@ class PlaybackChatList extends StatelessWidget {
                 );
 
                 final isMine = sender.id == project.ownerId;
+                final previousMessage = index > 0 ? messages[index - 1] : null;
 
+                final nextMessage =
+                    index < messages.length - 1 ? messages[index + 1] : null;
+
+                final isFirstInGroup = previousMessage == null ||
+                    previousMessage.senderId != message.senderId;
+
+                final isLastInGroup = nextMessage == null ||
+                    nextMessage.senderId != message.senderId;
                 return MessageBubble(
                   message: message,
                   sender: sender,
                   isMine: isMine,
                   isGroup: project.participantIds.length > 2,
+                  isFirstInGroup: isFirstInGroup,
+                  isLastInGroup: isLastInGroup,
                 );
               },
             );
