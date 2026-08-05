@@ -107,6 +107,20 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                       (p) => p.id == otherPersonId,
                     );
                   }
+                  String lastMessagePreview = project.lastMessage;
+
+                  if (isGroup && project.lastSenderId != null) {
+                    if (project.lastSenderId == project.ownerId) {
+                      lastMessagePreview = 'You: $lastMessagePreview';
+                    } else {
+                      final sender = personState.persons.firstWhere(
+                        (p) => p.id == project.lastSenderId,
+                      );
+
+                      lastMessagePreview =
+                          '${sender.name}: $lastMessagePreview';
+                    }
+                  }
 
                   final chat = ChatListItem(
                     project: project,
@@ -114,7 +128,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     avatarPath: isGroup ? null : otherPerson!.avatarPath,
                     groupImagePath: project.groupImagePath,
                     verified: isGroup ? false : otherPerson!.isVerified,
-                    lastMessage: project.lastMessage,
+                    lastMessage: lastMessagePreview,
                     lastMessageTime: project.lastMessageTime,
                     lastMessageStatus: project.lastMessageStatus,
                     isLastMessageMine: project.lastSenderId == project.ownerId,

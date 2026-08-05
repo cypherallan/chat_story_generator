@@ -33,6 +33,7 @@ class _ConversationPageState extends State<ConversationPage> {
   late String selectedSenderId;
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _messageKeys = {};
+  final Set<String> typingPersonIds = {};
   bool otherPersonTyping = false;
   final Set<String> selectedMessageIds = {};
   Message? replyingTo;
@@ -146,7 +147,7 @@ class _ConversationPageState extends State<ConversationPage> {
                             child: ConversationHeader(
                               project: widget.project,
                               persons: state.persons,
-                              isTyping: otherPersonTyping,
+                              typingPersonIds: typingPersonIds,
                             ),
                           );
                         }
@@ -518,6 +519,7 @@ class _ConversationPageState extends State<ConversationPage> {
                           onTypingStarted: () {
                             if (selectedSenderId != widget.project.ownerId) {
                               setState(() {
+                                typingPersonIds.add(selectedSenderId);
                                 otherPersonTyping = true;
                               });
 
@@ -530,6 +532,7 @@ class _ConversationPageState extends State<ConversationPage> {
                           onTypingStopped: () {
                             if (mounted) {
                               setState(() {
+                                typingPersonIds.remove(selectedSenderId);
                                 otherPersonTyping = false;
                               });
                             }

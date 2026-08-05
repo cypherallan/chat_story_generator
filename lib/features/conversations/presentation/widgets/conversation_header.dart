@@ -8,13 +8,15 @@ class ConversationHeader extends StatelessWidget {
   final Project? project;
   final List<Person>? persons;
   final bool isTyping;
+  final Set<String> typingPersonIds;
 
   const ConversationHeader({
     super.key,
     this.person,
     this.project,
     this.persons,
-    required this.isTyping,
+    this.isTyping = false,
+    this.typingPersonIds = const {},
   });
 
   String _formatLastSeen(DateTime dateTime) {
@@ -66,6 +68,35 @@ class ConversationHeader extends StatelessWidget {
     }
 
     return '${names.take(3).join(', ')}, +${names.length - 3}';
+  }
+
+  String _groupTypingText() {
+    if (persons == null || project == null) {
+      return '';
+    }
+
+    final typingPeople = persons!
+        .where(
+          (person) =>
+              project!.participantIds.contains(person.id) &&
+              typingPersonIds.contains(person.id),
+        )
+        .map((person) => person.name)
+        .toList();
+
+    if (typingPeople.isEmpty) {
+      return _groupParticipants();
+    }
+
+    if (typingPeople.length == 1) {
+      return '${typingPeople.first} is typing...';
+    }
+
+    if (typingPeople.length == 2) {
+      return '${typingPeople[0]}, ${typingPeople[1]} are typing...';
+    }
+
+    return '${typingPeople.length} people are typing...';
   }
 
   @override
@@ -127,7 +158,7 @@ class ConversationHeader extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 child: Text(
                   isGroup
-                      ? _groupParticipants()
+                      ? _groupTypingText()
                       : isTyping
                           ? 'typing...'
                           : person!.isOnline
@@ -146,7 +177,9 @@ class ConversationHeader extends StatelessWidget {
                   ),
                   style: TextStyle(
                     fontSize: 12,
-                    color: isTyping ? const Color(0xff25D366) : Colors.grey,
+                    color: (isTyping || typingPersonIds.isNotEmpty)
+                        ? const Color(0xff25D366)
+                        : Colors.grey,
                   ),
                 ),
               ),
