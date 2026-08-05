@@ -150,12 +150,24 @@ class MessageCubit extends Cubit<MessageState> {
     required String projectId,
     required String messageId,
   }) async {
-    final result = await deleteMessage(
-      DeleteMessageParams(
-        projectId: projectId,
-        messageId: messageId,
-      ),
+    if (state is! MessageLoaded) return;
+
+    final messages = (state as MessageLoaded).messages;
+
+    final message = messages.firstWhere(
+      (m) => m.id == messageId,
     );
+
+    final deletedMessage = message.copyWith(
+      text: 'This message was deleted',
+      isDeleted: true,
+      replyToMessageId: null,
+      replyToSenderId: null,
+      replyToSenderName: null,
+      replyToText: null,
+    );
+
+    final result = await updateMessage(deletedMessage);
 
     result.fold(
       (failure) => emit(MessageError(failure.message)),

@@ -8,6 +8,7 @@ class Message extends Equatable {
   final String text;
   final DateTime createdAt;
   final MessageStatus status;
+  final bool isDeleted;
   final bool isEdited;
   final String? replyToMessageId;
   final String? replyToSenderId;
@@ -21,6 +22,7 @@ class Message extends Equatable {
     required this.text,
     required this.createdAt,
     this.status = MessageStatus.sent,
+    this.isDeleted = false,
     this.isEdited = false,
     this.replyToMessageId,
     this.replyToSenderId,
@@ -35,6 +37,7 @@ class Message extends Equatable {
     DateTime? createdAt,
     MessageStatus? status,
     bool? isEdited,
+    bool? isDeleted,
     String? replyToMessageId,
     String? replyToSenderId,
     String? replyToSenderName,
@@ -48,6 +51,7 @@ class Message extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       isEdited: isEdited ?? this.isEdited,
+      isDeleted: isDeleted ?? this.isDeleted,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       replyToSenderId: replyToSenderId ?? this.replyToSenderId,
       replyToSenderName: replyToSenderName ?? this.replyToSenderName,
@@ -64,6 +68,7 @@ class Message extends Equatable {
         createdAt,
         status,
         isEdited,
+        isDeleted,
         replyToMessageId,
         replyToSenderId,
         replyToSenderName,

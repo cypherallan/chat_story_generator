@@ -159,7 +159,8 @@ class _MessageBubbleState extends State<MessageBubble>
                     )
                   ],
                 ),
-              if (widget.message.replyToText != null)
+              if (!widget.message.isDeleted &&
+                  widget.message.replyToText != null)
                 GestureDetector(
                   onTap: widget.onReplyTap,
                   child: Container(
@@ -201,9 +202,14 @@ class _MessageBubbleState extends State<MessageBubble>
                 ),
               Text(
                 widget.message.text,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15.5,
                   height: 1.3,
+                  color:
+                      widget.message.isDeleted ? Colors.grey : Colors.black87,
+                  fontStyle: widget.message.isDeleted
+                      ? FontStyle.italic
+                      : FontStyle.normal,
                 ),
               ),
               const SizedBox(height: 2),
@@ -230,7 +236,7 @@ class _MessageBubbleState extends State<MessageBubble>
                         color: Colors.grey,
                       ),
                     ),
-                    if (widget.isMine) ...[
+                    if (widget.isMine && !widget.message.isDeleted) ...[
                       const SizedBox(width: 3),
                       MessageStatusIcon(
                         status: widget.message.status,
