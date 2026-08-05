@@ -98,9 +98,6 @@ class _MessageBubbleState extends State<MessageBubble>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-      '${widget.message.text} -> first=${widget.isFirstInGroup}',
-    );
     return GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,

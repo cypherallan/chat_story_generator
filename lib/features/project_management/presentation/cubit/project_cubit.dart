@@ -149,6 +149,32 @@ class ProjectCubit extends Cubit<ProjectState> {
     );
   }
 
+  Future<void> incrementUnreadCount(String projectId) async {
+    final result = await getProjects();
+
+    result.fold(
+      (failure) => emit(ProjectError(failure.message)),
+      (projects) async {
+        final project = projects.firstWhere(
+          (p) => p.id == projectId,
+        );
+
+        final updated = project.copyWith(
+          unreadCount: project.unreadCount + 1,
+        );
+
+        final updateResult = await updateProject(updated);
+
+        updateResult.fold(
+          (failure) => emit(ProjectError(failure.message)),
+          (_) async {
+            await loadProjects();
+          },
+        );
+      },
+    );
+  }
+
   Future<void> clearUnreadCount(String projectId) async {
     final result = await getProjects();
 

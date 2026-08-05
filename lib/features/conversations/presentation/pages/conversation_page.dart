@@ -91,6 +91,7 @@ class _ConversationPageState extends State<ConversationPage> {
     selectedSenderId = widget.project.ownerId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PersonCubit>().setPersonOnline(selectedSenderId);
+      context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
     });
   }
 
@@ -582,6 +583,11 @@ class _ConversationPageState extends State<ConversationPage> {
                                   text: text,
                                   replyingTo: replyingTo,
                                 );
+                            if (senderId != widget.project.ownerId) {
+                              context
+                                  .read<ProjectCubit>()
+                                  .incrementUnreadCount(widget.project.id);
+                            }
 
                             replyingTo = null;
 
