@@ -6,6 +6,7 @@ class Message extends Equatable {
   final String projectId;
   final String senderId;
   final String text;
+  final String? imagePath;
   final DateTime createdAt;
   final MessageStatus status;
   final bool isDeleted;
@@ -21,6 +22,7 @@ class Message extends Equatable {
     required this.projectId,
     required this.senderId,
     required this.text,
+    this.imagePath,
     required this.createdAt,
     this.status = MessageStatus.sent,
     this.isDeleted = false,
@@ -42,6 +44,7 @@ class Message extends Equatable {
     bool? isDeleted,
     String? replyToMessageId,
     String? replyToSenderId,
+    String? imagePath,
     String? replyToSenderName,
     String? replyToText,
     Map<String, String>? reactions,
@@ -57,6 +60,7 @@ class Message extends Equatable {
       isDeleted: isDeleted ?? this.isDeleted,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       replyToSenderId: replyToSenderId ?? this.replyToSenderId,
+      imagePath: imagePath ?? this.imagePath,
       replyToSenderName: replyToSenderName ?? this.replyToSenderName,
       replyToText: replyToText ?? this.replyToText,
       reactions: reactions ?? this.reactions,
@@ -69,6 +73,7 @@ class Message extends Equatable {
         projectId,
         senderId,
         text,
+        imagePath,
         createdAt,
         status,
         isEdited,

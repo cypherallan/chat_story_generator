@@ -3,12 +3,14 @@ import '../../../person_management/domain/entities/person.dart';
 import 'expression_panel.dart';
 import 'attachment_sheet.dart';
 import '../../domain/entities/message.dart';
+import 'dart:io';
 
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
   final String selectedSenderId;
   final ValueChanged<String> onSenderChanged;
   final Function(String senderId, String text) onSend;
+  final ValueChanged<File> onImageSelected;
 
   final VoidCallback? onTypingStarted;
   final Message? replyingTo;
@@ -21,6 +23,7 @@ class MessageComposer extends StatefulWidget {
     required this.selectedSenderId,
     required this.onSenderChanged,
     required this.onSend,
+    required this.onImageSelected,
     this.onTypingStarted,
     this.onTypingStopped,
     this.replyingTo,
@@ -295,19 +298,13 @@ class _MessageComposerState extends State<MessageComposer> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.attach_file,
-                          ),
+                          icon: const Icon(Icons.attach_file),
                           onPressed: () {
                             FocusScope.of(context).unfocus();
 
                             setState(() {
-                              if (_showEmoji) {
-                                _showEmoji = false;
-                                _showAttachments = true;
-                              } else {
-                                _showAttachments = !_showAttachments;
-                              }
+                              _showEmoji = false;
+                              _showAttachments = !_showAttachments;
                             });
                           },
                         ),
@@ -360,9 +357,11 @@ class _MessageComposerState extends State<MessageComposer> {
               controller: controller,
             ),
           if (_showAttachments)
-            const SizedBox(
+            SizedBox(
               height: 280,
-              child: AttachmentSheet(),
+              child: AttachmentSheet(
+                onImageSelected: widget.onImageSelected,
+              ),
             ),
         ],
       ),

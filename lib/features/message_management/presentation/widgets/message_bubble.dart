@@ -4,6 +4,7 @@ import '../../domain/entities/message.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'message_status_icon.dart';
 import 'chat_bubble_shape.dart';
+import 'dart:io';
 
 class MessageBubble extends StatefulWidget {
   final Message message;
@@ -252,19 +253,28 @@ class _MessageBubbleState extends State<MessageBubble>
                                     ),
                                   ),
                                 ),
-                              Text(
-                                widget.message.text,
-                                style: TextStyle(
-                                  fontSize: 15.5,
-                                  height: 1.3,
-                                  color: widget.message.isDeleted
-                                      ? Colors.grey
-                                      : Colors.black87,
-                                  fontStyle: widget.message.isDeleted
-                                      ? FontStyle.italic
-                                      : FontStyle.normal,
-                                ),
-                              ),
+                              widget.message.imagePath != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        File(widget.message.imagePath!),
+                                        width: 250,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Text(
+                                      widget.message.text,
+                                      style: TextStyle(
+                                        fontSize: 15.5,
+                                        height: 1.3,
+                                        color: widget.message.isDeleted
+                                            ? Colors.grey
+                                            : Colors.black87,
+                                        fontStyle: widget.message.isDeleted
+                                            ? FontStyle.italic
+                                            : FontStyle.normal,
+                                      ),
+                                    ),
                               const SizedBox(height: 2),
                               Align(
                                 alignment: Alignment.bottomRight,

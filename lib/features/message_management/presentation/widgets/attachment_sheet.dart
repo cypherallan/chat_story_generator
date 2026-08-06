@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../media_management/presentation/pages/gallery_page.dart';
+import 'dart:io';
+
 
 class AttachmentSheet extends StatelessWidget {
-  const AttachmentSheet({super.key});
+  final ValueChanged<File> onImageSelected;
+
+  const AttachmentSheet({
+    super.key,
+    required this.onImageSelected,
+  });
 
   Widget _item({
     required IconData icon,
@@ -61,7 +69,22 @@ class AttachmentSheet extends StatelessWidget {
               icon: Icons.photo,
               color: Colors.purple,
               label: "Gallery",
-              onTap: () {},
+              onTap: () async {
+                final file = await Navigator.push<File>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GalleryPage(),
+                  ),
+                );
+
+                if (file != null) {
+                  onImageSelected(file);
+                }
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
             ),
             _item(
               icon: Icons.camera_alt,

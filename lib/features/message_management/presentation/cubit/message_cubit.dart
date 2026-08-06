@@ -13,7 +13,9 @@ import '../../domain/usecases/update_message.dart';
 import '../../../project_management/domain/usecases/update_project.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
 
+
 part 'message_state.dart';
+
 
 class MessageCubit extends Cubit<MessageState> {
   final GetMessages getMessages;
@@ -58,6 +60,7 @@ class MessageCubit extends Cubit<MessageState> {
     required String senderId,
     required String senderName,
     required String text,
+    String? imagePath,
     Message? replyingTo,
   }) async {
     final message = Message(
@@ -65,6 +68,7 @@ class MessageCubit extends Cubit<MessageState> {
       projectId: projectId,
       senderId: senderId,
       text: text,
+      imagePath: imagePath,
       createdAt: DateTime.now(),
       status: MessageStatus.sending,
       replyToMessageId: replyingTo?.id,

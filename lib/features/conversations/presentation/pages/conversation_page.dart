@@ -428,6 +428,7 @@ class _ConversationPageState extends State<ConversationPage> {
                                           personState.persons.firstWhere(
                                         (person) =>
                                             person.id == message.senderId,
+                                        orElse: () => personState.persons.first,
                                       );
 
                                       final isMine =
@@ -572,6 +573,32 @@ class _ConversationPageState extends State<ConversationPage> {
                                 otherPersonTyping = false;
                               });
                             }
+                          },
+                          onImageSelected: (file) {
+                            debugPrint("selectedSenderId = $selectedSenderId");
+                            debugPrint(
+                                "participants = ${participants.map((e) => "${e.name} (${e.id})").toList()}");
+
+                            final sender = participants
+                                .where((p) => p.id == selectedSenderId);
+
+                            if (sender.isEmpty) {
+                              debugPrint("ERROR: selected sender not found.");
+                              return;
+                            }
+
+                            context.read<MessageCubit>().createMessage(
+                                  projectId: widget.project.id,
+                                  senderId: selectedSenderId,
+                                  senderName: sender.first.name,
+                                  text: '',
+                                  imagePath: file.path,
+                                  replyingTo: replyingTo,
+                                );
+
+                            setState(() {
+                              replyingTo = null;
+                            });
                           },
                           onSend: (senderId, text) {
                             context.read<MessageCubit>().createMessage(
