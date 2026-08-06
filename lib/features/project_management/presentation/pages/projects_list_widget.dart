@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubit/project_cubit.dart';
+
 import '../../presentation/widgets/chat_list_item_widget.dart';
 
 import '../../../person_management/presentation/cubit/person_cubit.dart';
+
 import '../../../conversations/presentation/pages/conversation_page.dart';
+
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 
 import '../../../person_management/domain/entities/person.dart';
+
 import '../models/chat_list_item.dart';
 
 import '../../../../injection_container.dart' as di;
 
 class ProjectsListWidget extends StatelessWidget {
   final Set<String> selectedChatIds;
+
   final Function(String) onChatSelected;
 
   const ProjectsListWidget({
@@ -34,6 +40,7 @@ class ProjectsListWidget extends StatelessWidget {
 
 class _ProjectsListBody extends StatefulWidget {
   final Set<String> selectedChatIds;
+
   final Function(String) onChatSelected;
 
   const _ProjectsListBody({
@@ -75,7 +82,9 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
 
               projects.sort((a, b) {
                 final aTime = a.lastMessageTime ?? a.createdAt;
+
                 final bTime = b.lastMessageTime ?? b.createdAt;
+
                 return bTime.compareTo(aTime);
               });
 
@@ -107,6 +116,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                       (p) => p.id == otherPersonId,
                     );
                   }
+
                   String lastMessagePreview = project.lastMessage;
 
                   if (isGroup && project.lastSenderId != null) {
@@ -144,6 +154,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     onTap: () async {
                       if (widget.selectedChatIds.isNotEmpty) {
                         widget.onChatSelected(project.id);
+
                         return;
                       }
 

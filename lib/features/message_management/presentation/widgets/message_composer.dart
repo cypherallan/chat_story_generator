@@ -197,10 +197,16 @@ class _MessageComposerState extends State<MessageComposer> {
                           },
                           child: Builder(
                             builder: (context) {
-                              final currentPerson =
-                                  widget.participants.firstWhere(
+                              if (widget.participants.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final personList =
+                                  List<Person>.from(widget.participants);
+                              final currentPerson = personList.firstWhere(
                                 (person) =>
                                     person.id == widget.selectedSenderId,
+                                orElse: () => personList.first,
                               );
                               ImageProvider? image;
 

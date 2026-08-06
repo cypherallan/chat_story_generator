@@ -64,7 +64,7 @@ class PersonCubit extends Cubit<PersonState> {
 
     result.fold(
       (failure) => emit(PersonError(failure.message)),
-      (persons) => emit(PersonLoaded(persons)),
+      (persons) => emit(PersonLoaded(List<Person>.from(persons))),
     );
   }
 
