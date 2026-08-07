@@ -186,18 +186,6 @@ class ConversationHeader extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.videocam),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.call),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.more_vert),
-          onPressed: () {},
-        ),
       ],
     );
   }
