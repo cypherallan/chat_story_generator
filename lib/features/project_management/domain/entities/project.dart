@@ -15,7 +15,7 @@ class Project extends Equatable {
 
   // Chat preview
   final String lastMessage;
-
+  final String? lastMessageImagePath;
   final DateTime? lastMessageTime;
 
   final String? lastSenderId;
@@ -37,6 +37,7 @@ class Project extends Equatable {
     required this.participantIds,
     this.groupImagePath,
     this.lastMessage = '',
+    this.lastMessageImagePath,
     this.lastMessageTime,
     this.lastSenderId,
     this.lastMessageStatus,
@@ -54,6 +55,7 @@ class Project extends Equatable {
     List<String>? participantIds,
     String? groupImagePath,
     String? lastMessage,
+    String? lastMessageImagePath,
     DateTime? lastMessageTime,
     String? lastSenderId,
     MessageStatus? lastMessageStatus,
@@ -70,6 +72,7 @@ class Project extends Equatable {
       participantIds: participantIds ?? this.participantIds,
       groupImagePath: groupImagePath ?? this.groupImagePath,
       lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageImagePath: lastMessageImagePath ?? this.lastMessageImagePath,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       lastSenderId: lastSenderId ?? this.lastSenderId,
       lastMessageStatus: lastMessageStatus ?? this.lastMessageStatus,
@@ -89,6 +92,7 @@ class Project extends Equatable {
         participantIds,
         groupImagePath,
         lastMessage,
+        lastMessageImagePath,
         lastMessageTime,
         lastSenderId,
         lastMessageStatus,

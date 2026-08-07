@@ -10,6 +10,7 @@ class ProjectModel extends Project {
     required super.participantIds,
     super.groupImagePath,
     super.lastMessage,
+    super.lastMessageImagePath,
     super.lastMessageTime,
     super.lastSenderId,
     super.lastMessageStatus,
@@ -32,6 +33,7 @@ class ProjectModel extends Project {
       ),
       groupImagePath: json['groupImagePath'],
       lastMessage: json['lastMessage'] ?? '',
+      lastMessageImagePath: json['lastMessageImagePath'],
       lastSenderId: json['lastSenderId'],
       lastMessageStatus: json['lastMessageStatus'] != null
           ? MessageStatus.values.firstWhere(
@@ -57,6 +59,7 @@ class ProjectModel extends Project {
       'participantIds': participantIds,
       'groupImagePath': groupImagePath,
       'lastMessage': lastMessage,
+      'lastMessageImagePath': lastMessageImagePath,
       'lastSenderId': lastSenderId,
       'lastMessageStatus': lastMessageStatus?.name,
       'lastMessageTime': lastMessageTime?.toIso8601String(),
@@ -78,6 +81,7 @@ class ProjectModel extends Project {
       participantIds: project.participantIds,
       groupImagePath: project.groupImagePath,
       lastMessage: project.lastMessage,
+      lastMessageImagePath: project.lastMessageImagePath,
       lastSenderId: project.lastSenderId,
       lastMessageStatus: project.lastMessageStatus,
       lastMessageTime: project.lastMessageTime,

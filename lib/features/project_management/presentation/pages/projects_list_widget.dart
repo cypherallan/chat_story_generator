@@ -125,6 +125,12 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
 
                   String lastMessagePreview = project.lastMessage;
 
+                  if (project.lastMessageImagePath != null) {
+                    lastMessagePreview = project.lastMessage.isNotEmpty
+                        ? '🖼️ ${project.lastMessage}'
+                        : '🖼️ Photo';
+                  }
+
                   if (isGroup && project.lastSenderId != null) {
                     if (project.lastSenderId == project.ownerId) {
                       lastMessagePreview = 'You: $lastMessagePreview';

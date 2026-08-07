@@ -253,7 +253,8 @@ class _MessageBubbleState extends State<MessageBubble>
                                     ),
                                   ),
                                 ),
-                              widget.message.imagePath != null
+                              widget.message.imagePath != null &&
+                                      !widget.message.isDeleted
                                   ? Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,

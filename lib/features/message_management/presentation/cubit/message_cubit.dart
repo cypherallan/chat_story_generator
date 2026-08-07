@@ -13,9 +13,7 @@ import '../../domain/usecases/update_message.dart';
 import '../../../project_management/domain/usecases/update_project.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
 
-
 part 'message_state.dart';
-
 
 class MessageCubit extends Cubit<MessageState> {
   final GetMessages getMessages;
@@ -233,6 +231,7 @@ class MessageCubit extends Cubit<MessageState> {
     final deletedMessage = message.copyWith(
       text: 'This message was deleted',
       isDeleted: true,
+      imagePath: null,
       replyToMessageId: null,
       replyToSenderId: null,
       replyToSenderName: null,
@@ -263,6 +262,7 @@ class MessageCubit extends Cubit<MessageState> {
 
         final updated = project.copyWith(
           lastMessage: message.text,
+          lastMessageImagePath: message.imagePath,
           lastMessageTime: message.createdAt,
           lastSenderId: message.senderId,
           lastMessageStatus: message.status,
