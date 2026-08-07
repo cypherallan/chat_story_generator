@@ -3,7 +3,7 @@ import '../../../message_management/domain/entities/message_status.dart';
 
 class ChatListItem {
   final Project project;
-
+  final String? lastMessageImagePath;
   final String chatName;
   final String? avatarPath;
 
@@ -28,6 +28,7 @@ class ChatListItem {
 
   const ChatListItem({
     required this.project,
+    this.lastMessageImagePath,
     required this.chatName,
     this.avatarPath,
     required this.lastMessage,

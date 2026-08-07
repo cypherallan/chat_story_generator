@@ -152,6 +152,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     groupImagePath: project.groupImagePath,
                     verified: isGroup ? false : otherPerson!.isVerified,
                     lastMessage: lastMessagePreview,
+                    lastMessageImagePath: project.lastMessageImagePath,
                     lastMessageTime: project.lastMessageTime,
                     lastMessageStatus: project.lastMessageStatus,
                     isLastMessageMine: project.lastSenderId == project.ownerId,
