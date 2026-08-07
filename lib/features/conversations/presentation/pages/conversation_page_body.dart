@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../project_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
@@ -10,6 +9,7 @@ import '../../../message_management/domain/entities/message.dart';
 import '../widgets/conversation_message_list.dart';
 import '../widgets/conversation_typing_section.dart';
 import '../widgets/conversation_composer_section.dart';
+import 'dart:io';
 
 class ConversationPageBody extends StatefulWidget {
   final Project project;
@@ -222,7 +222,9 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                     _notifyParent();
                   }
                 },
-                onImageSelected: (file) {
+                onImageSelected: (result) {
+                  final file = result['image'] as File;
+                  final caption = result['caption'] as String;
                   final participants = (context.read<PersonCubit>().state
                           as PersonLoaded)
                       .persons
@@ -239,7 +241,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         projectId: widget.project.id,
                         senderId: selectedSenderId,
                         senderName: sender.first.name,
-                        text: '',
+                        text: caption,
                         imagePath: file.path,
                         replyingTo: replyingTo,
                       );

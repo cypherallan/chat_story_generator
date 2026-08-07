@@ -3,14 +3,13 @@ import '../../../person_management/domain/entities/person.dart';
 import 'expression_panel.dart';
 import 'attachment_sheet.dart';
 import '../../domain/entities/message.dart';
-import 'dart:io';
 
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
   final String selectedSenderId;
   final ValueChanged<String> onSenderChanged;
   final Function(String senderId, String text) onSend;
-  final ValueChanged<File> onImageSelected;
+  final ValueChanged<Map<String, dynamic>> onImageSelected;
 
   final VoidCallback? onTypingStarted;
   final Message? replyingTo;

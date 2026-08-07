@@ -254,13 +254,40 @@ class _MessageBubbleState extends State<MessageBubble>
                                   ),
                                 ),
                               widget.message.imagePath != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.file(
-                                        File(widget.message.imagePath!),
-                                        width: 250,
-                                        fit: BoxFit.cover,
-                                      ),
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.file(
+                                            File(widget.message.imagePath!),
+                                            width: 250,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        if (widget.message.text.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 6,
+                                            ),
+                                            child: Text(
+                                              widget.message.text,
+                                              style: TextStyle(
+                                                fontSize: 15.5,
+                                                height: 1.3,
+                                                color: widget.message.isDeleted
+                                                    ? Colors.grey
+                                                    : Colors.black87,
+                                                fontStyle:
+                                                    widget.message.isDeleted
+                                                        ? FontStyle.italic
+                                                        : FontStyle.normal,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     )
                                   : Text(
                                       widget.message.text,

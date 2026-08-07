@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'image_preview_page.dart';
+import 'media_preview_page.dart';
 import '../cubit/gallery_cubit.dart';
 import '../cubit/gallery_state.dart';
 
@@ -70,17 +70,17 @@ class _GalleryPageState extends State<GalleryPage> {
 
                 return GestureDetector(
                   onTap: () async {
-                    final File? selectedImage = await Navigator.push<File>(
+                    final result = await Navigator.push<Map<String, dynamic>>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ImagePreviewPage(
+                        builder: (_) => MediaPreviewPage(
                           image: File(media.path),
                         ),
                       ),
                     );
 
-                    if (selectedImage != null && context.mounted) {
-                      Navigator.pop(context, selectedImage);
+                    if (result != null && context.mounted) {
+                      Navigator.pop(context, result);
                     }
                   },
                   child: Image.file(

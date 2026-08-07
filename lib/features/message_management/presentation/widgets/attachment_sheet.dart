@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../media_management/presentation/pages/gallery_page.dart';
-import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../media_management/presentation/cubit/gallery_cubit.dart';
@@ -9,7 +8,7 @@ import '../../../media_management/data/repositories/media_repository_impl.dart';
 import '../../../media_management/data/datasources/android_media_service.dart';
 
 class AttachmentSheet extends StatelessWidget {
-  final ValueChanged<File> onImageSelected;
+  final ValueChanged<Map<String, dynamic>> onImageSelected;
   final VoidCallback onClose;
 
   const AttachmentSheet({
@@ -77,7 +76,7 @@ class AttachmentSheet extends StatelessWidget {
               color: Colors.purple,
               label: "Gallery",
               onTap: () async {
-                final file = await Navigator.push<File>(
+                final result = await Navigator.push<Map<String, dynamic>>(
                   context,
                   MaterialPageRoute(
                     builder: (_) => BlocProvider(
@@ -93,8 +92,8 @@ class AttachmentSheet extends StatelessWidget {
                   ),
                 );
 
-                if (file != null) {
-                  onImageSelected(file);
+                if (result != null) {
+                  onImageSelected(result);
                   onClose();
                 }
               },

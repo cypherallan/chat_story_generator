@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +15,7 @@ class ConversationComposerSection extends StatelessWidget {
   final void Function(String) onSenderChanged;
   final VoidCallback onTypingStarted;
   final VoidCallback onTypingStopped;
-  final void Function(File) onImageSelected;
+  final void Function(Map<String, dynamic>) onImageSelected;
   final void Function(String senderId, String text) onSend;
 
   const ConversationComposerSection({

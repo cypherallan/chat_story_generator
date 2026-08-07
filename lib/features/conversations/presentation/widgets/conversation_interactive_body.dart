@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../project_management/domain/entities/project.dart';
@@ -27,7 +25,7 @@ class ConversationInteractiveBody extends StatelessWidget {
   final void Function(String) onSenderChanged;
   final VoidCallback onTypingStarted;
   final VoidCallback onTypingStopped;
-  final void Function(File) onImageSelected;
+  final void Function(Map<String, dynamic>) onImageSelected;
   final void Function(String senderId, String text) onSend;
 
   const ConversationInteractiveBody({
