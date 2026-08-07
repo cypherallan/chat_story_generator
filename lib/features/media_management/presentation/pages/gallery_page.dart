@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'dart:io';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'image_preview_page.dart';
+import '../cubit/gallery_cubit.dart';
+import '../cubit/gallery_state.dart';
 
 class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
@@ -10,90 +14,15 @@ class GalleryPage extends StatefulWidget {
 }
 
 class _GalleryPageState extends State<GalleryPage> {
-  bool _loading = true;
-  bool _hasPermission = false;
-  List<AssetEntity> _media = [];
-  AssetPathEntity? _album;
-
   @override
   void initState() {
     super.initState();
-    _requestPermission();
-  }
 
-  Future<void> _requestPermission() async {
-    if (Platform.isWindows) {
-      setState(() {
-        _hasPermission = true;
-        _loading = false;
-      });
-
-      await _loadGallery();
-      return;
-    }
-
-    final PermissionState permission =
-        await PhotoManager.requestPermissionExtend();
-
-    debugPrint("Permission: ${permission.isAuth}");
-    debugPrint("State: $permission");
-
-    if (!mounted) return;
-
-    setState(() {
-      _hasPermission = permission.hasAccess;
-      _loading = false;
-    });
-
-    if (_hasPermission) {
-      await _loadGallery();
-    }
-  }
-
-  Future<void> _loadGallery() async {
-    final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.common,
-    );
-
-    if (albums.isEmpty) return;
-
-    _album = albums.first;
-
-    final media = await _album!.getAssetListPaged(
-      page: 0,
-      size: 100,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _media = media;
-    });
+    context.read<GalleryCubit>().loadMedia();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (!_hasPermission) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Text(
-            'Gallery permission denied',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -101,38 +30,69 @@ class _GalleryPageState extends State<GalleryPage> {
         foregroundColor: Colors.white,
         title: const Text("Gallery"),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(2),
-        itemCount: _media.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 2,
-          mainAxisSpacing: 2,
-        ),
-        itemBuilder: (context, index) {
-          return FutureBuilder(
-            future: _media[index].thumbnailDataWithSize(
-              const ThumbnailSize(300, 300),
-            ),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Container(
-                  color: Colors.grey.shade900,
-                );
-              }
+      body: BlocBuilder<GalleryCubit, GalleryState>(
+        builder: (context, state) {
+          if (state is GalleryLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-              return GestureDetector(
-                onTap: () async {
-                  final file = await _media[index].file;
-                  Navigator.pop(context, file);
-                },
-                child: Image.memory(
-                  snapshot.data!,
-                  fit: BoxFit.cover,
-                ),
-              );
-            },
-          );
+          if (state is GalleryPermissionDenied) {
+            return const Center(
+              child: Text(
+                'Gallery permission denied',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          if (state is GalleryError) {
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          if (state is GalleryLoaded) {
+            return GridView.builder(
+              padding: const EdgeInsets.all(2),
+              itemCount: state.media.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 2,
+                mainAxisSpacing: 2,
+              ),
+              itemBuilder: (context, index) {
+                final media = state.media[index];
+
+                return GestureDetector(
+                  onTap: () async {
+                    final File? selectedImage = await Navigator.push<File>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ImagePreviewPage(
+                          image: File(media.path),
+                        ),
+                      ),
+                    );
+
+                    if (selectedImage != null && context.mounted) {
+                      Navigator.pop(context, selectedImage);
+                    }
+                  },
+                  child: Image.file(
+                    File(media.path),
+                    fit: BoxFit.cover,
+                  ),
+                );
+              },
+            );
+          }
+
+          return const SizedBox.shrink();
         },
       ),
     );

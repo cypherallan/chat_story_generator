@@ -8,7 +8,7 @@ class AndroidMediaService implements MediaService {
   Future<List<MediaItem>> loadMedia() async {
     final permission = await PhotoManager.requestPermissionExtend();
 
-    if (!permission.isAuth) {
+    if (!permission.hasAccess) {
       return [];
     }
 

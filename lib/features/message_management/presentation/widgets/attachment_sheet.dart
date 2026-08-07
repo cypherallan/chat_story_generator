@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../media_management/presentation/pages/gallery_page.dart';
 import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../media_management/presentation/cubit/gallery_cubit.dart';
+import '../../../media_management/domain/usecases/load_media.dart';
+import '../../../media_management/data/repositories/media_repository_impl.dart';
+import '../../../media_management/data/datasources/android_media_service.dart';
 
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<File> onImageSelected;
+  final VoidCallback onClose;
 
   const AttachmentSheet({
     super.key,
     required this.onImageSelected,
+    required this.onClose,
   });
 
   Widget _item({
@@ -73,16 +80,22 @@ class AttachmentSheet extends StatelessWidget {
                 final file = await Navigator.push<File>(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const GalleryPage(),
+                    builder: (_) => BlocProvider(
+                      create: (_) => GalleryCubit(
+                        LoadMedia(
+                          MediaRepositoryImpl(
+                            AndroidMediaService(),
+                          ),
+                        ),
+                      ),
+                      child: const GalleryPage(),
+                    ),
                   ),
                 );
 
                 if (file != null) {
                   onImageSelected(file);
-                }
-
-                if (context.mounted) {
-                  Navigator.pop(context);
+                  onClose();
                 }
               },
             ),

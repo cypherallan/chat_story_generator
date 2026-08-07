@@ -367,6 +367,11 @@ class _MessageComposerState extends State<MessageComposer> {
               height: 280,
               child: AttachmentSheet(
                 onImageSelected: widget.onImageSelected,
+                onClose: () {
+                  setState(() {
+                    _showAttachments = false;
+                  });
+                },
               ),
             ),
         ],
