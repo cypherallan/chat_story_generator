@@ -112,9 +112,15 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                       orElse: () => project.ownerId,
                     );
 
-                    otherPerson = personState.persons.firstWhere(
+                    final matches = personState.persons.where(
                       (p) => p.id == otherPersonId,
                     );
+
+                    if (matches.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    otherPerson = matches.first;
                   }
 
                   String lastMessagePreview = project.lastMessage;
@@ -123,12 +129,13 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     if (project.lastSenderId == project.ownerId) {
                       lastMessagePreview = 'You: $lastMessagePreview';
                     } else {
-                      final sender = personState.persons.firstWhere(
+                      final sender = personState.persons.where(
                         (p) => p.id == project.lastSenderId,
                       );
 
-                      lastMessagePreview =
-                          '${sender.name}: $lastMessagePreview';
+                      lastMessagePreview = sender.isNotEmpty
+                          ? '${sender.first.name}: $lastMessagePreview'
+                          : 'Unknown: $lastMessagePreview';
                     }
                   }
 
