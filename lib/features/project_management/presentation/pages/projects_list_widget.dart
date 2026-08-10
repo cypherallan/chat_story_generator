@@ -128,7 +128,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                   if (project.lastMessageImagePath != null) {
                     lastMessagePreview = project.lastMessage.isNotEmpty
                         ? '🖼️ ${project.lastMessage}'
-                        : '🖼️ Photo';
+                        : 'Photo';
                   }
 
                   if (isGroup && project.lastSenderId != null) {

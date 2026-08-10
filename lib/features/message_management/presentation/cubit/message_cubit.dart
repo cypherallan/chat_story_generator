@@ -242,7 +242,9 @@ class MessageCubit extends Cubit<MessageState> {
 
     result.fold(
       (failure) => emit(MessageError(failure.message)),
-      (_) {},
+      (_) async {
+        await _updateProjectPreview(deletedMessage);
+      },
     );
   }
 

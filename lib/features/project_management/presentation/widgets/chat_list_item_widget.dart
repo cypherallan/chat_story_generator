@@ -112,39 +112,37 @@ class ChatListItemWidget extends StatelessWidget {
               ),
             )
           : Row(
-  children: [
-    if (chat.isLastMessageMine) ...[
-      _ChatPreviewTicks(
-        status: chat.lastMessageStatus,
-      ),
-      const SizedBox(width: 4),
-    ],
-
-    if (chat.lastMessageImagePath != null)
-      const Padding(
-        padding: EdgeInsets.only(right: 4),
-        child: Icon(
-          Icons.image,
-          size: 16,
-          color: Colors.grey,
-        ),
-      ),
-
-    Expanded(
-      child: Text(
-        chat.lastMessageImagePath != null &&
-                chat.lastMessage.isEmpty
-            ? "Photo"
-            : chat.lastMessage,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-        ),
-      ),
-    ),
-  ],
-),
+              children: [
+                if (chat.isLastMessageMine) ...[
+                  _ChatPreviewTicks(
+                    status: chat.lastMessageStatus,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                if (chat.lastMessageImagePath != null)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 4),
+                    child: Icon(
+                      Icons.image,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                Expanded(
+                  child: Text(
+                    chat.lastMessageImagePath != null &&
+                            chat.lastMessage.isEmpty
+                        ? "Photo"
+                        : chat.lastMessage,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
