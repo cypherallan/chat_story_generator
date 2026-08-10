@@ -7,8 +7,8 @@ import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 
 import '../widgets/conversation_app_bar.dart';
-import 'conversation_playback_page.dart';
-import '../cubit/conversation_replay_cubit.dart';
+import '../../../replay_management/presentation/pages/conversation_playback_page.dart';
+import '../../../replay_management/presentation/cubit/conversation_replay_cubit.dart';
 import 'conversation_page_body.dart';
 
 class ConversationPage extends StatefulWidget {

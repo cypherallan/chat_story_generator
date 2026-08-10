@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../project_management/domain/entities/project.dart';
 import '../cubit/conversation_replay_cubit.dart';
-import 'conversation_header.dart';
+import '../../../conversations/presentation/widgets/conversation_header.dart';
 
 class PlaybackHeader extends StatelessWidget {
   final Project project;

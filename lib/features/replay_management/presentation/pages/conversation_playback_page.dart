@@ -4,7 +4,7 @@ import '../../../message_management/domain/entities/message.dart';
 import '../../../project_management/domain/entities/project.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../conversations/presentation/cubit/conversation_replay_cubit.dart';
+import '../cubit/conversation_replay_cubit.dart';
 
 import '../widgets/playback_header.dart';
 import '../widgets/playback_chat_list.dart';
