@@ -1,5 +1,10 @@
 part of 'conversation_replay_cubit.dart';
 
+enum ReplayScreen {
+  home,
+  conversation,
+}
+
 class ConversationReplayState {
   final List<Message> visibleMessages;
 
@@ -22,13 +27,16 @@ class ConversationReplayState {
   final bool shiftEnabled;
   final bool shiftPressed;
 
-  // Emoji playback
   final bool emojiKeyboardVisible;
   final String? pressedEmoji;
 
   final List<String> availableEmojis;
   final String? lastPressedEmoji;
   final int emojiPressCount;
+
+  // Replay navigation
+  final ReplayScreen screen;
+  final String? currentProjectId;
 
   const ConversationReplayState({
     this.visibleMessages = const [],
@@ -49,6 +57,8 @@ class ConversationReplayState {
     this.availableEmojis = const [],
     this.lastPressedEmoji,
     this.emojiPressCount = 0,
+    this.screen = ReplayScreen.home,
+    this.currentProjectId,
   });
 
   ConversationReplayState copyWith({
@@ -70,6 +80,8 @@ class ConversationReplayState {
     List<String>? availableEmojis,
     String? lastPressedEmoji,
     int? emojiPressCount,
+    ReplayScreen? screen,
+    String? currentProjectId,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -90,6 +102,8 @@ class ConversationReplayState {
       availableEmojis: availableEmojis ?? this.availableEmojis,
       lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
       emojiPressCount: emojiPressCount ?? this.emojiPressCount,
+      screen: screen ?? this.screen,
+      currentProjectId: currentProjectId ?? this.currentProjectId,
     );
   }
 }

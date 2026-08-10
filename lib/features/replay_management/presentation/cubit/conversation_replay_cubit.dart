@@ -9,6 +9,41 @@ part 'conversation_replay_state.dart';
 
 class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   ConversationReplayCubit() : super(const ConversationReplayState());
+  void showHome() {
+    _timer?.cancel();
+
+    emit(
+      state.copyWith(
+        screen: ReplayScreen.home,
+        currentProjectId: null,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
+      ),
+    );
+  }
+
+  void openConversation(String projectId) {
+    _timer?.cancel();
+
+    emit(
+      state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: projectId,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
+      ),
+    );
+  }
+
+  void goBackToHome() {
+    showHome();
+  }
 
   final List<Message> _messages = [];
   final Random _random = Random();
@@ -36,9 +71,12 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
       }
     }
 
-    emit(ConversationReplayState(
-      availableEmojis: emojiSet.toList(),
-    ));
+    emit(
+      ConversationReplayState(
+        availableEmojis: emojiSet.toList(),
+        screen: ReplayScreen.home,
+      ),
+    );
   }
 
   void play() {
