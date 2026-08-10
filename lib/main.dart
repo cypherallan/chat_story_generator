@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'core/app/app_initializer.dart';
+import 'core/auth/auth_service.dart';
+import 'features/auth/presentation/pages/login_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
+import 'injection_container.dart' as di;
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +29,52 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = di.sl<AuthService>();
+
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text(
+                'Authentication error:\n${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        final user = snapshot.data;
+
+        if (user == null) {
+          return LoginPage(
+            authService: authService,
+          );
+        }
+
+        return const HomePage();
+      },
     );
   }
 }

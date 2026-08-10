@@ -38,6 +38,7 @@ class PersonCubit extends Cubit<PersonState> {
         newImagePath,
         onProgress: (_) {},
       );
+      if (isClosed) return;
 
       if (imageUrl == null) {
         emit(const PersonError('Failed to upload image.'));
@@ -50,6 +51,7 @@ class PersonCubit extends Cubit<PersonState> {
     }
 
     final result = await updatePerson(updatedPerson);
+    if (isClosed) return;
 
     result.fold(
       (failure) => emit(PersonError(failure.message)),
@@ -58,13 +60,23 @@ class PersonCubit extends Cubit<PersonState> {
   }
 
   Future<void> loadPersons() async {
+    if (isClosed) return;
+
     emit(PersonLoading());
 
     final result = await getPersons(NoParams());
 
+    if (isClosed) return;
+
     result.fold(
-      (failure) => emit(PersonError(failure.message)),
-      (persons) => emit(PersonLoaded(List<Person>.from(persons))),
+      (failure) {
+        if (isClosed) return;
+        emit(PersonError(failure.message));
+      },
+      (persons) {
+        if (isClosed) return;
+        emit(PersonLoaded(List<Person>.from(persons)));
+      },
     );
   }
 
@@ -85,6 +97,8 @@ class PersonCubit extends Cubit<PersonState> {
       imageUrl = await storageService.uploadParticipantImage(
         avatarPath,
         onProgress: (progress) {
+          if (isClosed) return;
+
           emit(
             PersonSaving(
               progress: progress,
@@ -94,6 +108,8 @@ class PersonCubit extends Cubit<PersonState> {
           );
         },
       );
+
+      if (isClosed) return;
 
       if (imageUrl == null) {
         emit(const PersonError('Failed to upload image.'));
@@ -117,14 +133,22 @@ class PersonCubit extends Cubit<PersonState> {
     );
 
     final result = await addPerson(person);
+    if (isClosed) return;
 
     result.fold(
-      (failure) => emit(PersonError(failure.message)),
+      (failure) {
+        if (isClosed) return;
+        emit(PersonError(failure.message));
+      },
       (_) async {
+        if (isClosed) return;
+
         emit(PersonSaved());
+
         await loadPersons();
       },
     );
+    ;
   }
 
   Future<void> removePerson(String id) async {
@@ -132,9 +156,17 @@ class PersonCubit extends Cubit<PersonState> {
 
     final result = await deletePerson(id);
 
+    if (isClosed) return;
+
     result.fold(
-      (failure) => emit(PersonError(failure.message)),
-      (_) => loadPersons(),
+      (failure) {
+        if (isClosed) return;
+        emit(PersonError(failure.message));
+      },
+      (_) {
+        if (isClosed) return;
+        loadPersons();
+      },
     );
   }
 

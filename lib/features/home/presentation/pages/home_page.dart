@@ -10,6 +10,9 @@ import '../../../project_management/presentation/pages/projects_list_widget.dart
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
 
+import '../../../auth/presentation/pages/profile_page.dart';
+import '../../../../core/auth/auth_service.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -65,7 +68,24 @@ class _HomePageState extends State<HomePage> {
                           Text(selectedChatIds.length.toString()),
                         ],
                       )
-                    : const Text("WhatsApp"),
+                    : GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProfilePage(
+                                authService: di.sl<AuthService>(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "WhatsApp",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                 actions: isSelectionMode
                     ? [
                         IconButton(
