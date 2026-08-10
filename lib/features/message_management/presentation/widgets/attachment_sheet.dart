@@ -1,11 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../media_management/presentation/pages/gallery_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../media_management/presentation/cubit/gallery_cubit.dart';
-import '../../../media_management/domain/usecases/load_media.dart';
-import '../../../media_management/data/repositories/media_repository_impl.dart';
-import '../../../media_management/data/datasources/android_media_service.dart';
 
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<Map<String, dynamic>> onImageSelected;
@@ -75,27 +68,13 @@ class AttachmentSheet extends StatelessWidget {
               icon: Icons.photo,
               color: Colors.purple,
               label: "Gallery",
-              onTap: () async {
-                final result = await Navigator.push<Map<String, dynamic>>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider(
-                      create: (_) => GalleryCubit(
-                        LoadMedia(
-                          MediaRepositoryImpl(
-                            AndroidMediaService(),
-                          ),
-                        ),
-                      ),
-                      child: const GalleryPage(),
-                    ),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gallery will be added later.'),
+                    duration: Duration(seconds: 1),
                   ),
                 );
-
-                if (result != null) {
-                  onImageSelected(result);
-                  onClose();
-                }
               },
             ),
             _item(

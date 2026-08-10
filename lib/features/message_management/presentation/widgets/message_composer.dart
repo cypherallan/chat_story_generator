@@ -3,6 +3,7 @@ import '../../../person_management/domain/entities/person.dart';
 import 'expression_panel.dart';
 import 'attachment_sheet.dart';
 import '../../domain/entities/message.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
@@ -212,7 +213,9 @@ class _MessageComposerState extends State<MessageComposer> {
                               if (currentPerson.avatarPath != null &&
                                   currentPerson.avatarPath!
                                       .startsWith('http')) {
-                                image = NetworkImage(currentPerson.avatarPath!);
+                                image = CachedNetworkImageProvider(
+                                  currentPerson.avatarPath!,
+                                );
                               }
 
                               return AnimatedSwitcher(

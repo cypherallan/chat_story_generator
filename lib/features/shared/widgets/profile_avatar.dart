@@ -15,26 +15,54 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider? image;
+    final hasNetworkImage = imagePath != null &&
+        imagePath!.isNotEmpty &&
+        imagePath!.startsWith('http');
 
-    if (imagePath != null && imagePath!.isNotEmpty) {
-      if (imagePath != null &&
-          imagePath!.isNotEmpty &&
-          imagePath!.startsWith('http')) {
-        image = CachedNetworkImageProvider(imagePath!);
-      }
+    final fallbackLetter = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    if (!hasNetworkImage) {
+      return CircleAvatar(
+        radius: radius,
+        child: Text(
+          fallbackLetter,
+          style: TextStyle(
+            fontSize: radius * 0.8,
+          ),
+        ),
+      );
     }
-    return CircleAvatar(
-      radius: radius,
-      backgroundImage: image,
-      child: image == null
-          ? Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: TextStyle(
-                fontSize: radius * 0.8,
-              ),
-            )
-          : null,
+
+    return CachedNetworkImage(
+      imageUrl: imagePath!,
+      imageBuilder: (context, imageProvider) {
+        return CircleAvatar(
+          radius: radius,
+          backgroundImage: imageProvider,
+        );
+      },
+      placeholder: (context, url) {
+        return CircleAvatar(
+          radius: radius,
+          child: Text(
+            fallbackLetter,
+            style: TextStyle(
+              fontSize: radius * 0.8,
+            ),
+          ),
+        );
+      },
+      errorWidget: (context, url, error) {
+        return CircleAvatar(
+          radius: radius,
+          child: Text(
+            fallbackLetter,
+            style: TextStyle(
+              fontSize: radius * 0.8,
+            ),
+          ),
+        );
+      },
     );
   }
 }

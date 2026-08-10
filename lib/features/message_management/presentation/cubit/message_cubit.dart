@@ -12,7 +12,7 @@ import '../../domain/usecases/get_messages.dart';
 import '../../domain/usecases/update_message.dart';
 import '../../../project_management/domain/usecases/update_project.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
-
+import '../../../../core/storage/firebase_storage_service.dart';
 part 'message_state.dart';
 
 class MessageCubit extends Cubit<MessageState> {
@@ -22,6 +22,8 @@ class MessageCubit extends Cubit<MessageState> {
   final DeleteMessage deleteMessage;
   final GetProjects getProjects;
   final UpdateProject updateProject;
+  final FirebaseStorageService storageService;
+  final List<Message> _pendingMessages = [];
 
   StreamSubscription? _messagesSubscription;
 
@@ -32,6 +34,7 @@ class MessageCubit extends Cubit<MessageState> {
     required this.deleteMessage,
     required this.getProjects,
     required this.updateProject,
+    required this.storageService,
   }) : super(MessageInitial());
 
   void loadMessages(String projectId) {
@@ -46,7 +49,14 @@ class MessageCubit extends Cubit<MessageState> {
             emit(MessageError(failure.message));
           },
           (messages) {
-            emit(MessageLoaded(messages));
+            emit(
+              MessageLoaded([
+                ...messages,
+                ..._pendingMessages.where(
+                  (pending) => pending.projectId == projectId,
+                ),
+              ]),
+            );
           },
         );
       },
@@ -61,8 +71,10 @@ class MessageCubit extends Cubit<MessageState> {
     String? imagePath,
     Message? replyingTo,
   }) async {
+    final messageId = const Uuid().v4();
+
     final message = Message(
-      id: const Uuid().v4(),
+      id: messageId,
       projectId: projectId,
       senderId: senderId,
       text: text,
@@ -75,14 +87,116 @@ class MessageCubit extends Cubit<MessageState> {
       replyToText: replyingTo?.text,
     );
 
-    final result = await addMessage(message);
+    // Show the message immediately in the conversation.
+    _pendingMessages.add(message);
+
+    _emitMessagesWithPending(projectId);
+
+    // Text-only message.
+    if (imagePath == null || imagePath.isEmpty) {
+      final result = await addMessage(message);
+
+      result.fold(
+        (failure) {
+          _pendingMessages.removeWhere(
+            (m) => m.id == message.id,
+          );
+
+          emit(MessageError(failure.message));
+        },
+        (_) {
+          _pendingMessages.removeWhere(
+            (m) => m.id == message.id,
+          );
+
+          _updateProjectPreview(message);
+
+          _simulateDelivery(message);
+        },
+      );
+
+      return;
+    }
+
+    // Image message: upload in the background.
+    final imageUrl = await storageService.uploadMessageImage(
+      imagePath,
+      messageId: message.id,
+      onProgress: (_) {},
+    );
+
+    if (imageUrl == null) {
+      _pendingMessages.removeWhere(
+        (m) => m.id == message.id,
+      );
+
+      _emitMessagesWithPending(projectId);
+
+      emit(
+        const MessageError(
+          'Failed to upload image.',
+        ),
+      );
+
+      return;
+    }
+
+    // Replace the local image path with the Firebase URL.
+    final uploadedMessage = message.copyWith(
+      imagePath: imageUrl,
+    );
+
+    final result = await addMessage(uploadedMessage);
 
     result.fold(
-      (failure) => emit(MessageError(failure.message)),
-      (_) async {
-        await _updateProjectPreview(message);
-        _simulateDelivery(message);
+      (failure) {
+        _pendingMessages.removeWhere(
+          (m) => m.id == message.id,
+        );
+
+        _emitMessagesWithPending(projectId);
+
+        emit(MessageError(failure.message));
       },
+      (_) {
+        _pendingMessages.removeWhere(
+          (m) => m.id == message.id,
+        );
+
+        _emitMessagesWithPending(projectId);
+
+        _updateProjectPreview(uploadedMessage);
+
+        _simulateDelivery(uploadedMessage);
+      },
+    );
+  }
+
+  void _emitMessagesWithPending(String projectId) {
+    if (state is! MessageLoaded) return;
+
+    final currentMessages = List<Message>.from(
+      (state as MessageLoaded).messages,
+    );
+
+    final pendingForProject = _pendingMessages.where(
+      (message) => message.projectId == projectId,
+    );
+
+    final existingIds = currentMessages.map((m) => m.id).toSet();
+
+    for (final pending in pendingForProject) {
+      if (!existingIds.contains(pending.id)) {
+        currentMessages.add(pending);
+      }
+    }
+
+    currentMessages.sort(
+      (a, b) => a.createdAt.compareTo(b.createdAt),
+    );
+
+    emit(
+      MessageLoaded(currentMessages),
     );
   }
 

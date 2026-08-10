@@ -5,6 +5,7 @@ import '../../../person_management/domain/entities/person.dart';
 import 'message_status_icon.dart';
 import 'chat_bubble_shape.dart';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MessageBubble extends StatefulWidget {
   final Message message;
@@ -91,7 +92,7 @@ class _MessageBubbleState extends State<MessageBubble>
     }
 
     if (widget.sender.avatarPath!.startsWith('http')) {
-      return NetworkImage(widget.sender.avatarPath!);
+      return CachedNetworkImageProvider(widget.sender.avatarPath!);
     }
 
     return null;
@@ -262,11 +263,50 @@ class _MessageBubbleState extends State<MessageBubble>
                                         ClipRRect(
                                           borderRadius:
                                               BorderRadius.circular(10),
-                                          child: Image.file(
-                                            File(widget.message.imagePath!),
-                                            width: 250,
-                                            fit: BoxFit.cover,
-                                          ),
+                                          child: widget.message.imagePath!
+                                                  .startsWith('http')
+                                              ? CachedNetworkImage(
+                                                  imageUrl:
+                                                      widget.message.imagePath!,
+                                                  width: 250,
+                                                  fit: BoxFit.cover,
+                                                  memCacheWidth: 750,
+                                                  maxWidthDiskCache: 750,
+                                                  placeholder: (context, url) =>
+                                                      Container(
+                                                    width: 250,
+                                                    height: 250,
+                                                    color: Colors.grey.shade200,
+                                                    child: const Center(
+                                                      child: SizedBox(
+                                                        width: 24,
+                                                        height: 24,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Container(
+                                                    width: 250,
+                                                    height: 250,
+                                                    color: Colors.grey.shade200,
+                                                    child: const Icon(
+                                                      Icons.broken_image,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                )
+                                              : Image.file(
+                                                  File(widget
+                                                      .message.imagePath!),
+                                                  width: 250,
+                                                  cacheWidth: 750,
+                                                  fit: BoxFit.cover,
+                                                ),
                                         ),
                                         if (widget.message.text.isNotEmpty)
                                           Padding(

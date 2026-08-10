@@ -134,6 +134,7 @@ Future<void> init() async {
       deleteMessage: sl(),
       getProjects: sl(),
       updateProject: sl(),
+      storageService: sl(),
     ),
   );
 }
