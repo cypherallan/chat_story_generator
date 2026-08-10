@@ -114,11 +114,25 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
     if (confirm != true) return;
 
     final messageCubit = context.read<MessageCubit>();
+
+    final messages = (messageCubit.state as MessageLoaded).messages;
+
     for (final id in selectedMessageIds) {
-      await messageCubit.removeMessage(
-        projectId: widget.project.id,
-        messageId: id,
+      final message = messages.firstWhere(
+        (message) => message.id == id,
       );
+
+      if (message.isDeleted) {
+        await messageCubit.permanentlyDeleteMessage(
+          projectId: widget.project.id,
+          messageId: id,
+        );
+      } else {
+        await messageCubit.removeMessage(
+          projectId: widget.project.id,
+          messageId: id,
+        );
+      }
     }
     setState(() => selectedMessageIds.clear());
     _notifyParent();

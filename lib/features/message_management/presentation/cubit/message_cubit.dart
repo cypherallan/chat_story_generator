@@ -362,6 +362,84 @@ class MessageCubit extends Cubit<MessageState> {
     );
   }
 
+  Future<void> permanentlyDeleteMessage({
+    required String projectId,
+    required String messageId,
+  }) async {
+    final result = await deleteMessage(
+      DeleteMessageParams(
+        projectId: projectId,
+        messageId: messageId,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        emit(MessageError(failure.message));
+      },
+      (_) async {
+        await _updateProjectPreviewAfterPermanentDelete(projectId);
+      },
+    );
+  }
+
+  Future<void> _updateProjectPreviewAfterPermanentDelete(
+    String projectId,
+  ) async {
+    if (state is! MessageLoaded) return;
+
+    final messages = (state as MessageLoaded)
+        .messages
+        .where((message) => message.projectId == projectId)
+        .toList();
+
+    messages.sort(
+      (a, b) => a.createdAt.compareTo(b.createdAt),
+    );
+
+    final result = await getProjects();
+
+    result.fold(
+      (_) {},
+      (projects) async {
+        final index = projects.indexWhere(
+          (project) => project.id == projectId,
+        );
+
+        if (index == -1) return;
+
+        final project = projects[index];
+
+        // No messages remain in the conversation.
+        if (messages.isEmpty) {
+          final updated = project.copyWith(
+            lastMessage: '',
+            lastMessageImagePath: null,
+            lastMessageTime: null,
+            lastSenderId: null,
+            lastMessageStatus: null,
+          );
+
+          await updateProject(updated);
+          return;
+        }
+
+        // There are still messages, so use the newest one.
+        final latestMessage = messages.last;
+
+        final updated = project.copyWith(
+          lastMessage: latestMessage.text,
+          lastMessageImagePath: latestMessage.imagePath,
+          lastMessageTime: latestMessage.createdAt,
+          lastSenderId: latestMessage.senderId,
+          lastMessageStatus: latestMessage.status,
+        );
+
+        await updateProject(updated);
+      },
+    );
+  }
+
   Future<void> _updateProjectPreview(Message message) async {
     final result = await getProjects();
 
@@ -376,12 +454,37 @@ class MessageCubit extends Cubit<MessageState> {
 
         final project = projects[index];
 
+        // Get the current messages in this conversation.
+        if (state is! MessageLoaded) return;
+
+        final messages = (state as MessageLoaded)
+            .messages
+            .where((m) => m.projectId == message.projectId)
+            .toList();
+
+        // If there are no messages left, completely clear the preview.
+        if (messages.isEmpty) {
+          final updated = project.copyWith(
+            lastMessage: '',
+            lastMessageImagePath: null,
+            lastMessageTime: null,
+            lastSenderId: null,
+            lastMessageStatus: null,
+          );
+
+          await updateProject(updated);
+          return;
+        }
+
+        // The messages are already ordered by createdAt from Firestore.
+        final latestMessage = messages.last;
+
         final updated = project.copyWith(
-          lastMessage: message.text,
-          lastMessageImagePath: message.imagePath,
-          lastMessageTime: message.createdAt,
-          lastSenderId: message.senderId,
-          lastMessageStatus: message.status,
+          lastMessage: latestMessage.text,
+          lastMessageImagePath: latestMessage.imagePath,
+          lastMessageTime: latestMessage.createdAt,
+          lastSenderId: latestMessage.senderId,
+          lastMessageStatus: latestMessage.status,
         );
 
         await updateProject(updated);
