@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -15,13 +17,11 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasNetworkImage = imagePath != null &&
-        imagePath!.isNotEmpty &&
-        imagePath!.startsWith('http');
+    final path = imagePath?.trim();
 
     final fallbackLetter = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
-    if (!hasNetworkImage) {
+    Widget fallback() {
       return CircleAvatar(
         radius: radius,
         child: Text(
@@ -33,34 +33,56 @@ class ProfileAvatar extends StatelessWidget {
       );
     }
 
-    return CachedNetworkImage(
-      imageUrl: imagePath!,
-      imageBuilder: (context, imageProvider) {
+    // -------------------------------------------------------------------------
+    // NO IMAGE
+    // -------------------------------------------------------------------------
+
+    if (path == null || path.isEmpty) {
+      return fallback();
+    }
+
+    // -------------------------------------------------------------------------
+    // NETWORK IMAGE
+    // -------------------------------------------------------------------------
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        imageBuilder: (context, imageProvider) {
+          return CircleAvatar(
+            radius: radius,
+            backgroundImage: imageProvider,
+          );
+        },
+        placeholder: (context, url) {
+          return fallback();
+        },
+        errorWidget: (context, url, error) {
+          return fallback();
+        },
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // LOCAL IMAGE
+    // -------------------------------------------------------------------------
+
+    final file = File(path);
+
+    return FutureBuilder<bool>(
+      future: file.exists(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return fallback();
+        }
+
+        if (snapshot.data != true) {
+          return fallback();
+        }
+
         return CircleAvatar(
           radius: radius,
-          backgroundImage: imageProvider,
-        );
-      },
-      placeholder: (context, url) {
-        return CircleAvatar(
-          radius: radius,
-          child: Text(
-            fallbackLetter,
-            style: TextStyle(
-              fontSize: radius * 0.8,
-            ),
-          ),
-        );
-      },
-      errorWidget: (context, url, error) {
-        return CircleAvatar(
-          radius: radius,
-          child: Text(
-            fallbackLetter,
-            style: TextStyle(
-              fontSize: radius * 0.8,
-            ),
-          ),
+          backgroundImage: FileImage(file),
         );
       },
     );

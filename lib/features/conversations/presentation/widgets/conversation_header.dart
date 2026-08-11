@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
 import '../../../person_management/domain/entities/person.dart';
 import '../../../project_management/domain/entities/project.dart';
+import '../../../shared/widgets/profile_avatar.dart';
 
 class ConversationHeader extends StatelessWidget {
   final Person? person;
@@ -101,30 +102,18 @@ class ConversationHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider? image;
-
     final isGroup = project != null;
 
     final displayName = isGroup ? project!.title : person?.name ?? 'Unknown';
 
     final avatarPath = isGroup ? project!.groupImagePath : person?.avatarPath;
 
-    if (avatarPath != null && avatarPath.isNotEmpty) {
-      if (avatarPath.startsWith('http')) {
-        image = CachedNetworkImageProvider(avatarPath);
-      }
-    }
-
     return Row(
       children: [
-        CircleAvatar(
+        ProfileAvatar(
+          imagePath: avatarPath,
+          name: displayName,
           radius: 22,
-          backgroundImage: image,
-          child: image == null
-              ? Text(
-                  displayName[0].toUpperCase(),
-                )
-              : null,
         ),
         const SizedBox(width: 12),
         Expanded(

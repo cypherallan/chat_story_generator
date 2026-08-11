@@ -133,23 +133,47 @@ class ReplayHomeChatList extends StatelessWidget {
   }
 
   Widget _buildAvatar(ChatListItem chat) {
-    if (chat.avatarPath != null) {
+    final imagePath = chat.groupImagePath ?? chat.avatarPath;
+
+    // No image: use the chat/group name initial.
+    if (imagePath == null || imagePath.isEmpty) {
+      final fallbackLetter =
+          chat.chatName.isNotEmpty ? chat.chatName[0].toUpperCase() : '?';
+
       return CircleAvatar(
         radius: 25,
-        backgroundImage: NetworkImage(chat.avatarPath!),
+        child: Text(
+          fallbackLetter,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       );
     }
 
-    if (chat.groupImagePath != null) {
+    // Only load actual network URLs as network images.
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return CircleAvatar(
         radius: 25,
-        backgroundImage: NetworkImage(chat.groupImagePath!),
+        backgroundImage: NetworkImage(imagePath),
       );
     }
 
-    return const CircleAvatar(
+    // Local paths are not treated as network URLs.
+    // For now, use the chat/group initial instead.
+    final fallbackLetter =
+        chat.chatName.isNotEmpty ? chat.chatName[0].toUpperCase() : '?';
+
+    return CircleAvatar(
       radius: 25,
-      child: Icon(Icons.person),
+      child: Text(
+        fallbackLetter,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 

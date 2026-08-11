@@ -99,14 +99,18 @@ class _MessageBubbleState extends State<MessageBubble>
   }
 
   ImageProvider? _getAvatarImage() {
-    if (widget.sender.avatarPath == null || widget.sender.avatarPath!.isEmpty) {
+    final avatarPath = widget.sender.avatarPath;
+
+    if (avatarPath == null || avatarPath.isEmpty) {
       return null;
     }
 
-    if (widget.sender.avatarPath!.startsWith('http')) {
-      return CachedNetworkImageProvider(widget.sender.avatarPath!);
+    if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+      return CachedNetworkImageProvider(avatarPath);
     }
 
+    // Local Windows/device paths are intentionally not loaded here.
+    // They are not valid network URLs.
     return null;
   }
 
@@ -155,10 +159,11 @@ class _MessageBubbleState extends State<MessageBubble>
                       ? CircleAvatar(
                           radius: 16,
                           backgroundImage: _getAvatarImage(),
-                          child: widget.sender.avatarPath == null ||
-                                  widget.sender.avatarPath!.isEmpty
+                          child: _getAvatarImage() == null
                               ? Text(
-                                  widget.sender.name[0].toUpperCase(),
+                                  widget.sender.name.isNotEmpty
+                                      ? widget.sender.name[0].toUpperCase()
+                                      : '?',
                                   style: const TextStyle(fontSize: 13),
                                 )
                               : null,

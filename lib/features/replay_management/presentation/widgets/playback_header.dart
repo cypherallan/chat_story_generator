@@ -8,6 +8,8 @@ import '../../../project_management/domain/entities/project.dart';
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 
+import '../../../shared/widgets/profile_avatar.dart';
+
 class PlaybackHeader extends StatelessWidget {
   final Project project;
   final VoidCallback onBack;
@@ -28,7 +30,9 @@ class PlaybackHeader extends StatelessWidget {
 
   Person? _findPerson(List<Person> persons, String id) {
     for (final person in persons) {
-      if (person.id == id) return person;
+      if (person.id == id) {
+        return person;
+      }
     }
     return null;
   }
@@ -42,27 +46,90 @@ class PlaybackHeader extends StatelessWidget {
         }
 
         if (personState is! PersonLoaded) {
-          return _buildHeader(context, null, 'Playback', 'online', false);
+          return _buildHeader(
+            context,
+            null,
+            project.title,
+            'online',
+            false,
+            isGroup: project.participantIds.length > 2,
+          );
         }
 
         return BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
           builder: (context, replayState) {
+            final isGroup = project.participantIds.length > 2;
+
             final otherPersonIds = project.participantIds
                 .where((id) => id != project.ownerId)
                 .toList();
 
-            Person? person;
-            if (otherPersonIds.isNotEmpty) {
-              person = _findPerson(personState.persons, otherPersonIds.first);
+            // ================================================================
+            // GROUP CHAT
+            // ================================================================
+
+            if (isGroup) {
+              final groupMembers = personState.persons
+                  .where(
+                    (person) => project.participantIds.contains(person.id),
+                  )
+                  .toList();
+
+              final participantNames =
+                  groupMembers.map((person) => person.name).toList();
+
+              String subtitle;
+
+              // During replay, show the person currently typing.
+              if (replayState.typing && replayState.typingPersonId != null) {
+                final typingPerson = _findPerson(
+                  personState.persons,
+                  replayState.typingPersonId!,
+                );
+
+                subtitle = typingPerson != null
+                    ? '${typingPerson.name} is typing...'
+                    : 'typing...';
+              } else {
+                // WhatsApp-style group participant preview.
+                if (participantNames.isEmpty) {
+                  subtitle = 'Group';
+                } else if (participantNames.length <= 3) {
+                  subtitle = participantNames.join(', ');
+                } else {
+                  subtitle =
+                      '${participantNames.take(3).join(', ')}, +${participantNames.length - 3}';
+                }
+              }
+
+              return _buildHeader(
+                context,
+                null,
+                project.title,
+                subtitle,
+                replayState.typing,
+                isGroup: true,
+              );
             }
 
-            final title = project.participantIds.length > 2
-                ? project.title
-                : person?.name ?? project.title;
+            // ================================================================
+            // ONE-TO-ONE CHAT
+            // ================================================================
+
+            Person? person;
+
+            if (otherPersonIds.isNotEmpty) {
+              person = _findPerson(
+                personState.persons,
+                otherPersonIds.first,
+              );
+            }
 
             final isTyping = replayState.typing &&
                 replayState.typingPersonId != null &&
-                otherPersonIds.contains(replayState.typingPersonId);
+                otherPersonIds.contains(
+                  replayState.typingPersonId,
+                );
 
             final subtitle = isTyping
                 ? 'typing...'
@@ -70,7 +137,14 @@ class PlaybackHeader extends StatelessWidget {
                     ? 'online'
                     : 'last seen recently';
 
-            return _buildHeader(context, person, title, subtitle, isTyping);
+            return _buildHeader(
+              context,
+              person,
+              person?.name ?? project.title,
+              subtitle,
+              isTyping,
+              isGroup: false,
+            );
           },
         );
       },
@@ -82,15 +156,22 @@ class PlaybackHeader extends StatelessWidget {
     Person? person,
     String title,
     String subtitle,
-    bool isTyping,
-  ) {
+    bool isTyping, {
+    required bool isGroup,
+  }) {
     return Container(
       height: kToolbarHeight,
       padding: const EdgeInsets.only(left: 0, right: 4),
       child: Row(
         children: [
-          IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack),
-          _buildAvatar(person),
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: onBack,
+          ),
+          _buildPersonAvatar(
+            person,
+            isGroup: isGroup,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -102,7 +183,9 @@ class PlaybackHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w600),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -118,11 +201,38 @@ class PlaybackHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-              icon: const Icon(Icons.videocam_outlined), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.call_outlined), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+            icon: const Icon(Icons.videocam_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.call_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {},
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPersonAvatar(
+    Person? person, {
+    required bool isGroup,
+  }) {
+    if (isGroup) {
+      return ProfileAvatar(
+        imagePath: project.groupImagePath,
+        name: project.title,
+        radius: 20,
+      );
+    }
+
+    return ProfileAvatar(
+      imagePath: person?.avatarPath,
+      name: person?.name ?? 'Playback',
+      radius: 20,
     );
   }
 
@@ -139,15 +249,28 @@ class PlaybackHeader extends StatelessWidget {
           Expanded(
             child: Text(
               '$selectedCount',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          IconButton(icon: const Icon(Icons.star_border), onPressed: () {}),
           IconButton(
-              icon: const Icon(Icons.emoji_emotions_outlined),
-              onPressed: () {}),
-          IconButton(icon: const Icon(Icons.reply), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.copy), onPressed: () {}),
+            icon: const Icon(Icons.star_border),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.emoji_emotions_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.reply),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy),
+            onPressed: () {},
+          ),
 
           // DELETE – visually pressed during replay
           IconButton(
@@ -161,24 +284,14 @@ class PlaybackHeader extends StatelessWidget {
 
           PopupMenuButton<String>(
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 'more', child: Text('More')),
+              PopupMenuItem(
+                value: 'more',
+                child: Text('More'),
+              ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAvatar(Person? person) {
-    if (person?.avatarPath != null && person!.avatarPath!.isNotEmpty) {
-      return CircleAvatar(
-        radius: 20,
-        backgroundImage: NetworkImage(person.avatarPath!),
-      );
-    }
-    return const CircleAvatar(
-      radius: 20,
-      child: Icon(Icons.person, size: 22),
     );
   }
 }
