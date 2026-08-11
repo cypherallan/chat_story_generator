@@ -111,6 +111,12 @@ class PlaybackChatList extends StatelessWidget {
                   isLastInGroup: isLastInGroup,
                   isSelected: selectedMessageIds.contains(message.id),
                   isHighlighted: false,
+                  forcedDragOffset: replayState.swipingMessageId == message.id
+                      ? replayState.swipeOffset
+                      : null,
+                  forceShowReplyArrow:
+                      replayState.swipingMessageId == message.id &&
+                          replayState.swipeOffset > 15,
                   onLongPress: () => onToggleSelection(message.id),
                   onTap: () {
                     if (selectedMessageIds.isNotEmpty) {

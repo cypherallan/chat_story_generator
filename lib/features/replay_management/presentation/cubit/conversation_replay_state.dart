@@ -29,6 +29,12 @@ class ConversationReplayState extends Equatable {
   final ReplayScreen screen;
   final String? currentProjectId;
 
+  // NEW – visual swipe + reply preview during replay
+  final String? swipingMessageId;
+  final double swipeOffset;
+  final String? replyPreviewText;
+  final String? replyPreviewSenderName;
+
   const ConversationReplayState({
     this.visibleMessages = const [],
     this.playing = false,
@@ -50,6 +56,10 @@ class ConversationReplayState extends Equatable {
     this.emojiPressCount = 0,
     this.screen = ReplayScreen.home,
     this.currentProjectId,
+    this.swipingMessageId,
+    this.swipeOffset = 0,
+    this.replyPreviewText,
+    this.replyPreviewSenderName,
   });
 
   ConversationReplayState copyWith({
@@ -73,44 +83,43 @@ class ConversationReplayState extends Equatable {
     int? emojiPressCount,
     ReplayScreen? screen,
     String? currentProjectId,
+    String? swipingMessageId,
+    double? swipeOffset,
+    String? replyPreviewText,
+    String? replyPreviewSenderName,
+    bool clearSwipe = false,
+    bool clearReplyPreview = false,
   }) {
     return ConversationReplayState(
-      visibleMessages:
-          visibleMessages ?? this.visibleMessages,
+      visibleMessages: visibleMessages ?? this.visibleMessages,
       playing: playing ?? this.playing,
       paused: paused ?? this.paused,
       finished: finished ?? this.finished,
-      currentIndex:
-          currentIndex ?? this.currentIndex,
+      currentIndex: currentIndex ?? this.currentIndex,
       typing: typing ?? this.typing,
-      typingPersonId:
-          typingPersonId ?? this.typingPersonId,
-      onlinePersonId:
-          onlinePersonId ?? this.onlinePersonId,
-      composerText:
-          composerText ?? this.composerText,
-      pressedKey:
-          pressedKey ?? this.pressedKey,
-      keyboardVisible:
-          keyboardVisible ?? this.keyboardVisible,
-      shiftEnabled:
-          shiftEnabled ?? this.shiftEnabled,
-      shiftPressed:
-          shiftPressed ?? this.shiftPressed,
-      emojiKeyboardVisible:
-          emojiKeyboardVisible ??
-              this.emojiKeyboardVisible,
-      pressedEmoji:
-          pressedEmoji ?? this.pressedEmoji,
-      availableEmojis:
-          availableEmojis ?? this.availableEmojis,
-      lastPressedEmoji:
-          lastPressedEmoji ?? this.lastPressedEmoji,
-      emojiPressCount:
-          emojiPressCount ?? this.emojiPressCount,
+      typingPersonId: typingPersonId ?? this.typingPersonId,
+      onlinePersonId: onlinePersonId ?? this.onlinePersonId,
+      composerText: composerText ?? this.composerText,
+      pressedKey: pressedKey ?? this.pressedKey,
+      keyboardVisible: keyboardVisible ?? this.keyboardVisible,
+      shiftEnabled: shiftEnabled ?? this.shiftEnabled,
+      shiftPressed: shiftPressed ?? this.shiftPressed,
+      emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
+      pressedEmoji: pressedEmoji ?? this.pressedEmoji,
+      availableEmojis: availableEmojis ?? this.availableEmojis,
+      lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
+      emojiPressCount: emojiPressCount ?? this.emojiPressCount,
       screen: screen ?? this.screen,
-      currentProjectId:
-          currentProjectId ?? this.currentProjectId,
+      currentProjectId: currentProjectId ?? this.currentProjectId,
+      swipingMessageId:
+          clearSwipe ? null : (swipingMessageId ?? this.swipingMessageId),
+      swipeOffset: clearSwipe ? 0 : (swipeOffset ?? this.swipeOffset),
+      replyPreviewText: clearReplyPreview
+          ? null
+          : (replyPreviewText ?? this.replyPreviewText),
+      replyPreviewSenderName: clearReplyPreview
+          ? null
+          : (replyPreviewSenderName ?? this.replyPreviewSenderName),
     );
   }
 
@@ -136,5 +145,9 @@ class ConversationReplayState extends Equatable {
         emojiPressCount,
         screen,
         currentProjectId,
+        swipingMessageId,
+        swipeOffset,
+        replyPreviewText,
+        replyPreviewSenderName,
       ];
 }

@@ -16,7 +16,8 @@ class MessageBubble extends StatefulWidget {
   final bool isLastInGroup;
   final bool isSelected;
   final bool isHighlighted;
-
+  final double? forcedDragOffset; // NEW
+  final bool forceShowReplyArrow; // NEW
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onReplyTap;
@@ -36,6 +37,8 @@ class MessageBubble extends StatefulWidget {
     this.onLongPress,
     this.onReplyTap,
     this.onSwipeReply,
+    this.forcedDragOffset, // NEW
+    this.forceShowReplyArrow = false, // NEW
   });
 
   @override
@@ -46,7 +49,16 @@ class _MessageBubbleState extends State<MessageBubble>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _dragOffset = 0;
-  bool get _showReplyArrow => _dragOffset > 15;
+
+  double get _effectiveDragOffset {
+    if (widget.forcedDragOffset != null) {
+      return widget.forcedDragOffset!;
+    }
+    return _dragOffset;
+  }
+
+  bool get _showReplyArrow =>
+      widget.forceShowReplyArrow || _effectiveDragOffset > 15;
 
   @override
   void initState() {
@@ -182,7 +194,7 @@ class _MessageBubbleState extends State<MessageBubble>
                         ),
                       ),
                     Transform.translate(
-                      offset: Offset(_dragOffset, 0),
+                      offset: Offset(_effectiveDragOffset, 0),
                       child: ChatBubbleShape(
                         isMine: widget.isMine,
                         isSelected: widget.isSelected,

@@ -10,7 +10,9 @@ import 'playback_navigation_bar.dart';
 class PlaybackBottomPanel extends StatelessWidget {
   const PlaybackBottomPanel({super.key});
 
-  static const double _composerHeight = 62;
+  static const double _baseComposerHeight = 62;
+  static const double _replyPreviewHeight =
+      72; // approximate height of the reply bar
   static const double _keyboardHeight = 228;
   static const double _emojiKeyboardHeight = 280;
   static const double _navigationBarHeight = 48;
@@ -25,12 +27,21 @@ class PlaybackBottomPanel extends StatelessWidget {
         final keyboardHeight =
             state.emojiKeyboardVisible ? _emojiKeyboardHeight : _keyboardHeight;
 
+        final hasReplyPreview = state.replyPreviewText != null;
+
+        // Dynamic height so the reply preview is fully visible above the text field
+        final composerHeight =
+            _baseComposerHeight + (hasReplyPreview ? _replyPreviewHeight : 0);
+
         return SizedBox(
-          height: _composerHeight +
+          height: composerHeight +
               _navigationBarHeight +
               (keyboardVisible ? keyboardHeight : 0),
           child: Stack(
             children: [
+              // ---------------------------------------------------------------
+              // COMPOSER (now includes reply preview)
+              // ---------------------------------------------------------------
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOut,
@@ -43,6 +54,10 @@ class PlaybackBottomPanel extends StatelessWidget {
                   keyboardVisible: keyboardVisible,
                 ),
               ),
+
+              // ---------------------------------------------------------------
+              // KEYBOARD
+              // ---------------------------------------------------------------
               Positioned(
                 left: 0,
                 right: 0,
@@ -58,6 +73,10 @@ class PlaybackBottomPanel extends StatelessWidget {
                   emojiPressCount: state.emojiPressCount,
                 ),
               ),
+
+              // ---------------------------------------------------------------
+              // NAVIGATION BAR
+              // ---------------------------------------------------------------
               Positioned(
                 left: 0,
                 right: 0,
