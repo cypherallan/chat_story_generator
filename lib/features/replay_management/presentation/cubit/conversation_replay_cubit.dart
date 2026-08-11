@@ -367,17 +367,12 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   // ---------------------------------------------------------------------------
 
   void _scheduleDeletion(Message originalMessage) {
-    // Always use a short, predictable delay after the message appears
-    // so the visual sequence is guaranteed to be seen.
     final delay =
         Duration(milliseconds: 2200 + _random.nextInt(1200)); // 2.2 – 3.4 s
 
     Timer(delay, () {
-      // Allow the animation even if playback has just finished,
-      // as long as we are still on the conversation screen.
       if (state.screen != ReplayScreen.conversation) return;
 
-      // 1. Long-press → select the message
       emit(
         state.copyWith(
           selectedMessageIds: {originalMessage.id},
@@ -385,14 +380,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
         ),
       );
 
-      // 2. Let the user see the selection + header change
       Timer(const Duration(milliseconds: 800), () {
         if (state.screen != ReplayScreen.conversation) return;
 
-        // 3. Visually press the delete icon
         emit(state.copyWith(deleteIconPressed: true));
 
-        // 4. After the “tap”, turn the message into “This message was deleted”
         Timer(const Duration(milliseconds: 400), () {
           if (state.screen != ReplayScreen.conversation) return;
 
