@@ -17,6 +17,8 @@ class MessageModel extends Message {
     super.replyToSenderName,
     super.replyToText,
     super.reactions = const {},
+    super.originalText,
+    super.deletedAt,
   });
 
   factory MessageModel.fromEntity(Message message) {
@@ -35,6 +37,8 @@ class MessageModel extends Message {
       replyToSenderName: message.replyToSenderName,
       replyToText: message.replyToText,
       reactions: message.reactions,
+      originalText: message.originalText,
+      deletedAt: message.deletedAt,
     );
   }
 
@@ -58,6 +62,10 @@ class MessageModel extends Message {
       reactions: Map<String, String>.from(
         json['reactions'] ?? {},
       ),
+      originalText: json['originalText'] as String?,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
     );
   }
 
@@ -77,6 +85,8 @@ class MessageModel extends Message {
       'replyToSenderName': replyToSenderName,
       'replyToText': replyToText,
       'reactions': reactions,
+      'originalText': originalText,
+      'deletedAt': deletedAt?.toIso8601String(),
     };
   }
 }

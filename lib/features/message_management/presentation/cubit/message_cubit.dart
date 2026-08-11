@@ -343,8 +343,11 @@ class MessageCubit extends Cubit<MessageState> {
     );
 
     final deletedMessage = message.copyWith(
+      // Keep the original text so replay can type it first
+      originalText: message.originalText ?? message.text,
       text: 'This message was deleted',
       isDeleted: true,
+      deletedAt: DateTime.now(),
       imagePath: null,
       replyToMessageId: null,
       replyToSenderId: null,

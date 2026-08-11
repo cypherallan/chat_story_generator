@@ -186,16 +186,10 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // OTHER PERSON TYPING
-  //
-  // The actual message remains hidden while the "typing..." indicator is shown.
-  // The delay is based on the length and structure of the message so short
-  // messages are quick and longer messages take noticeably longer.
-  // ---------------------------------------------------------------------------
-
   void _typeOtherPersonMessage(Message message) {
-    final delay = _humanTypingDuration(message.text);
+    final delay = _humanTypingDuration(
+      message.originalText ?? message.text,
+    );
 
     emit(
       state.copyWith(
@@ -219,8 +213,16 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
           return;
         }
 
+        // Always show the original text first (even if the message was later deleted)
+        final messageToShow = message.isDeleted
+            ? message.copyWith(
+                text: message.originalText ?? message.text,
+                isDeleted: false,
+              )
+            : message;
+
         final updatedMessages = List<Message>.from(state.visibleMessages)
-          ..add(message);
+          ..add(messageToShow);
 
         emit(
           state.copyWith(
@@ -230,6 +232,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
             currentIndex: state.currentIndex + 1,
           ),
         );
+
+        // If this message was deleted later, schedule the visual deletion
+        if (message.isDeleted) {
+          _scheduleDeletion(message);
+        }
 
         _timer = Timer(
           const Duration(milliseconds: 650),
@@ -355,12 +362,66 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // SCHEDULE VISUAL DELETION
+  // ---------------------------------------------------------------------------
+
+  void _scheduleDeletion(Message originalMessage) {
+    // Calculate how long after the message was sent it was deleted.
+    // If deletedAt is missing we use a reasonable default (4–8 seconds).
+    Duration delay;
+
+    if (originalMessage.deletedAt != null) {
+      final diff =
+          originalMessage.deletedAt!.difference(originalMessage.createdAt);
+      // Clamp to a sensible range so replay doesn’t wait minutes
+      if (diff.inMilliseconds < 1500) {
+        delay = const Duration(milliseconds: 1800);
+      } else if (diff.inSeconds > 20) {
+        delay = Duration(seconds: 6 + _random.nextInt(4));
+      } else {
+        delay = diff;
+      }
+    } else {
+      delay = Duration(milliseconds: 2500 + _random.nextInt(3000));
+    }
+
+    // We use a separate timer so it doesn’t interfere with the main playback timer
+    Timer(delay, () {
+      if (!state.playing && !state.paused) return;
+
+      final currentMessages = List<Message>.from(state.visibleMessages);
+      final index =
+          currentMessages.indexWhere((m) => m.id == originalMessage.id);
+
+      if (index == -1) return;
+
+      // Replace the message with the deleted version
+      currentMessages[index] = originalMessage.copyWith(
+        text: 'This message was deleted',
+        isDeleted: true,
+        imagePath: null,
+        replyToMessageId: null,
+        replyToSenderId: null,
+        replyToSenderName: null,
+        replyToText: null,
+      );
+
+      emit(
+        state.copyWith(
+          visibleMessages: currentMessages,
+        ),
+      );
+    });
+  }
+
   void _typeOwnerMessage(Message message) {
     if (message.replyToMessageId != null && message.replyToText != null) {
       _performSwipeThenType(message);
       return;
     }
-    final characters = message.text.characters.toList();
+    final characters =
+        (message.originalText ?? message.text).characters.toList();
 
     int characterIndex = 0;
     String typedText = '';
@@ -414,8 +475,16 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     // ---------------------------------------------------------------
 
     if (characterIndex >= characters.length) {
+      // Always show the original text first (even if the message was later deleted)
+      final messageToShow = message.isDeleted
+          ? message.copyWith(
+              text: message.originalText ?? message.text,
+              isDeleted: false,
+            )
+          : message;
+
       final updatedMessages = List<Message>.from(state.visibleMessages)
-        ..add(message);
+        ..add(messageToShow);
 
       emit(
         state.copyWith(
@@ -428,9 +497,14 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
           keyboardVisible: true,
           visibleMessages: updatedMessages,
           currentIndex: state.currentIndex + 1,
-          clearReplyPreview: true, // ← add this
+          clearReplyPreview: true,
         ),
       );
+
+      // If this message was deleted later, schedule the visual deletion
+      if (message.isDeleted) {
+        _scheduleDeletion(message);
+      }
 
       _timer = Timer(
         const Duration(milliseconds: 550),

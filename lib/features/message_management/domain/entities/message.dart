@@ -17,6 +17,10 @@ class Message extends Equatable {
   final String? replyToText;
   final Map<String, String> reactions;
 
+  // NEW – needed for realistic deletion during replay
+  final String? originalText;
+  final DateTime? deletedAt;
+
   const Message({
     required this.id,
     required this.projectId,
@@ -32,7 +36,10 @@ class Message extends Equatable {
     this.replyToSenderName,
     this.replyToText,
     this.reactions = const {},
+    this.originalText,
+    this.deletedAt,
   });
+
   Message copyWith({
     String? id,
     String? projectId,
@@ -48,6 +55,8 @@ class Message extends Equatable {
     String? replyToSenderName,
     String? replyToText,
     Map<String, String>? reactions,
+    String? originalText,
+    DateTime? deletedAt,
   }) {
     return Message(
       id: id ?? this.id,
@@ -64,6 +73,8 @@ class Message extends Equatable {
       replyToSenderName: replyToSenderName ?? this.replyToSenderName,
       replyToText: replyToText ?? this.replyToText,
       reactions: reactions ?? this.reactions,
+      originalText: originalText ?? this.originalText,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -83,5 +94,7 @@ class Message extends Equatable {
         replyToSenderName,
         replyToText,
         reactions,
+        originalText,
+        deletedAt,
       ];
 }
