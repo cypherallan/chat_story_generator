@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/domain/entities/person.dart';
 import '../../../project_management/domain/entities/project.dart';
@@ -30,16 +31,11 @@ class ReplayConversationView extends StatefulWidget {
   });
 
   @override
-  State<ReplayConversationView> createState() =>
-      _ReplayConversationViewState();
+  State<ReplayConversationView> createState() => _ReplayConversationViewState();
 }
 
 class _ReplayConversationViewState extends State<ReplayConversationView> {
   final ScrollController _scrollController = ScrollController();
-
-  final Set<String> _selectedMessageIds = {};
-
-  bool get _isSelectionMode => _selectedMessageIds.isNotEmpty;
 
   @override
   void dispose() {
@@ -48,61 +44,12 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
   }
 
   // ===========================================================================
-  // MESSAGE SELECTION
+  // SWIPE TO REPLY (still placeholder – visual is already handled)
   // ===========================================================================
 
-  void _toggleMessageSelection(String messageId) {
-    setState(() {
-      if (_selectedMessageIds.contains(messageId)) {
-        _selectedMessageIds.remove(messageId);
-      } else {
-        _selectedMessageIds.add(messageId);
-      }
-    });
-  }
+  void _onSwipeReply(Message message) {}
 
-  void _clearSelection() {
-    setState(() {
-      _selectedMessageIds.clear();
-    });
-  }
-
-  // ===========================================================================
-  // SWIPE TO REPLY
-  // ===========================================================================
-
-  void _onSwipeReply(Message message) {
-    // Replay does not modify the actual conversation.
-    //
-    // MessageBubble handles the visual swipe animation itself.
-    //
-    // This callback is intentionally left as a placeholder for now.
-  }
-
-  // ===========================================================================
-  // REPLY PREVIEW TAP
-  // ===========================================================================
-
-  void _onReplyTap(String messageId) {
-    // Placeholder for now.
-    //
-    // Later we can make replay scroll to the original
-    // replied-to message.
-  }
-
-  // ===========================================================================
-  // HEADER
-  // ===========================================================================
-
-  Widget _buildHeader() {
-    return playback_header.PlaybackHeader(
-      project: widget.project,
-      onBack: widget.onBack,
-      isSelectionMode: _isSelectionMode,
-      selectedCount: _selectedMessageIds.length,
-      onClearSelection: _clearSelection,
-    );
-  }
+  void _onReplyTap(String messageId) {}
 
   // ===========================================================================
   // BUILD
@@ -110,81 +57,62 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFECE5DD),
+    return BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
+      builder: (context, state) {
+        final selectedIds = state.selectedMessageIds;
+        final isSelectionMode = selectedIds.isNotEmpty;
 
-      // -----------------------------------------------------------------------
-      // WHATSAPP HEADER
-      //
-      // The header is completely separate from the wallpaper.
-      // -----------------------------------------------------------------------
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: _buildHeader(),
-      ),
-
-      // -----------------------------------------------------------------------
-      // CHAT BODY
-      // -----------------------------------------------------------------------
-      body: Stack(
-        children: [
-          // -------------------------------------------------------------------
-          // CHAT WALLPAPER
-          // -------------------------------------------------------------------
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/chat_wallpaper.png',
-              fit: BoxFit.cover,
+        return Scaffold(
+          backgroundColor: const Color(0xFFECE5DD),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: playback_header.PlaybackHeader(
+              project: widget.project,
+              onBack: widget.onBack,
+              isSelectionMode: isSelectionMode,
+              selectedCount: selectedIds.length,
+              onClearSelection: () {
+                // During automated replay we ignore manual clear
+              },
+              deleteIconPressed: state.deleteIconPressed,
             ),
           ),
-
-          // -------------------------------------------------------------------
-          // CHAT CONTENT
-          // -------------------------------------------------------------------
-          SafeArea(
-            top: false,
-            bottom: false,
-            child: Column(
-              children: [
-                // -----------------------------------------------------------------
-                // MESSAGES
-                // -----------------------------------------------------------------
-                Expanded(
-                  child: playback_chat_list.PlaybackChatList(
-                    project: widget.project,
-                    scrollController: _scrollController,
-                    selectedMessageIds: _selectedMessageIds,
-                    onToggleSelection: _toggleMessageSelection,
-                    onSwipeReply: _onSwipeReply,
-                    onReplyTap: _onReplyTap,
-                  ),
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/chat_wallpaper.png',
+                  fit: BoxFit.cover,
                 ),
-
-                // -----------------------------------------------------------------
-                // TYPING INDICATOR
-                // -----------------------------------------------------------------
-                if (widget.state.typing)
-                  const TypingIndicator(
-                    visible: true,
-                  ),
-
-                // -----------------------------------------------------------------
-                // COMPOSER + KEYBOARD
-                // -----------------------------------------------------------------
-                const PlaybackBottomPanel(),
-
-                // -----------------------------------------------------------------
-                // PLAY / PAUSE / STOP
-                // -----------------------------------------------------------------
-                ReplayPlaybackControls(
-                  state: widget.state,
-                  replayCubit: widget.replayCubit,
+              ),
+              SafeArea(
+                top: false,
+                bottom: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: playback_chat_list.PlaybackChatList(
+                        project: widget.project,
+                        scrollController: _scrollController,
+                        selectedMessageIds: selectedIds,
+                        onToggleSelection: (_) {}, // driven by cubit
+                        onSwipeReply: _onSwipeReply,
+                        onReplyTap: _onReplyTap,
+                      ),
+                    ),
+                    if (state.typing) const TypingIndicator(visible: true),
+                    const PlaybackBottomPanel(),
+                    ReplayPlaybackControls(
+                      state: state,
+                      replayCubit: widget.replayCubit,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

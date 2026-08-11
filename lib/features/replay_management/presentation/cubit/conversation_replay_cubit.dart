@@ -367,51 +367,61 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   // ---------------------------------------------------------------------------
 
   void _scheduleDeletion(Message originalMessage) {
-    // Calculate how long after the message was sent it was deleted.
-    // If deletedAt is missing we use a reasonable default (4–8 seconds).
-    Duration delay;
+    // Always use a short, predictable delay after the message appears
+    // so the visual sequence is guaranteed to be seen.
+    final delay =
+        Duration(milliseconds: 2200 + _random.nextInt(1200)); // 2.2 – 3.4 s
 
-    if (originalMessage.deletedAt != null) {
-      final diff =
-          originalMessage.deletedAt!.difference(originalMessage.createdAt);
-      // Clamp to a sensible range so replay doesn’t wait minutes
-      if (diff.inMilliseconds < 1500) {
-        delay = const Duration(milliseconds: 1800);
-      } else if (diff.inSeconds > 20) {
-        delay = Duration(seconds: 6 + _random.nextInt(4));
-      } else {
-        delay = diff;
-      }
-    } else {
-      delay = Duration(milliseconds: 2500 + _random.nextInt(3000));
-    }
-
-    // We use a separate timer so it doesn’t interfere with the main playback timer
     Timer(delay, () {
-      if (!state.playing && !state.paused) return;
+      // Allow the animation even if playback has just finished,
+      // as long as we are still on the conversation screen.
+      if (state.screen != ReplayScreen.conversation) return;
 
-      final currentMessages = List<Message>.from(state.visibleMessages);
-      final index =
-          currentMessages.indexWhere((m) => m.id == originalMessage.id);
-
-      if (index == -1) return;
-
-      // Replace the message with the deleted version
-      currentMessages[index] = originalMessage.copyWith(
-        text: 'This message was deleted',
-        isDeleted: true,
-        imagePath: null,
-        replyToMessageId: null,
-        replyToSenderId: null,
-        replyToSenderName: null,
-        replyToText: null,
-      );
-
+      // 1. Long-press → select the message
       emit(
         state.copyWith(
-          visibleMessages: currentMessages,
+          selectedMessageIds: {originalMessage.id},
+          deleteIconPressed: false,
         ),
       );
+
+      // 2. Let the user see the selection + header change
+      Timer(const Duration(milliseconds: 800), () {
+        if (state.screen != ReplayScreen.conversation) return;
+
+        // 3. Visually press the delete icon
+        emit(state.copyWith(deleteIconPressed: true));
+
+        // 4. After the “tap”, turn the message into “This message was deleted”
+        Timer(const Duration(milliseconds: 400), () {
+          if (state.screen != ReplayScreen.conversation) return;
+
+          final currentMessages = List<Message>.from(state.visibleMessages);
+          final index =
+              currentMessages.indexWhere((m) => m.id == originalMessage.id);
+
+          if (index != -1) {
+            currentMessages[index] = originalMessage.copyWith(
+              text: 'This message was deleted',
+              isDeleted: true,
+              imagePath: null,
+              replyToMessageId: null,
+              replyToSenderId: null,
+              replyToSenderName: null,
+              replyToText: null,
+            );
+          }
+
+          // 5. Clear selection
+          emit(
+            state.copyWith(
+              visibleMessages: currentMessages,
+              clearSelection: true,
+              deleteIconPressed: false,
+            ),
+          );
+        });
+      });
     });
   }
 

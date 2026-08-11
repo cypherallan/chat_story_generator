@@ -29,11 +29,15 @@ class ConversationReplayState extends Equatable {
   final ReplayScreen screen;
   final String? currentProjectId;
 
-  // NEW – visual swipe + reply preview during replay
+  // Swipe + reply preview
   final String? swipingMessageId;
   final double swipeOffset;
   final String? replyPreviewText;
   final String? replyPreviewSenderName;
+
+  // NEW – selection driven by cubit (for visual long-press + delete)
+  final Set<String> selectedMessageIds;
+  final bool deleteIconPressed; // true while the delete icon is being “tapped”
 
   const ConversationReplayState({
     this.visibleMessages = const [],
@@ -60,6 +64,8 @@ class ConversationReplayState extends Equatable {
     this.swipeOffset = 0,
     this.replyPreviewText,
     this.replyPreviewSenderName,
+    this.selectedMessageIds = const {},
+    this.deleteIconPressed = false,
   });
 
   ConversationReplayState copyWith({
@@ -87,8 +93,11 @@ class ConversationReplayState extends Equatable {
     double? swipeOffset,
     String? replyPreviewText,
     String? replyPreviewSenderName,
+    Set<String>? selectedMessageIds,
+    bool? deleteIconPressed,
     bool clearSwipe = false,
     bool clearReplyPreview = false,
+    bool clearSelection = false,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -120,6 +129,9 @@ class ConversationReplayState extends Equatable {
       replyPreviewSenderName: clearReplyPreview
           ? null
           : (replyPreviewSenderName ?? this.replyPreviewSenderName),
+      selectedMessageIds:
+          clearSelection ? {} : (selectedMessageIds ?? this.selectedMessageIds),
+      deleteIconPressed: deleteIconPressed ?? this.deleteIconPressed,
     );
   }
 
@@ -149,5 +161,7 @@ class ConversationReplayState extends Equatable {
         swipeOffset,
         replyPreviewText,
         replyPreviewSenderName,
+        selectedMessageIds,
+        deleteIconPressed,
       ];
 }

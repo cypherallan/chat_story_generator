@@ -11,13 +11,10 @@ import '../cubit/conversation_replay_state.dart';
 class PlaybackHeader extends StatelessWidget {
   final Project project;
   final VoidCallback onBack;
-
-  // ---------------------------------------------------------------------------
-  // SELECTION MODE
-  // ---------------------------------------------------------------------------
   final bool isSelectionMode;
   final int selectedCount;
   final VoidCallback onClearSelection;
+  final bool deleteIconPressed;
 
   const PlaybackHeader({
     super.key,
@@ -26,18 +23,13 @@ class PlaybackHeader extends StatelessWidget {
     required this.isSelectionMode,
     required this.selectedCount,
     required this.onClearSelection,
+    this.deleteIconPressed = false,
   });
 
-  Person? _findPerson(
-    List<Person> persons,
-    String id,
-  ) {
+  Person? _findPerson(List<Person> persons, String id) {
     for (final person in persons) {
-      if (person.id == id) {
-        return person;
-      }
+      if (person.id == id) return person;
     }
-
     return null;
   }
 
@@ -50,30 +42,18 @@ class PlaybackHeader extends StatelessWidget {
         }
 
         if (personState is! PersonLoaded) {
-          return _buildHeader(
-            context,
-            null,
-            'Playback',
-            'online',
-            false,
-          );
+          return _buildHeader(context, null, 'Playback', 'online', false);
         }
 
         return BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
           builder: (context, replayState) {
             final otherPersonIds = project.participantIds
-                .where(
-                  (id) => id != project.ownerId,
-                )
+                .where((id) => id != project.ownerId)
                 .toList();
 
             Person? person;
-
             if (otherPersonIds.isNotEmpty) {
-              person = _findPerson(
-                personState.persons,
-                otherPersonIds.first,
-              );
+              person = _findPerson(personState.persons, otherPersonIds.first);
             }
 
             final title = project.participantIds.length > 2
@@ -82,9 +62,7 @@ class PlaybackHeader extends StatelessWidget {
 
             final isTyping = replayState.typing &&
                 replayState.typingPersonId != null &&
-                otherPersonIds.contains(
-                  replayState.typingPersonId,
-                );
+                otherPersonIds.contains(replayState.typingPersonId);
 
             final subtitle = isTyping
                 ? 'typing...'
@@ -92,22 +70,12 @@ class PlaybackHeader extends StatelessWidget {
                     ? 'online'
                     : 'last seen recently';
 
-            return _buildHeader(
-              context,
-              person,
-              title,
-              subtitle,
-              isTyping,
-            );
+            return _buildHeader(context, person, title, subtitle, isTyping);
           },
         );
       },
     );
   }
-
-  // ===========================================================================
-  // NORMAL HEADER
-  // ===========================================================================
 
   Widget _buildHeader(
     BuildContext context,
@@ -118,30 +86,12 @@ class PlaybackHeader extends StatelessWidget {
   ) {
     return Container(
       height: kToolbarHeight,
-      padding: const EdgeInsets.only(
-        left: 0,
-        right: 4,
-      ),
+      padding: const EdgeInsets.only(left: 0, right: 4),
       child: Row(
         children: [
-          // -------------------------------------------------------------------
-          // BACK
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: onBack,
-          ),
-
-          // -------------------------------------------------------------------
-          // PROFILE PICTURE
-          // -------------------------------------------------------------------
+          IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack),
           _buildAvatar(person),
-
           const SizedBox(width: 10),
-
-          // -------------------------------------------------------------------
-          // NAME + STATUS
-          // -------------------------------------------------------------------
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -152,9 +102,7 @@ class PlaybackHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 17, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -169,141 +117,51 @@ class PlaybackHeader extends StatelessWidget {
               ],
             ),
           ),
-
-          // -------------------------------------------------------------------
-          // VIDEO
-          // -------------------------------------------------------------------
           IconButton(
-            icon: const Icon(
-              Icons.videocam_outlined,
-            ),
-            onPressed: () {},
-          ),
-
-          // -------------------------------------------------------------------
-          // CALL
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(
-              Icons.call_outlined,
-            ),
-            onPressed: () {},
-          ),
-
-          // -------------------------------------------------------------------
-          // THREE DOTS
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(
-              Icons.more_vert,
-            ),
-            onPressed: () {},
-          ),
+              icon: const Icon(Icons.videocam_outlined), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.call_outlined), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
     );
   }
 
-  // ===========================================================================
-  // SELECTION HEADER
-  // ===========================================================================
-
   Widget _buildSelectionHeader() {
     return Container(
       height: kToolbarHeight,
-      padding: const EdgeInsets.only(
-        left: 0,
-        right: 4,
-      ),
+      padding: const EdgeInsets.only(left: 0, right: 4),
       child: Row(
         children: [
-          // -------------------------------------------------------------------
-          // EXIT SELECTION MODE
-          // -------------------------------------------------------------------
           IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-            ),
+            icon: const Icon(Icons.arrow_back),
             onPressed: onClearSelection,
           ),
-
-          // -------------------------------------------------------------------
-          // SELECTED COUNT
-          // -------------------------------------------------------------------
           Expanded(
             child: Text(
               '$selectedCount',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
             ),
           ),
-
-          // -------------------------------------------------------------------
-          // STAR
-          // Placeholder for now.
-          // -------------------------------------------------------------------
+          IconButton(icon: const Icon(Icons.star_border), onPressed: () {}),
           IconButton(
-            icon: const Icon(
-              Icons.star_border,
-            ),
-            onPressed: () {},
-          ),
+              icon: const Icon(Icons.emoji_emotions_outlined),
+              onPressed: () {}),
+          IconButton(icon: const Icon(Icons.reply), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.copy), onPressed: () {}),
 
-          // -------------------------------------------------------------------
-          // REACTION
-          // Placeholder for now.
-          // -------------------------------------------------------------------
+          // DELETE – visually pressed during replay
           IconButton(
-            icon: const Icon(
-              Icons.emoji_emotions_outlined,
-            ),
-            onPressed: () {},
-          ),
-
-          // -------------------------------------------------------------------
-          // REPLY
-          // Placeholder for now.
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(
-              Icons.reply,
-            ),
-            onPressed: () {},
-          ),
-
-          // -------------------------------------------------------------------
-          // COPY
-          // Placeholder for now.
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(
-              Icons.copy,
-            ),
-            onPressed: () {},
-          ),
-
-          // -------------------------------------------------------------------
-          // DELETE
-          // Placeholder for now.
-          // -------------------------------------------------------------------
-          IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.delete_outline,
+              color: deleteIconPressed ? Colors.red : null,
+              size: deleteIconPressed ? 28 : 24,
             ),
             onPressed: () {},
           ),
 
-          // -------------------------------------------------------------------
-          // MORE
-          // -------------------------------------------------------------------
           PopupMenuButton<String>(
             itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'more',
-                child: Text('More'),
-              ),
+              PopupMenuItem(value: 'more', child: Text('More')),
             ],
           ),
         ],
@@ -311,26 +169,16 @@ class PlaybackHeader extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // AVATAR
-  // ===========================================================================
-
   Widget _buildAvatar(Person? person) {
     if (person?.avatarPath != null && person!.avatarPath!.isNotEmpty) {
       return CircleAvatar(
         radius: 20,
-        backgroundImage: NetworkImage(
-          person.avatarPath!,
-        ),
+        backgroundImage: NetworkImage(person.avatarPath!),
       );
     }
-
     return const CircleAvatar(
       radius: 20,
-      child: Icon(
-        Icons.person,
-        size: 22,
-      ),
+      child: Icon(Icons.person, size: 22),
     );
   }
 }
