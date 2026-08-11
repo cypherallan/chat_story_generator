@@ -104,12 +104,12 @@ class _MessageBubbleState extends State<MessageBubble>
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
       onHorizontalDragUpdate: (details) {
-        setState(() {
-          _dragOffset += details.delta.dx;
+        final delta = details.primaryDelta ?? 0;
 
-          if (_dragOffset < 0) {
-            _dragOffset = 0;
-          }
+        if (delta <= 0) return;
+
+        setState(() {
+          _dragOffset += delta;
 
           if (_dragOffset > 80) {
             _dragOffset = 80;
@@ -121,6 +121,11 @@ class _MessageBubbleState extends State<MessageBubble>
           widget.onSwipeReply?.call();
         }
 
+        setState(() {
+          _dragOffset = 0;
+        });
+      },
+      onHorizontalDragCancel: () {
         setState(() {
           _dragOffset = 0;
         });
