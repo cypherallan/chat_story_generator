@@ -1,28 +1,18 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../cubit/project_cubit.dart';
-
 import '../../presentation/widgets/chat_list_item_widget.dart';
-
 import '../../../person_management/presentation/cubit/person_cubit.dart';
-
 import '../../../conversations/presentation/pages/conversation_page.dart';
-
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-
 import '../../../person_management/domain/entities/person.dart';
-
 import '../models/chat_list_item.dart';
-
 import '../../../../injection_container.dart' as di;
 
 class ProjectsListWidget extends StatelessWidget {
   final Set<String> selectedChatIds;
 
   final Function(String) onChatSelected;
-
   const ProjectsListWidget({
     super.key,
     required this.selectedChatIds,
@@ -42,7 +32,6 @@ class _ProjectsListBody extends StatefulWidget {
   final Set<String> selectedChatIds;
 
   final Function(String) onChatSelected;
-
   const _ProjectsListBody({
     required this.selectedChatIds,
     required this.onChatSelected,
@@ -62,7 +51,6 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
             child: CircularProgressIndicator(),
           );
         }
-
         return BlocBuilder<ProjectCubit, ProjectState>(
           builder: (context, state) {
             if (state is ProjectLoading) {

@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../project_management/domain/entities/project.dart';
 import '../../../message_management/presentation/widgets/message_bubble.dart';
+
 import '../cubit/conversation_replay_cubit.dart';
+import '../cubit/conversation_replay_state.dart';
 
 class PlaybackChatList extends StatelessWidget {
   final Project project;
@@ -45,11 +47,20 @@ class PlaybackChatList extends StatelessWidget {
               itemBuilder: (context, index) {
                 final message = messages[index];
 
-                final sender = personState.persons.firstWhere(
-                  (p) => p.id == message.senderId,
-                );
+                final matchingPersons = personState.persons
+                    .where(
+                      (person) => person.id == message.senderId,
+                    )
+                    .toList();
+
+                if (matchingPersons.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final sender = matchingPersons.first;
 
                 final isMine = sender.id == project.ownerId;
+
                 final previousMessage = index > 0 ? messages[index - 1] : null;
 
                 final nextMessage =
@@ -60,6 +71,7 @@ class PlaybackChatList extends StatelessWidget {
 
                 final isLastInGroup = nextMessage == null ||
                     nextMessage.senderId != message.senderId;
+
                 return MessageBubble(
                   message: message,
                   sender: sender,

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
-
-import 'package:characters/characters.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../message_management/domain/entities/message.dart';
 
-part 'conversation_replay_state.dart';
+import 'package:characters/characters.dart';
+
+import 'conversation_replay_state.dart';
 
 class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   ConversationReplayCubit() : super(const ConversationReplayState());
@@ -49,6 +49,7 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   final Random _random = Random();
 
   String _ownerId = "";
+  String get ownerId => _ownerId;
 
   Timer? _timer;
 
@@ -353,15 +354,33 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   }
 
   Duration _typingDelay(String text) {
-    if (text.length < 25) {
-      return const Duration(seconds: 2);
-    }
+    // Count actual characters rather than using broad fixed buckets.
+    final characterCount = text.characters.length;
 
-    if (text.length < 80) {
-      return const Duration(seconds: 3);
-    }
+    // Humans don't type at a perfectly constant speed.
+    // This gives an average base speed of roughly 5–7 characters/second.
+    final baseMilliseconds = characterCount * 155;
 
-    return const Duration(seconds: 5);
+    // Small natural variation for every message.
+    final variation = _random.nextInt(700) - 350;
+
+    // Extra thinking/pause time for punctuation.
+    final punctuationCount = RegExp(r'[,.!?;:]').allMatches(text).length;
+    final punctuationPause = punctuationCount * 180;
+
+    // Slight pauses for longer messages.
+    final longMessagePause = characterCount > 45 ? _random.nextInt(1000) : 0;
+
+    var milliseconds =
+        baseMilliseconds + variation + punctuationPause + longMessagePause;
+
+    // Never let even a very short message appear instantly.
+    milliseconds = max(milliseconds, 1200);
+
+    // Keep extremely long messages from becoming ridiculously slow.
+    milliseconds = min(milliseconds, 12000);
+
+    return Duration(milliseconds: milliseconds);
   }
 
   @override

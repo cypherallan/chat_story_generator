@@ -5,7 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'features/person_management/domain/usecases/update_person.dart';
 import 'core/auth/auth_service.dart';
 import 'core/storage/firebase_storage_service.dart';
-
+import 'features/replay_management/presentation/cubit/conversation_replay_cubit.dart';
 import 'features/person_management/data/datasources/person_firestore_data_source.dart';
 import 'features/person_management/data/repositories/person_repository_impl.dart';
 
@@ -136,5 +136,9 @@ Future<void> init() async {
       updateProject: sl(),
       storageService: sl(),
     ),
+  );
+    // Conversation Replay Cubit
+  sl.registerFactory(
+    () => ConversationReplayCubit(),
   );
 }

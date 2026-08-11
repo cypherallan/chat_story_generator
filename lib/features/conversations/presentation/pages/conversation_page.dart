@@ -8,7 +8,6 @@ import '../../../project_management/presentation/cubit/project_cubit.dart';
 
 import '../widgets/conversation_app_bar.dart';
 import '../../../replay_management/presentation/pages/conversation_playback_page.dart';
-import '../../../replay_management/presentation/cubit/conversation_replay_cubit.dart';
 import 'conversation_page_body.dart';
 
 class ConversationPage extends StatefulWidget {
@@ -79,26 +78,10 @@ class _ConversationPageState extends State<ConversationPage> {
           onClearSelection: () =>
               _bodyKey.currentState?.clearMessageSelection(),
           onPreviewPressed: () {
-            final state = context.read<MessageCubit>().state;
-            if (state is! MessageLoaded) return;
-
-            final personCubit = context.read<PersonCubit>();
-            final messageCubit = context.read<MessageCubit>();
-
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: personCubit),
-                    BlocProvider.value(value: messageCubit),
-                    BlocProvider(create: (_) => ConversationReplayCubit()),
-                  ],
-                  child: ConversationPlaybackPage(
-                    project: widget.project,
-                    messages: state.messages,
-                  ),
-                ),
+                builder: (_) => const ConversationPlaybackPage(),
               ),
             );
           },

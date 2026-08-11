@@ -1,40 +1,31 @@
-part of 'conversation_replay_cubit.dart';
+import 'package:equatable/equatable.dart';
+
+import '../../../message_management/domain/entities/message.dart';
 
 enum ReplayScreen {
   home,
   conversation,
 }
 
-class ConversationReplayState {
+class ConversationReplayState extends Equatable {
   final List<Message> visibleMessages;
-
   final bool playing;
   final bool paused;
   final bool finished;
-
   final int currentIndex;
-
   final bool typing;
   final String? typingPersonId;
   final String? onlinePersonId;
-
   final String composerText;
-
   final String? pressedKey;
-
   final bool keyboardVisible;
-
   final bool shiftEnabled;
   final bool shiftPressed;
-
   final bool emojiKeyboardVisible;
   final String? pressedEmoji;
-
   final List<String> availableEmojis;
   final String? lastPressedEmoji;
   final int emojiPressCount;
-
-  // Replay navigation
   final ReplayScreen screen;
   final String? currentProjectId;
 
@@ -84,26 +75,66 @@ class ConversationReplayState {
     String? currentProjectId,
   }) {
     return ConversationReplayState(
-      visibleMessages: visibleMessages ?? this.visibleMessages,
+      visibleMessages:
+          visibleMessages ?? this.visibleMessages,
       playing: playing ?? this.playing,
       paused: paused ?? this.paused,
       finished: finished ?? this.finished,
-      currentIndex: currentIndex ?? this.currentIndex,
+      currentIndex:
+          currentIndex ?? this.currentIndex,
       typing: typing ?? this.typing,
-      typingPersonId: typingPersonId ?? this.typingPersonId,
-      onlinePersonId: onlinePersonId ?? this.onlinePersonId,
-      composerText: composerText ?? this.composerText,
-      pressedKey: pressedKey ?? this.pressedKey,
-      keyboardVisible: keyboardVisible ?? this.keyboardVisible,
-      shiftEnabled: shiftEnabled ?? this.shiftEnabled,
-      shiftPressed: shiftPressed ?? this.shiftPressed,
-      emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
-      pressedEmoji: pressedEmoji ?? this.pressedEmoji,
-      availableEmojis: availableEmojis ?? this.availableEmojis,
-      lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
-      emojiPressCount: emojiPressCount ?? this.emojiPressCount,
+      typingPersonId:
+          typingPersonId ?? this.typingPersonId,
+      onlinePersonId:
+          onlinePersonId ?? this.onlinePersonId,
+      composerText:
+          composerText ?? this.composerText,
+      pressedKey:
+          pressedKey ?? this.pressedKey,
+      keyboardVisible:
+          keyboardVisible ?? this.keyboardVisible,
+      shiftEnabled:
+          shiftEnabled ?? this.shiftEnabled,
+      shiftPressed:
+          shiftPressed ?? this.shiftPressed,
+      emojiKeyboardVisible:
+          emojiKeyboardVisible ??
+              this.emojiKeyboardVisible,
+      pressedEmoji:
+          pressedEmoji ?? this.pressedEmoji,
+      availableEmojis:
+          availableEmojis ?? this.availableEmojis,
+      lastPressedEmoji:
+          lastPressedEmoji ?? this.lastPressedEmoji,
+      emojiPressCount:
+          emojiPressCount ?? this.emojiPressCount,
       screen: screen ?? this.screen,
-      currentProjectId: currentProjectId ?? this.currentProjectId,
+      currentProjectId:
+          currentProjectId ?? this.currentProjectId,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        visibleMessages,
+        playing,
+        paused,
+        finished,
+        currentIndex,
+        typing,
+        typingPersonId,
+        onlinePersonId,
+        composerText,
+        pressedKey,
+        keyboardVisible,
+        shiftEnabled,
+        shiftPressed,
+        emojiKeyboardVisible,
+        pressedEmoji,
+        availableEmojis,
+        lastPressedEmoji,
+        emojiPressCount,
+        screen,
+        currentProjectId,
+      ];
 }

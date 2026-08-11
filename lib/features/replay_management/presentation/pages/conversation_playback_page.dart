@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
-
-import '../../../message_management/domain/entities/message.dart';
-import '../../../project_management/domain/entities/project.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/conversation_replay_cubit.dart';
 
-import '../widgets/playback_header.dart';
-import '../widgets/playback_chat_list.dart';
-import '../widgets/playback_controls.dart';
-import '../widgets/playback_bottom_panel.dart';
+import '../../../../injection_container.dart' as di;
+import '../../../message_management/domain/usecases/get_messages.dart';
+import '../../../person_management/domain/entities/person.dart';
+import '../../../person_management/presentation/cubit/person_cubit.dart';
+import '../../../project_management/domain/entities/project.dart';
+import '../../../project_management/presentation/cubit/project_cubit.dart';
+
+import '../cubit/conversation_replay_cubit.dart';
+import '../cubit/conversation_replay_state.dart';
+import '../widgets/replay_conversation_view.dart';
+import '../widgets/replay_home_view.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
-  final Project project;
-  final List<Message> messages;
-
   const ConversationPlaybackPage({
     super.key,
-    required this.project,
-    required this.messages,
   });
 
   @override
@@ -26,56 +23,154 @@ class ConversationPlaybackPage extends StatefulWidget {
       _ConversationPlaybackPageState();
 }
 
-class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
+class _ConversationPlaybackPageState
+    extends State<ConversationPlaybackPage> {
+  late final ConversationReplayCubit _replayCubit;
 
   @override
   void initState() {
     super.initState();
 
-    final replayCubit = context.read<ConversationReplayCubit>();
+    _replayCubit = di.sl<ConversationReplayCubit>();
 
-    replayCubit.load(
-      widget.messages,
-      widget.project.ownerId,
-    );
+    _replayCubit.showHome();
+  }
+
+  @override
+  void dispose() {
+    _replayCubit.close();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: const PlaybackControls(),
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: PlaybackHeader(
-          project: widget.project,
+    return DefaultTabController(
+      length: 4,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<ProjectCubit>(
+            create: (_) => di.sl<ProjectCubit>()..loadProjects(),
+          ),
+          BlocProvider<PersonCubit>(
+            create: (_) => di.sl<PersonCubit>()..loadPersons(),
+          ),
+          BlocProvider<ConversationReplayCubit>.value(
+            value: _replayCubit,
+          ),
+        ],
+        child: BlocBuilder<
+            ConversationReplayCubit,
+            ConversationReplayState>(
+          builder: (context, replayState) {
+            if (replayState.screen == ReplayScreen.conversation) {
+              return _buildConversation(
+                context,
+                replayState,
+              );
+            }
+
+            return _buildHome(context);
+          },
         ),
       ),
-      body: Column(children: [
-        Expanded(
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/chat_wallpaper.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              PlaybackChatList(
-                project: widget.project,
-                scrollController: _scrollController,
-              ),
-            ],
-          ),
+    );
+  }
+
+  Widget _buildHome(BuildContext context) {
+    return ReplayHomeView(
+      onChatTap: (project) {
+        _openReplayConversation(
+          context,
+          project,
+        );
+      },
+    );
+  }
+
+  Widget _buildConversation(
+    BuildContext context,
+    ConversationReplayState replayState,
+  ) {
+    final projectId = replayState.currentProjectId;
+
+    if (projectId == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Conversation not selected.'),
         ),
-        const PlaybackBottomPanel(),
-      ]),
+      );
+    }
+
+    final projectState =
+        context.watch<ProjectCubit>().state;
+
+    final personState =
+        context.watch<PersonCubit>().state;
+
+    if (projectState is! ProjectLoaded ||
+        personState is! PersonLoaded) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    Project? project;
+
+    for (final item in projectState.projects) {
+      if (item.id == projectId) {
+        project = item;
+        break;
+      }
+    }
+
+    if (project == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Project not found.'),
+        ),
+      );
+    }
+
+    final List<Person> persons = personState.persons;
+
+    return ReplayConversationView(
+      project: project,
+      persons: persons,
+      replayCubit: _replayCubit,
+      state: replayState,
+      onBack: _replayCubit.showHome,
+    );
+  }
+
+  Future<void> _openReplayConversation(
+    BuildContext context,
+    Project project,
+  ) async {
+    final result =
+        await di.sl<GetMessages>()(project.id).first;
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+          ),
+        );
+      },
+      (messages) {
+        _replayCubit.load(
+          messages,
+          project.ownerId,
+        );
+
+        _replayCubit.openConversation(
+          project.id,
+        );
+      },
     );
   }
 }

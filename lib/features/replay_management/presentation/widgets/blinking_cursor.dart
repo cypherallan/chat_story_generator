@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class BlinkingCursor extends StatefulWidget {
-  const BlinkingCursor({super.key});
+  const BlinkingCursor({
+    super.key,
+  });
 
   @override
   State<BlinkingCursor> createState() => _BlinkingCursorState();
@@ -38,16 +40,16 @@ class _BlinkingCursorState extends State<BlinkingCursor> {
 
   @override
   Widget build(BuildContext context) {
-    return Visibility(
-      visible: _visible,
-      maintainAnimation: true,
-      maintainState: true,
-      maintainSize: true,
+    return AnimatedOpacity(
+      opacity: _visible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 80),
       child: Container(
         width: 2,
         height: 20,
-        margin: const EdgeInsets.only(left: 1),
-        color: const Color.fromARGB(255, 71, 71, 71),
+        margin: const EdgeInsets.only(
+          left: 1,
+        ),
+        color: const Color(0xFF474747),
       ),
     );
   }

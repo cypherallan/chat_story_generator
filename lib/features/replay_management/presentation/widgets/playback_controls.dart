@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubit/conversation_replay_cubit.dart';
+import '../cubit/conversation_replay_state.dart';
 
 class PlaybackControls extends StatelessWidget {
   const PlaybackControls({
@@ -13,9 +14,6 @@ class PlaybackControls extends StatelessWidget {
     return BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
       builder: (context, state) {
         return FloatingActionButton(
-          child: Icon(
-            state.playing ? Icons.pause : Icons.play_arrow,
-          ),
           onPressed: () {
             final cubit = context.read<ConversationReplayCubit>();
 
@@ -25,6 +23,9 @@ class PlaybackControls extends StatelessWidget {
               cubit.play();
             }
           },
+          child: Icon(
+            state.playing ? Icons.pause : Icons.play_arrow,
+          ),
         );
       },
     );
