@@ -1,14 +1,28 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../message_management/domain/entities/message.dart';
 
 import 'package:characters/characters.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../message_management/domain/entities/message.dart';
 import 'conversation_replay_state.dart';
 
 class ConversationReplayCubit extends Cubit<ConversationReplayState> {
   ConversationReplayCubit() : super(const ConversationReplayState());
+
+  final List<Message> _messages = [];
+  final Random _random = Random();
+
+  Timer? _timer;
+
+  String _ownerId = '';
+
+  String get ownerId => _ownerId;
+
+  // ---------------------------------------------------------------------------
+  // NAVIGATION
+  // ---------------------------------------------------------------------------
+
   void showHome() {
     _timer?.cancel();
 
@@ -21,6 +35,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
         onlinePersonId: null,
         keyboardVisible: false,
         emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftPressed: false,
       ),
     );
   }
@@ -37,6 +56,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
         onlinePersonId: null,
         keyboardVisible: false,
         emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftPressed: false,
       ),
     );
   }
@@ -45,18 +69,16 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     showHome();
   }
 
-  final List<Message> _messages = [];
-  final Random _random = Random();
-
-  String _ownerId = "";
-  String get ownerId => _ownerId;
-
-  Timer? _timer;
+  // ---------------------------------------------------------------------------
+  // LOAD REPLAY
+  // ---------------------------------------------------------------------------
 
   void load(
     List<Message> messages,
     String ownerId,
   ) {
+    _timer?.cancel();
+
     _messages
       ..clear()
       ..addAll(messages);
@@ -64,10 +86,11 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     _ownerId = ownerId;
 
     final Set<String> emojiSet = {};
+
     for (final message in messages) {
-      for (final char in message.text.characters) {
-        if (_isEmoji(char)) {
-          emojiSet.add(char);
+      for (final character in message.text.characters) {
+        if (_isEmoji(character)) {
+          emojiSet.add(character);
         }
       }
     }
@@ -80,14 +103,21 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // PLAYBACK
+  // ---------------------------------------------------------------------------
+
   void play() {
-    if (state.playing || state.finished) return;
+    if (state.playing || state.finished) {
+      return;
+    }
 
     emit(
       state.copyWith(
         playing: true,
         paused: false,
         keyboardVisible: true,
+        emojiKeyboardVisible: false,
       ),
     );
 
@@ -101,6 +131,10 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
       state.copyWith(
         playing: false,
         paused: true,
+        typing: false,
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
       ),
     );
   }
@@ -115,8 +149,14 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // PLAY NEXT MESSAGE
+  // ---------------------------------------------------------------------------
+
   void _playNext() {
-    if (!state.playing) return;
+    if (!state.playing) {
+      return;
+    }
 
     if (state.currentIndex >= _messages.length) {
       emit(
@@ -124,8 +164,16 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
           playing: false,
           finished: true,
           typing: false,
+          keyboardVisible: false,
+          emojiKeyboardVisible: false,
+          composerText: '',
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+          shiftPressed: false,
         ),
       );
+
       return;
     }
 
@@ -133,41 +181,386 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
 
     if (message.senderId == _ownerId) {
       _typeOwnerMessage(message);
-      return;
+    } else {
+      _typeOtherPersonMessage(message);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // OTHER PERSON TYPING
+  //
+  // The actual message remains hidden while the "typing..." indicator is shown.
+  // The delay is based on the length and structure of the message so short
+  // messages are quick and longer messages take noticeably longer.
+  // ---------------------------------------------------------------------------
+
+  void _typeOtherPersonMessage(Message message) {
+    final delay = _humanTypingDuration(message.text);
 
     emit(
       state.copyWith(
         typing: true,
         typingPersonId: message.senderId,
         onlinePersonId: message.senderId,
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftPressed: false,
       ),
     );
 
     _timer = Timer(
-      _typingDelay(message.text),
+      delay,
       () {
-        final updated = List<Message>.from(state.visibleMessages)..add(message);
+        if (!state.playing) {
+          return;
+        }
+
+        final updatedMessages = List<Message>.from(state.visibleMessages)
+          ..add(message);
 
         emit(
           state.copyWith(
             typing: false,
-            visibleMessages: updated,
+            typingPersonId: null,
+            visibleMessages: updatedMessages,
             currentIndex: state.currentIndex + 1,
           ),
         );
 
         _timer = Timer(
-          const Duration(milliseconds: 700),
+          const Duration(milliseconds: 650),
           _playNext,
         );
       },
     );
   }
 
-  List<String> _characters(String text) {
-    return text.characters.toList();
+  void _typeOwnerMessage(Message message) {
+    final characters = message.text.characters.toList();
+
+    int characterIndex = 0;
+    String typedText = '';
+
+    emit(
+      state.copyWith(
+        composerText: '',
+        keyboardVisible: true,
+        emojiKeyboardVisible: false,
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftEnabled: true,
+        shiftPressed: true,
+      ),
+    );
+
+    _timer = Timer(
+      const Duration(milliseconds: 120),
+      () {
+        if (!state.playing) return;
+
+        emit(
+          state.copyWith(
+            shiftPressed: false,
+          ),
+        );
+
+        _typeNextOwnerCharacter(
+          message,
+          characters,
+          characterIndex,
+          typedText,
+        );
+      },
+    );
   }
+
+  void _typeNextOwnerCharacter(
+    Message message,
+    List<String> characters,
+    int characterIndex,
+    String typedText,
+  ) {
+    if (!state.playing) {
+      return;
+    }
+
+    // ---------------------------------------------------------------
+    // FINISHED TYPING
+    // ---------------------------------------------------------------
+
+    if (characterIndex >= characters.length) {
+      final updatedMessages = List<Message>.from(state.visibleMessages)
+        ..add(message);
+
+      emit(
+        state.copyWith(
+          composerText: '',
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+          shiftPressed: false,
+          emojiKeyboardVisible: false,
+          keyboardVisible: true,
+          visibleMessages: updatedMessages,
+          currentIndex: state.currentIndex + 1,
+        ),
+      );
+
+      _timer = Timer(
+        const Duration(milliseconds: 550),
+        _playNext,
+      );
+
+      return;
+    }
+
+    final character = characters[characterIndex];
+
+    // ---------------------------------------------------------------
+    // EMOJI
+    // ---------------------------------------------------------------
+
+    if (_isEmoji(character)) {
+      emit(
+        state.copyWith(
+          emojiKeyboardVisible: true,
+          keyboardVisible: false,
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+        ),
+      );
+
+      _timer = Timer(
+        const Duration(milliseconds: 100),
+        () {
+          if (!state.playing) return;
+
+          emit(
+            state.copyWith(
+              lastPressedEmoji: character,
+              emojiPressCount: state.emojiPressCount + 1,
+            ),
+          );
+
+          _timer = Timer(
+            const Duration(milliseconds: 180),
+            () {
+              if (!state.playing) return;
+
+              emit(
+                state.copyWith(
+                  lastPressedEmoji: null,
+                ),
+              );
+
+              _timer = Timer(
+                const Duration(milliseconds: 70),
+                () {
+                  if (!state.playing) return;
+
+                  typedText += character;
+
+                  // IMPORTANT:
+                  // The emoji is now visible in the composer.
+                  emit(
+                    state.copyWith(
+                      composerText: typedText,
+                    ),
+                  );
+
+                  _typeNextOwnerCharacter(
+                    message,
+                    characters,
+                    characterIndex + 1,
+                    typedText,
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
+
+      return;
+    }
+
+    // ---------------------------------------------------------------
+    // NORMAL CHARACTER
+    // ---------------------------------------------------------------
+
+    final previousCharacter =
+        characterIndex > 0 ? characters[characterIndex - 1] : '';
+
+    final isSentenceStart = characterIndex == 0 ||
+        previousCharacter == '.' ||
+        previousCharacter == '!' ||
+        previousCharacter == '?' ||
+        previousCharacter == '\n';
+
+    final isUppercaseMessage =
+        message.text.isNotEmpty && message.text == message.text.toUpperCase();
+
+    final shouldShift = isUppercaseMessage || isSentenceStart;
+
+    // Add the character to the text being visibly typed.
+    typedText += character;
+
+    final keyToShow = character == ' ' ? 'space' : character;
+
+    // IMPORTANT:
+    // composerText is updated here, so the user sees the text
+    // appearing character-by-character.
+    emit(
+      state.copyWith(
+        composerText: typedText,
+        keyboardVisible: true,
+        emojiKeyboardVisible: false,
+        pressedKey: keyToShow,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftEnabled: shouldShift,
+        shiftPressed: false,
+      ),
+    );
+
+    characterIndex++;
+
+    final delay = _humanCharacterDelay(
+      character: character,
+      nextCharacter: characterIndex < characters.length
+          ? characters[characterIndex]
+          : null,
+    );
+
+    _timer = Timer(
+      delay,
+      () {
+        _typeNextOwnerCharacter(
+          message,
+          characters,
+          characterIndex,
+          typedText,
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // HUMAN TYPING SPEED
+  // ---------------------------------------------------------------------------
+
+  Duration _humanCharacterDelay({
+    required String character,
+    required String? nextCharacter,
+  }) {
+    // Base human keyboard interval.
+    var milliseconds = 75 + _random.nextInt(120);
+
+    // Spaces usually create a slightly larger pause.
+    if (character == ' ') {
+      milliseconds += 50 + _random.nextInt(90);
+    }
+
+    // Punctuation usually causes a small pause.
+    if (character == '.' ||
+        character == ',' ||
+        character == '!' ||
+        character == '?' ||
+        character == ':') {
+      milliseconds += 100 + _random.nextInt(180);
+    }
+
+    // Slight pause after punctuation before the next word.
+    if (character == '.' ||
+        character == '!' ||
+        character == '?' ||
+        character == ',') {
+      milliseconds += 80 + _random.nextInt(150);
+    }
+
+    // Occasional hesitation, like a real person typing.
+    if (_random.nextInt(18) == 0) {
+      milliseconds += 250 + _random.nextInt(500);
+    }
+
+    // Another small pause before punctuation.
+    if (nextCharacter == '.' ||
+        nextCharacter == ',' ||
+        nextCharacter == '!' ||
+        nextCharacter == '?') {
+      milliseconds += 50 + _random.nextInt(100);
+    }
+
+    return Duration(milliseconds: milliseconds);
+  }
+
+  // ---------------------------------------------------------------------------
+  // HUMAN TYPING DURATION FOR OTHER PARTICIPANTS
+  // ---------------------------------------------------------------------------
+
+  Duration _humanTypingDuration(String text) {
+    if (text.trim().isEmpty) {
+      return const Duration(milliseconds: 800);
+    }
+
+    final characters = text.characters.length;
+
+    // Approximate human typing speed:
+    //
+    // 180-260 characters/minute gives roughly
+    // 230-330ms per character.
+    //
+    // We use a randomized range so every replay doesn't feel identical.
+
+    final basePerCharacter = 210 + _random.nextInt(90); // 210-299 ms
+
+    var milliseconds = characters * basePerCharacter;
+
+    // Minimum typing time.
+    milliseconds = max(milliseconds, 1200);
+
+    // Short messages shouldn't feel unnaturally slow.
+    if (characters <= 5) {
+      milliseconds = 1200 + _random.nextInt(700);
+    } else if (characters <= 12) {
+      milliseconds = 1800 + _random.nextInt(900);
+    } else if (characters <= 25) {
+      milliseconds = 2600 + _random.nextInt(1200);
+    } else if (characters <= 50) {
+      milliseconds = 4000 + _random.nextInt(1600);
+    } else if (characters <= 90) {
+      milliseconds = 6000 + _random.nextInt(2200);
+    } else {
+      milliseconds = 8000 + _random.nextInt(3000);
+    }
+
+    // Extra time for punctuation and pauses between sentences.
+    final punctuationCount = RegExp(r'[.!?,]').allMatches(text).length;
+
+    milliseconds += punctuationCount * 250;
+
+    // Spaces represent word transitions.
+    final wordCount = text.trim().split(RegExp(r'\s+')).length;
+
+    milliseconds += wordCount * 60;
+
+    // Occasional longer hesitation.
+    if (_random.nextInt(8) == 0) {
+      milliseconds += 500 + _random.nextInt(1000);
+    }
+
+    return Duration(milliseconds: milliseconds);
+  }
+
+  // ---------------------------------------------------------------------------
+  // KEYBOARD
+  // ---------------------------------------------------------------------------
 
   void hideKeyboard() {
     emit(
@@ -178,210 +571,24 @@ class ConversationReplayCubit extends Cubit<ConversationReplayState> {
     );
   }
 
-  void _typeOwnerMessage(Message message) {
-    String currentText = '';
-
-    emit(
-      state.copyWith(
-        composerText: '',
-        keyboardVisible: true,
-        emojiKeyboardVisible: false,
-        shiftEnabled: true,
-        shiftPressed: true,
-      ),
-    );
-
-    _timer = Timer(
-      const Duration(milliseconds: 120),
-      () {
-        emit(
-          state.copyWith(
-            shiftPressed: false,
-          ),
-        );
-      },
-    );
-
-    final characters = _characters(message.text);
-
-    int characterIndex = 0;
-
-    void typeNextCharacter() {
-      if (!state.playing) {
-        return;
-      }
-
-      if (characterIndex >= characters.length) {
-        final updated = List<Message>.from(state.visibleMessages)..add(message);
-
-        emit(
-          state.copyWith(
-            composerText: '',
-            pressedKey: null,
-            pressedEmoji: null,
-            shiftPressed: false,
-            visibleMessages: updated,
-            currentIndex: state.currentIndex + 1,
-          ),
-        );
-
-        _timer = Timer(
-          const Duration(milliseconds: 500),
-          _playNext,
-        );
-
-        return;
-      }
-
-      final character = characters[characterIndex];
-
-      if (_isEmoji(character)) {
-        characterIndex++;
-
-        // Open emoji keyboard
-        emit(
-          state.copyWith(
-            emojiKeyboardVisible: true,
-            keyboardVisible: false,
-            pressedKey: null,
-            lastPressedEmoji: null,
-          ),
-        );
-
-        // Finger DOWN immediately
-        _timer = Timer(
-          const Duration(milliseconds: 60),
-          () {
-            emit(
-              state.copyWith(
-                lastPressedEmoji: character,
-                emojiPressCount: state.emojiPressCount + 1,
-              ),
-            );
-
-            // Hold — long enough to see the flash
-            _timer = Timer(
-              const Duration(milliseconds: 180),
-              () {
-                // Finger UP
-                emit(
-                  state.copyWith(
-                    lastPressedEmoji: null,
-                  ),
-                );
-
-                // Insert emoji
-                _timer = Timer(
-                  const Duration(milliseconds: 50),
-                  () {
-                    currentText += character;
-
-                    emit(
-                      state.copyWith(
-                        composerText: currentText,
-                      ),
-                    );
-
-                    _timer = Timer(
-                      _nextTypingDelay(),
-                      typeNextCharacter,
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
-
-        return;
-      }
-
-      final previousCharacter =
-          characterIndex > 0 ? characters[characterIndex - 1] : '';
-
-      final isSentenceStart = characterIndex == 0 ||
-          previousCharacter == '.' ||
-          previousCharacter == '!' ||
-          previousCharacter == '?';
-
-      final isUppercaseMessage = message.text == message.text.toUpperCase();
-
-      final shouldShift = isUppercaseMessage || isSentenceStart;
-
-      currentText += character;
-      characterIndex++;
-
-      emit(
-        state.copyWith(
-          composerText: currentText,
-          keyboardVisible: true,
-          emojiKeyboardVisible: false,
-          pressedKey: character,
-          pressedEmoji: null,
-          shiftEnabled: shouldShift,
-          shiftPressed: false,
-        ),
-      );
-
-      _timer = Timer(
-        _nextTypingDelay(),
-        typeNextCharacter,
-      );
-    }
-
-    typeNextCharacter();
-  }
+  // ---------------------------------------------------------------------------
+  // EMOJI DETECTION
+  // ---------------------------------------------------------------------------
 
   bool _isEmoji(String character) {
+    if (character.isEmpty) {
+      return false;
+    }
+
     final rune = character.runes.first;
 
     return (rune >= 0x1F300 && rune <= 0x1FAFF) ||
         (rune >= 0x2600 && rune <= 0x27BF);
   }
 
-  Duration _nextTypingDelay() {
-    final delay = 140 + _random.nextInt(180);
-
-    if (_random.nextInt(15) == 0) {
-      return Duration(
-        milliseconds: delay + 400,
-      );
-    }
-
-    return Duration(
-      milliseconds: delay,
-    );
-  }
-
-  Duration _typingDelay(String text) {
-    // Count actual characters rather than using broad fixed buckets.
-    final characterCount = text.characters.length;
-
-    // Humans don't type at a perfectly constant speed.
-    // This gives an average base speed of roughly 5–7 characters/second.
-    final baseMilliseconds = characterCount * 155;
-
-    // Small natural variation for every message.
-    final variation = _random.nextInt(700) - 350;
-
-    // Extra thinking/pause time for punctuation.
-    final punctuationCount = RegExp(r'[,.!?;:]').allMatches(text).length;
-    final punctuationPause = punctuationCount * 180;
-
-    // Slight pauses for longer messages.
-    final longMessagePause = characterCount > 45 ? _random.nextInt(1000) : 0;
-
-    var milliseconds =
-        baseMilliseconds + variation + punctuationPause + longMessagePause;
-
-    // Never let even a very short message appear instantly.
-    milliseconds = max(milliseconds, 1200);
-
-    // Keep extremely long messages from becoming ridiculously slow.
-    milliseconds = min(milliseconds, 12000);
-
-    return Duration(milliseconds: milliseconds);
-  }
+  // ---------------------------------------------------------------------------
+  // CLEANUP
+  // ---------------------------------------------------------------------------
 
   @override
   Future<void> close() {
