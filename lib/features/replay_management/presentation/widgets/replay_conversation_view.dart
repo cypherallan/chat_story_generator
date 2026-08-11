@@ -51,13 +51,114 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
   void _onReplyTap(String messageId) {}
 
+  Future<void> _showDeleteDialog(
+    BuildContext context,
+    ConversationReplayState state,
+  ) async {
+    // We expect exactly one message to be selected during
+    // the automated replay deletion sequence.
+    if (state.selectedMessageIds.isEmpty) {
+      return;
+    }
+
+    final messageId = state.selectedMessageIds.first;
+
+    Message? selectedMessage;
+
+    for (final message in state.visibleMessages) {
+      if (message.id == messageId) {
+        selectedMessage = message;
+        break;
+      }
+    }
+
+    if (selectedMessage == null) {
+      return;
+    }
+
+    final message = selectedMessage;
+
+    // ---------------------------------------------------------------------------
+    // SHOW DELETE CONFIRMATION
+    // ---------------------------------------------------------------------------
+
+    final dialogFuture = showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete message'),
+          content: const Text(
+            'Delete this message?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Delete for me'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // ---------------------------------------------------------------------------
+    // LET THE DIALOG BE VISIBLE
+    // ---------------------------------------------------------------------------
+    //
+    // This represents the replay pausing long enough for the viewer to see
+    // the confirmation dialog before the automated tap occurs.
+    //
+
+    await Future.delayed(
+      const Duration(milliseconds: 900),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (widget.replayCubit.state.screen != ReplayScreen.conversation) {
+      return;
+    }
+    Navigator.of(context, rootNavigator: true).pop(true);
+
+    await dialogFuture;
+
+    if (!mounted) {
+      return;
+    }
+
+    if (widget.replayCubit.state.screen != ReplayScreen.conversation) {
+      return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // APPLY DELETE
+    // ---------------------------------------------------------------------------
+
+    widget.replayCubit.deleteMessageForMe(message);
+  }
+
   // ===========================================================================
   // BUILD
   // ===========================================================================
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
+    return BlocConsumer<ConversationReplayCubit, ConversationReplayState>(
+      listenWhen: (previous, current) =>
+          !previous.showDeleteConfirmation && current.showDeleteConfirmation,
+      listener: (context, state) {
+        _showDeleteDialog(context, state);
+      },
       builder: (context, state) {
         final selectedIds = state.selectedMessageIds;
         final isSelectionMode = selectedIds.isNotEmpty;
@@ -72,7 +173,8 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
               isSelectionMode: isSelectionMode,
               selectedCount: selectedIds.length,
               onClearSelection: () {
-                // During automated replay we ignore manual clear
+                // Automated replay controls selection.
+                // Manual clearing will be handled later.
               },
               deleteIconPressed: state.deleteIconPressed,
             ),
@@ -95,12 +197,15 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                         project: widget.project,
                         scrollController: _scrollController,
                         selectedMessageIds: selectedIds,
-                        onToggleSelection: (_) {}, // driven by cubit
+                        onToggleSelection: (_) {},
                         onSwipeReply: _onSwipeReply,
                         onReplyTap: _onReplyTap,
                       ),
                     ),
-                    if (state.typing) const TypingIndicator(visible: true),
+                    if (state.typing)
+                      const TypingIndicator(
+                        visible: true,
+                      ),
                     const PlaybackBottomPanel(),
                     ReplayPlaybackControls(
                       state: state,

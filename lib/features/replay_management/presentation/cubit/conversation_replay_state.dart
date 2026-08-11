@@ -38,6 +38,11 @@ class ConversationReplayState extends Equatable {
   // NEW – selection driven by cubit (for visual long-press + delete)
   final Set<String> selectedMessageIds;
   final bool deleteIconPressed; // true while the delete icon is being “tapped”
+  final bool showDeleteConfirmation;
+  final bool deleteDialogVisible;
+  final bool deleteCancelPressed;
+  final bool deleteForMePressed;
+  final String? deletingMessageId;
 
   const ConversationReplayState({
     this.visibleMessages = const [],
@@ -66,6 +71,11 @@ class ConversationReplayState extends Equatable {
     this.replyPreviewSenderName,
     this.selectedMessageIds = const {},
     this.deleteIconPressed = false,
+    this.showDeleteConfirmation = false,
+    this.deleteDialogVisible = false,
+    this.deleteCancelPressed = false,
+    this.deleteForMePressed = false,
+    this.deletingMessageId,
   });
 
   ConversationReplayState copyWith({
@@ -95,9 +105,14 @@ class ConversationReplayState extends Equatable {
     String? replyPreviewSenderName,
     Set<String>? selectedMessageIds,
     bool? deleteIconPressed,
+    bool? showDeleteConfirmation,
     bool clearSwipe = false,
     bool clearReplyPreview = false,
     bool clearSelection = false,
+    bool? deleteDialogVisible,
+    bool? deleteCancelPressed,
+    bool? deleteForMePressed,
+    String? deletingMessageId,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -115,6 +130,10 @@ class ConversationReplayState extends Equatable {
       shiftPressed: shiftPressed ?? this.shiftPressed,
       emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
       pressedEmoji: pressedEmoji ?? this.pressedEmoji,
+      deleteDialogVisible: deleteDialogVisible ?? this.deleteDialogVisible,
+      deleteCancelPressed: deleteCancelPressed ?? this.deleteCancelPressed,
+      deleteForMePressed: deleteForMePressed ?? this.deleteForMePressed,
+      deletingMessageId: deletingMessageId ?? this.deletingMessageId,
       availableEmojis: availableEmojis ?? this.availableEmojis,
       lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
       emojiPressCount: emojiPressCount ?? this.emojiPressCount,
@@ -132,6 +151,8 @@ class ConversationReplayState extends Equatable {
       selectedMessageIds:
           clearSelection ? {} : (selectedMessageIds ?? this.selectedMessageIds),
       deleteIconPressed: deleteIconPressed ?? this.deleteIconPressed,
+      showDeleteConfirmation:
+          showDeleteConfirmation ?? this.showDeleteConfirmation,
     );
   }
 
@@ -163,5 +184,10 @@ class ConversationReplayState extends Equatable {
         replyPreviewSenderName,
         selectedMessageIds,
         deleteIconPressed,
+        showDeleteConfirmation,
+        deleteDialogVisible,
+        deleteCancelPressed,
+        deleteForMePressed,
+        deletingMessageId,
       ];
 }
