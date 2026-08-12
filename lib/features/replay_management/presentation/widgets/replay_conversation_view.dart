@@ -15,7 +15,6 @@ import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -217,32 +216,20 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                   ],
                 ),
               ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 12,
+                right: 12,
+                child: SimulatedNotificationBanner(
+                  onTap: (projectId) {
+                    context
+                        .read<SimulatedNotificationCubit>()
+                        .hideNotification();
 
-// ================================================================
-// SIMULATED INCOMING MESSAGE NOTIFICATION
-// ================================================================
-              BlocBuilder<SimulatedNotificationCubit,
-                  SimulatedNotificationState>(
-                builder: (context, notificationState) {
-                  if (!notificationState.visible ||
-                      notificationState.notification == null) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return Positioned(
-                    top: 12,
-                    left: 12,
-                    right: 12,
-                    child: SimulatedNotificationBanner(
-                      onTap: (projectId) {
-                        // For now, tapping the notification simply hides it.
-                        context
-                            .read<SimulatedNotificationCubit>()
-                            .hideNotification();
-                      },
-                    ),
-                  );
-                },
+                    // We will connect this to opening the referenced
+                    // conversation after confirming the banner appears.
+                  },
+                ),
               ),
             ],
           ),

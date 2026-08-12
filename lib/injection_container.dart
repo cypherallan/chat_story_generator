@@ -140,6 +140,8 @@ Future<void> init() async {
   sl.registerFactory(
     () => ConversationReplayCubit(
       notificationCubit: sl<SimulatedNotificationCubit>(),
+      getMessages: sl<GetMessages>(),
+      getProjects: sl<GetProjects>(),
     ),
   );
 

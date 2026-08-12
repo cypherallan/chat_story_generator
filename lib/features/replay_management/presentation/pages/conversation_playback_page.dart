@@ -7,11 +7,12 @@ import '../../../person_management/domain/entities/person.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../project_management/domain/entities/project.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
-
+import '../../../project_management/domain/usecases/get_projects.dart';
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
+import '../../../message_management/domain/entities/message.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
@@ -36,6 +37,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
 
     _replayCubit = ConversationReplayCubit(
       notificationCubit: _notificationCubit,
+      getMessages: di.sl<GetMessages>(),
+      getProjects: di.sl<GetProjects>(),
     );
 
     _replayCubit.showHome();
@@ -119,7 +122,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         ),
       );
     }
-    _replayCubit.setPersons(personState.persons);
 
     Project? project;
 
@@ -153,11 +155,21 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     BuildContext context,
     Project project,
   ) async {
-    final result = await di.sl<GetMessages>()(project.id).first;
+    final personState = context.read<PersonCubit>().state;
+
+    if (personState is! PersonLoaded) {
+      return;
+    }
+
+    final projectsResult = await di.sl<GetProjects>()();
 
     if (!mounted) return;
 
-    result.fold(
+    final messagesResult = await di.sl<GetMessages>()(project.id).first;
+
+    if (!mounted) return;
+
+    projectsResult.fold(
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -165,14 +177,49 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           ),
         );
       },
-      (messages) {
-        _replayCubit.load(
-          messages,
-          project.ownerId,
-        );
+      (projects) {
+        messagesResult.fold(
+          (failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(failure.message),
+              ),
+            );
+          },
+          (messages) async {
+            final backgroundMessages = <String, List<Message>>{};
 
-        _replayCubit.openConversation(
-          project.id,
+            for (final otherProject in projects) {
+              if (otherProject.id == project.id) {
+                continue;
+              }
+
+              final otherResult =
+                  await di.sl<GetMessages>()(otherProject.id).first;
+
+              if (!mounted) return;
+
+              otherResult.fold(
+                (_) {},
+                (otherMessages) {
+                  if (otherMessages.isNotEmpty) {
+                    backgroundMessages[otherProject.id] = otherMessages;
+                  }
+                },
+              );
+            }
+
+            _replayCubit.load(
+              messages,
+              project.ownerId,
+              personState.persons,
+              backgroundMessages: backgroundMessages,
+            );
+
+            _replayCubit.openConversation(
+              project.id,
+            );
+          },
         );
       },
     );
