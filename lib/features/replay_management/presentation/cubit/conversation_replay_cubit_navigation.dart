@@ -53,16 +53,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
       ),
     );
 
-    // -------------------------------------------------------------------------
-    // RESUME DELETION TIMING
-    // -------------------------------------------------------------------------
-    //
-    // If a message was already being timed for deletion before the user
-    // left the conversation, resume that timer now.
-    //
-    // The time spent away from the conversation is therefore ignored.
-    //
-
     _resumeActiveDeletion();
   }
 

@@ -82,6 +82,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       message.originalText ?? message.text,
     );
 
+    final sender = _persons.cast<Person?>().firstWhere(
+          (person) => person?.id == message.senderId,
+          orElse: () => null,
+        );
+
     emit(
       state.copyWith(
         typing: true,
@@ -96,6 +101,22 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
         shiftPressed: false,
       ),
     );
+    notificationCubit.showNotification(
+      projectId: message.projectId,
+      senderId: message.senderId,
+      senderName: message.senderName ?? message.senderId,
+      messageText: message.originalText ?? message.text,
+      imagePath: message.imagePath,
+    );
+
+    notificationCubit.showNotification(
+      projectId: message.projectId,
+      senderId: message.senderId,
+      senderName: sender?.name ?? 'Unknown',
+      senderAvatarPath: sender?.avatarPath,
+      messageText: message.originalText ?? message.text,
+      imagePath: message.imagePath,
+    );
 
     _timer = Timer(
       delay,
@@ -104,7 +125,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
           return;
         }
 
-        // Always show the original text first (even if the message was later deleted)
+        // Always show the original text first
+        // even if the message was later deleted.
         final messageToShow = message.isDeleted
             ? message.copyWith(
                 text: message.originalText ?? message.text,

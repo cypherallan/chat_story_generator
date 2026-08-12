@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
-
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import 'package:characters/characters.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../person_management/domain/entities/person.dart';
 import '../../../message_management/domain/entities/message.dart';
 import 'conversation_replay_state.dart';
 
@@ -18,66 +18,35 @@ part 'conversation_replay_cubit_utils.dart';
 
 abstract class _ConversationReplayCubitBase
     extends Cubit<ConversationReplayState> {
-  _ConversationReplayCubitBase() : super(const ConversationReplayState());
+  _ConversationReplayCubitBase({
+    required this.notificationCubit,
+  }) : super(const ConversationReplayState());
+
+  final SimulatedNotificationCubit notificationCubit;
+  List<Person> _persons = [];
+  void setPersons(List<Person> persons) {
+    _persons = List<Person>.from(persons);
+  }
 
   // ===========================================================================
   // SHARED REPLAY DATA
   // ===========================================================================
 
   final List<Message> _messages = [];
+  final List<Message> _backgroundMessages = [];
+
   final Random _random = Random();
 
   String _ownerId = '';
 
   String get ownerId => _ownerId;
-
-  // ===========================================================================
-  // PLAYBACK TIMER
-  // ===========================================================================
-
   Timer? _timer;
-
-  // ===========================================================================
-  // DELETION TIMING
-  //
-  // IMPORTANT:
-  // Deletion timing is completely separate from the normal playback timer.
-  // This allows deletion countdowns to pause when the user leaves the chat.
-  // ===========================================================================
-
   Timer? _deletionTimer;
-
-  /// Active conversation time accumulated for each message.
-  ///
-  /// Example:
-  ///
-  /// Message sent at 00:00:00
-  /// User leaves at 00:05:00
-  ///
-  /// Accumulated deletion time = 5 minutes.
-  ///
-  /// User returns at 06:00:00:
-  /// The 55 minutes away from the chat are NOT counted.
   final Map<String, Duration> _deletionElapsed = {};
-
-  /// When the currently active deletion timer started/resumed.
   DateTime? _deletionStartedAt;
-
-  /// The message currently being timed for deletion.
   String? _activeDeletionMessageId;
 
-  // ===========================================================================
-  // PLAYBACK
-  // ===========================================================================
-
   void _playNext();
-
-  // ===========================================================================
-  // DELETION TIMER HELPERS
-  // ===========================================================================
-
-  /// Pauses the deletion timer and stores the amount of active chat time
-  /// that has elapsed so far.
   void _pauseDeletionTimer() {
     _deletionTimer?.cancel();
     _deletionTimer = null;
@@ -93,9 +62,6 @@ abstract class _ConversationReplayCubitBase
     _deletionStartedAt = null;
   }
 
-  /// Completely clears the deletion timer.
-  ///
-  /// Used when leaving the replay conversation or when the cubit is closed.
   void _disposeDeletionTimer() {
     _deletionTimer?.cancel();
     _deletionTimer = null;
@@ -104,24 +70,9 @@ abstract class _ConversationReplayCubitBase
     _activeDeletionMessageId = null;
   }
 
-  // ===========================================================================
-  // OWNER TYPING
-  // ===========================================================================
-
   void _typeOwnerMessage(Message message);
-
   void _startOwnerTyping(Message message);
-
-  // ===========================================================================
-  // SWIPE + REPLY
-  // ===========================================================================
-
   void _performSwipeThenType(Message message);
-
-  // ===========================================================================
-  // DELETION
-  // ===========================================================================
-
   void _scheduleDeletion(Message originalMessage);
   void _resumeActiveDeletion();
 
@@ -132,16 +83,8 @@ abstract class _ConversationReplayCubitBase
 
   Duration _humanTypingDuration(String text);
 
-  // ===========================================================================
-  // UTILS
-  // ===========================================================================
-
   bool _isEmoji(String character);
 }
-
-// =============================================================================
-// PUBLIC CUBIT
-// =============================================================================
 
 class ConversationReplayCubit extends _ConversationReplayCubitBase
     with
@@ -153,6 +96,12 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
         _DeletionMixin,
         _TimingMixin,
         _UtilsMixin {
+  ConversationReplayCubit({
+    required SimulatedNotificationCubit notificationCubit,
+  }) : super(
+          notificationCubit: notificationCubit,
+        );
+
   @override
   Future<void> close() {
     _timer?.cancel();

@@ -5,6 +5,7 @@ class Message extends Equatable {
   final String id;
   final String projectId;
   final String senderId;
+  final String? senderName;
   final String text;
   final String? imagePath;
   final DateTime createdAt;
@@ -25,6 +26,7 @@ class Message extends Equatable {
     required this.id,
     required this.projectId,
     required this.senderId,
+    this.senderName,
     required this.text,
     this.imagePath,
     required this.createdAt,
@@ -44,6 +46,7 @@ class Message extends Equatable {
     String? id,
     String? projectId,
     String? senderId,
+    String? senderName,
     String? text,
     String? imagePath,
     DateTime? createdAt,
@@ -62,6 +65,7 @@ class Message extends Equatable {
       id: id ?? this.id,
       projectId: projectId ?? this.projectId,
       senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
       text: text ?? this.text,
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
@@ -83,6 +87,7 @@ class Message extends Equatable {
         id,
         projectId,
         senderId,
+        senderName,
         text,
         imagePath,
         createdAt,

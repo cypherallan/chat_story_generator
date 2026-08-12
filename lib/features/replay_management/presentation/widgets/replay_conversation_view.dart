@@ -13,6 +13,9 @@ import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
+import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
+import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -213,6 +216,33 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                     ),
                   ],
                 ),
+              ),
+
+// ================================================================
+// SIMULATED INCOMING MESSAGE NOTIFICATION
+// ================================================================
+              BlocBuilder<SimulatedNotificationCubit,
+                  SimulatedNotificationState>(
+                builder: (context, notificationState) {
+                  if (!notificationState.visible ||
+                      notificationState.notification == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Positioned(
+                    top: 12,
+                    left: 12,
+                    right: 12,
+                    child: SimulatedNotificationBanner(
+                      onTap: (projectId) {
+                        // For now, tapping the notification simply hides it.
+                        context
+                            .read<SimulatedNotificationCubit>()
+                            .hideNotification();
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ),

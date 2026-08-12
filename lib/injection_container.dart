@@ -13,7 +13,7 @@ import 'features/person_management/domain/repositories/person_repository.dart';
 import 'features/person_management/domain/usecases/add_person.dart';
 import 'features/person_management/domain/usecases/delete_person.dart';
 import 'features/person_management/domain/usecases/get_persons.dart';
-
+import 'features/notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import 'features/person_management/presentation/cubit/person_cubit.dart';
 
 import 'features/project_management/data/datasources/project_firestore_data_source.dart';
@@ -39,7 +39,6 @@ import 'features/message_management/domain/usecases/update_message.dart';
 import 'features/message_management/domain/usecases/delete_message.dart';
 
 import 'features/message_management/presentation/cubit/message_cubit.dart';
-
 import 'features/project_management/domain/usecases/delete_projects.dart';
 
 final sl = GetIt.instance;
@@ -137,8 +136,14 @@ Future<void> init() async {
       storageService: sl(),
     ),
   );
-    // Conversation Replay Cubit
+  // Conversation Replay Cubit
   sl.registerFactory(
-    () => ConversationReplayCubit(),
+    () => ConversationReplayCubit(
+      notificationCubit: sl<SimulatedNotificationCubit>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => SimulatedNotificationCubit(),
   );
 }

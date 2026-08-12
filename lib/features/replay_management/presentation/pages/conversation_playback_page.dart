@@ -12,6 +12,7 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   const ConversationPlaybackPage({
@@ -23,15 +24,19 @@ class ConversationPlaybackPage extends StatefulWidget {
       _ConversationPlaybackPageState();
 }
 
-class _ConversationPlaybackPageState
-    extends State<ConversationPlaybackPage> {
+class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
+  late final SimulatedNotificationCubit _notificationCubit;
   late final ConversationReplayCubit _replayCubit;
 
   @override
   void initState() {
     super.initState();
 
-    _replayCubit = di.sl<ConversationReplayCubit>();
+    _notificationCubit = di.sl<SimulatedNotificationCubit>();
+
+    _replayCubit = ConversationReplayCubit(
+      notificationCubit: _notificationCubit,
+    );
 
     _replayCubit.showHome();
   }
@@ -39,6 +44,7 @@ class _ConversationPlaybackPageState
   @override
   void dispose() {
     _replayCubit.close();
+    _notificationCubit.close();
     super.dispose();
   }
 
@@ -54,13 +60,14 @@ class _ConversationPlaybackPageState
           BlocProvider<PersonCubit>(
             create: (_) => di.sl<PersonCubit>()..loadPersons(),
           ),
+          BlocProvider<SimulatedNotificationCubit>.value(
+            value: _notificationCubit,
+          ),
           BlocProvider<ConversationReplayCubit>.value(
             value: _replayCubit,
           ),
         ],
-        child: BlocBuilder<
-            ConversationReplayCubit,
-            ConversationReplayState>(
+        child: BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
           builder: (context, replayState) {
             if (replayState.screen == ReplayScreen.conversation) {
               return _buildConversation(
@@ -101,20 +108,18 @@ class _ConversationPlaybackPageState
       );
     }
 
-    final projectState =
-        context.watch<ProjectCubit>().state;
+    final projectState = context.watch<ProjectCubit>().state;
 
-    final personState =
-        context.watch<PersonCubit>().state;
+    final personState = context.watch<PersonCubit>().state;
 
-    if (projectState is! ProjectLoaded ||
-        personState is! PersonLoaded) {
+    if (projectState is! ProjectLoaded || personState is! PersonLoaded) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
       );
     }
+    _replayCubit.setPersons(personState.persons);
 
     Project? project;
 
@@ -148,8 +153,7 @@ class _ConversationPlaybackPageState
     BuildContext context,
     Project project,
   ) async {
-    final result =
-        await di.sl<GetMessages>()(project.id).first;
+    final result = await di.sl<GetMessages>()(project.id).first;
 
     if (!mounted) return;
 
