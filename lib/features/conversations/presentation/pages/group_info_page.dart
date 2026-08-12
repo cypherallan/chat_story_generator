@@ -1,14 +1,14 @@
 import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../../../project_management/domain/entities/project.dart';
-import '../../../person_management/domain/entities/person.dart';
-import '../../../person_management/presentation/pages/persons_list_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../project_management/domain/entities/project.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../person_management/domain/entities/person.dart';
+import '../../../person_management/presentation/pages/persons_list_page.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/widgets/person_avatar.dart';
 
@@ -33,6 +33,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
   final ImagePicker _picker = ImagePicker();
 
+  bool _saving = false;
+  bool _savedSuccessfully = false;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +43,12 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     _nameController = TextEditingController(
       text: widget.project.title,
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   Future<void> _changeImage() async {
@@ -54,6 +63,59 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     }
   }
 
+  Future<void> _saveChanges() async {
+    final name = _nameController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Group name cannot be empty'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+    });
+
+    final updatedProject = widget.project.copyWith(
+      title: name,
+      groupImagePath: _newImage?.path ?? widget.project.groupImagePath,
+    );
+
+    await context.read<ProjectCubit>().editProject(
+          updatedProject,
+        );
+
+    if (!mounted) return;
+
+    final state = context.read<ProjectCubit>().state;
+
+    if (state is ProjectSaved) {
+      setState(() {
+        _saving = false;
+        _savedSuccessfully = true;
+      });
+    } else if (state is ProjectError) {
+      setState(() {
+        _saving = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to save changes: ${state.message}',
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _saving = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final members = widget.persons
@@ -64,9 +126,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Group Info',
-        ),
+        title: const Text('Group Info'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -179,10 +239,20 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () {
-                // Save changes
-              },
-              child: const Text("Save Changes"),
+              onPressed: _saving || _savedSuccessfully ? null : _saveChanges,
+              child: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      _savedSuccessfully
+                          ? 'Changes Saved Successfully'
+                          : 'Save Changes',
+                    ),
             ),
           ),
         ],

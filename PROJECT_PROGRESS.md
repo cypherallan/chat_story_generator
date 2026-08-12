@@ -349,3 +349,7 @@ I would implement them in this exact order:
 ✅ Notification overlay
 ✅ MP4 export improvements
 ✅ Full Android simulation
+message bubble
+message composer
+message cubit
+personslistpage
