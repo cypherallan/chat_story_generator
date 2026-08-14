@@ -6,6 +6,9 @@ class ReplayNotification extends Equatable {
   /// The conversation this notification belongs to.
   final String projectId;
 
+  /// The exact message represented by this notification.
+  final String messageId;
+
   /// The person who appears to have sent the notification.
   final String senderId;
 
@@ -18,6 +21,7 @@ class ReplayNotification extends Equatable {
   const ReplayNotification({
     required this.id,
     required this.projectId,
+    required this.messageId,
     required this.senderId,
     required this.senderName,
     this.senderAvatarPath,
@@ -28,6 +32,7 @@ class ReplayNotification extends Equatable {
   ReplayNotification copyWith({
     String? id,
     String? projectId,
+    String? messageId,
     String? senderId,
     String? senderName,
     String? senderAvatarPath,
@@ -37,6 +42,7 @@ class ReplayNotification extends Equatable {
     return ReplayNotification(
       id: id ?? this.id,
       projectId: projectId ?? this.projectId,
+      messageId: messageId ?? this.messageId,
       senderId: senderId ?? this.senderId,
       senderName: senderName ?? this.senderName,
       senderAvatarPath: senderAvatarPath ?? this.senderAvatarPath,
@@ -49,6 +55,7 @@ class ReplayNotification extends Equatable {
   List<Object?> get props => [
         id,
         projectId,
+        messageId,
         senderId,
         senderName,
         senderAvatarPath,

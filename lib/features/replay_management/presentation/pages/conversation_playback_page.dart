@@ -13,7 +13,11 @@ import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-
+import '../../../message_management/domain/entities/message.dart';
+import '../../../message_management/domain/entities/message_status.dart';
+import '../../../message_management/domain/usecases/add_message.dart';
+import 'package:uuid/uuid.dart';
+import '../../../project_management/domain/usecases/update_project.dart';
 import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
@@ -29,12 +33,14 @@ class ConversationPlaybackPage extends StatefulWidget {
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   late final SimulatedNotificationCubit _notificationCubit;
   late final ConversationReplayCubit _replayCubit;
+  late final AddMessage _addMessage;
 
   @override
   void initState() {
     super.initState();
 
     _notificationCubit = di.sl<SimulatedNotificationCubit>();
+    _addMessage = di.sl<AddMessage>();
 
     _replayCubit = ConversationReplayCubit(
       notificationCubit: _notificationCubit,
@@ -101,6 +107,179 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     );
   }
 
+  Future<void> _openNotificationChat(
+    BuildContext context,
+    dynamic notification,
+  ) async {
+    final projectId = notification.projectId;
+
+    final personState = context.read<PersonCubit>().state;
+
+    if (personState is! PersonLoaded) {
+      return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 1. Find the target project.
+    // ---------------------------------------------------------------------------
+
+    final projectState = context.read<ProjectCubit>().state;
+
+    if (projectState is! ProjectLoaded) {
+      return;
+    }
+
+    Project? project;
+
+    for (final item in projectState.projects) {
+      if (item.id == projectId) {
+        project = item;
+        break;
+      }
+    }
+
+    if (project == null) {
+      return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 2. Create the notification as a real chat message.
+    // ---------------------------------------------------------------------------
+
+    final message = Message(
+      id: const Uuid().v4(),
+      projectId: project.id,
+      senderId: notification.senderId,
+      senderName: notification.senderName,
+      text: notification.messageText,
+      imagePath: notification.imagePath,
+      createdAt: notification.createdAt,
+      status: MessageStatus.delivered,
+    );
+
+    // ---------------------------------------------------------------------------
+    // 3. Save the message.
+    // ---------------------------------------------------------------------------
+
+    final saveResult = await _addMessage(message);
+
+    if (!mounted) {
+      return;
+    }
+
+    final savedMessage = saveResult.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+          ),
+        );
+
+        return null;
+      },
+      (saved) => saved,
+    );
+
+    if (savedMessage == null) {
+      return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 4. Update the chat preview.
+    // ---------------------------------------------------------------------------
+
+    final updatedProject = project.copyWith(
+      lastMessage: savedMessage.text,
+      lastMessageImagePath: savedMessage.imagePath,
+      lastMessageTime: savedMessage.createdAt,
+      lastSenderId: savedMessage.senderId,
+      lastMessageStatus: savedMessage.status,
+      unreadCount: project.unreadCount + 1,
+    );
+
+    final updateResult = await di.sl<UpdateProject>()(updatedProject);
+
+    if (!mounted) {
+      return;
+    }
+
+    final updateFailed = updateResult.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+          ),
+        );
+
+        return true;
+      },
+      (_) => false,
+    );
+
+    if (updateFailed) {
+      return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 5. Reload all messages from this chat.
+    // ---------------------------------------------------------------------------
+
+    final messagesResult = await di.sl<GetMessages>()(project.id).first;
+
+    if (!mounted) {
+      return;
+    }
+
+    final messages = messagesResult.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+          ),
+        );
+
+        return <Message>[];
+      },
+      (messages) => messages,
+    );
+
+    // ---------------------------------------------------------------------------
+    // 6. Only show messages up to the notification message.
+    // ---------------------------------------------------------------------------
+
+    final visibleMessages = messages
+        .where(
+          (item) => !item.createdAt.isAfter(savedMessage.createdAt),
+        )
+        .toList();
+
+    // Make absolutely sure the notification message is included.
+    if (!visibleMessages.any(
+      (item) => item.id == savedMessage.id,
+    )) {
+      visibleMessages.add(savedMessage);
+    }
+
+    visibleMessages.sort(
+      (a, b) => a.createdAt.compareTo(b.createdAt),
+    );
+
+    // ---------------------------------------------------------------------------
+    // 7. Load replay data without starting playback.
+    // ---------------------------------------------------------------------------
+
+    _replayCubit.load(
+      visibleMessages,
+      project.ownerId,
+      personState.persons,
+    );
+
+    _replayCubit.openConversationFromNotification(
+      projectId: project.id,
+      messages: visibleMessages,
+    );
+  }
+
   Widget _buildConversation(
     BuildContext context,
     ConversationReplayState replayState,
@@ -154,6 +333,12 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       onBack: () {
         context.read<SimulatedNotificationCubit>().clear();
         _replayCubit.showHome();
+      },
+      onNotificationTap: (notification) {
+        _openNotificationChat(
+          context,
+          notification,
+        );
       },
     );
   }

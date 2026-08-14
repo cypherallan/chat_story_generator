@@ -58,6 +58,46 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _resumeActiveDeletion();
   }
 
+  void openConversationFromNotification({
+    required String projectId,
+    required List<Message> messages,
+  }) {
+    _pauseDeletionTimer();
+
+    _timer?.cancel();
+
+    notificationCubit.clear();
+
+    final visibleMessages = List<Message>.from(messages);
+
+    emit(
+      state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: projectId,
+
+        // Open directly at the notification point.
+        // No replay animation or typing.
+        visibleMessages: visibleMessages,
+        currentIndex: _messages.length,
+        playing: false,
+        paused: false,
+        finished: true,
+
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        lastPressedEmoji: null,
+        shiftPressed: false,
+      ),
+    );
+  }
+
   void goBackToHome() {
     showHome();
   }

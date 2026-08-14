@@ -4,6 +4,7 @@ class ReplayNotificationModel extends ReplayNotification {
   const ReplayNotificationModel({
     required super.id,
     required super.projectId,
+    required super.messageId,
     required super.senderId,
     required super.senderName,
     super.senderAvatarPath,
@@ -17,6 +18,7 @@ class ReplayNotificationModel extends ReplayNotification {
     return ReplayNotificationModel(
       id: json['id'] ?? '',
       projectId: json['projectId'] ?? '',
+      messageId: json['messageId'] ?? '',
       senderId: json['senderId'] ?? '',
       senderName: json['senderName'] ?? '',
       senderAvatarPath: json['senderAvatarPath'],
@@ -29,6 +31,7 @@ class ReplayNotificationModel extends ReplayNotification {
     return {
       'id': id,
       'projectId': projectId,
+      'messageId': messageId,
       'senderId': senderId,
       'senderName': senderName,
       'senderAvatarPath': senderAvatarPath,
@@ -43,6 +46,7 @@ class ReplayNotificationModel extends ReplayNotification {
     return ReplayNotificationModel(
       id: notification.id,
       projectId: notification.projectId,
+      messageId: notification.messageId,
       senderId: notification.senderId,
       senderName: notification.senderName,
       senderAvatarPath: notification.senderAvatarPath,

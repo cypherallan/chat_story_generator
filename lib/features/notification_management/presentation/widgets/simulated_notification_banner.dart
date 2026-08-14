@@ -4,9 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/widgets/profile_avatar.dart';
 import '../cubit/simulated_notification_cubit.dart';
 import '../cubit/simulated_notification_state.dart';
+import '../../domain/entities/simulated_notification.dart';
 
 class SimulatedNotificationBanner extends StatefulWidget {
-  final void Function(String projectId) onTap;
+  final void Function(SimulatedNotification notification) onTap;
 
   const SimulatedNotificationBanner({
     super.key,
@@ -100,7 +101,7 @@ class _SimulatedNotificationBannerState
                 onTap: () {
                   context.read<SimulatedNotificationCubit>().hideNotification();
 
-                  widget.onTap(notification.projectId);
+                  widget.onTap(notification);
                 },
                 child: Material(
                   elevation: 8,

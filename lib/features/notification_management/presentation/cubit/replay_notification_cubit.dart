@@ -60,6 +60,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
 
   Future<bool> createNotification({
     required String projectId,
+    required String messageId,
     required String senderId,
     required String senderName,
     String? senderAvatarPath,
@@ -69,6 +70,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     final notification = ReplayNotification(
       id: const Uuid().v4(),
       projectId: projectId,
+      messageId: messageId,
       senderId: senderId,
       senderName: senderName,
       senderAvatarPath: senderAvatarPath,
@@ -113,6 +115,11 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     // Show the notification immediately.
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
+
+      // A replay notification isn't a real Message entity,
+      // so use its own ID as the message ID.
+      messageId: notification.id,
+
       senderId: notification.senderId,
       senderName: notification.senderName,
       senderAvatarPath: notification.senderAvatarPath,

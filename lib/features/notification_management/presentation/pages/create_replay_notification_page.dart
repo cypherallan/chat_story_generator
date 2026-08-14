@@ -6,15 +6,19 @@ import '../../../project_management/domain/entities/project.dart';
 import '../../domain/entities/replay_notification.dart';
 import '../cubit/replay_notification_cubit.dart';
 import '../cubit/replay_notification_state.dart';
+import '../../../message_management/domain/entities/message.dart';
+import '../../../message_management/domain/usecases/get_messages.dart';
 
 class CreateReplayNotificationPage extends StatefulWidget {
   final List<Project> projects;
   final List<Person> persons;
+  final GetMessages getMessages;
 
   const CreateReplayNotificationPage({
     super.key,
     required this.projects,
     required this.persons,
+    required this.getMessages,
   });
 
   @override
@@ -24,7 +28,9 @@ class CreateReplayNotificationPage extends StatefulWidget {
 
 class _CreateReplayNotificationPageState
     extends State<CreateReplayNotificationPage> {
-  final TextEditingController _messageController = TextEditingController();
+  List<Message> _projectMessages = [];
+  String? _selectedMessageId;
+  bool _loadingMessages = false;
 
   String? _selectedProjectId;
   String? _selectedPersonId;
@@ -42,7 +48,6 @@ class _CreateReplayNotificationPageState
 
   @override
   void dispose() {
-    _messageController.dispose();
     super.dispose();
   }
 
@@ -54,6 +59,20 @@ class _CreateReplayNotificationPageState
     for (final project in widget.projects) {
       if (project.id == _selectedProjectId) {
         return project;
+      }
+    }
+
+    return null;
+  }
+
+  Message? get _selectedMessage {
+    if (_selectedMessageId == null) {
+      return null;
+    }
+
+    for (final message in _projectMessages) {
+      if (message.id == _selectedMessageId) {
+        return message;
       }
     }
 
@@ -90,13 +109,46 @@ class _CreateReplayNotificationPageState
     return null;
   }
 
+  Future<void> _loadProjectMessages(String projectId) async {
+    setState(() {
+      _loadingMessages = true;
+      _projectMessages = [];
+      _selectedMessageId = null;
+    });
+
+    final result = await widget.getMessages(projectId).first;
+
+    if (!mounted) return;
+
+    result.fold(
+      (_) {
+        setState(() {
+          _loadingMessages = false;
+        });
+
+        _showError('Unable to load messages for this chat.');
+      },
+      (messages) {
+        setState(() {
+          _projectMessages = messages;
+          _loadingMessages = false;
+        });
+      },
+    );
+  }
+
   Future<void> _save() async {
     final project = _selectedProject;
     final person = _selectedPerson;
-    final message = _messageController.text.trim();
+    final message = _selectedMessage;
 
     if (project == null) {
       _showError('Please select a chat.');
+      return;
+    }
+
+    if (message == null) {
+      _showError('Please select the message to show in the notification.');
       return;
     }
 
@@ -107,18 +159,15 @@ class _CreateReplayNotificationPageState
       return;
     }
 
-    if (message.isEmpty) {
-      _showError('Please enter a message.');
-      return;
-    }
-
     final success =
         await context.read<ReplayNotificationCubit>().createNotification(
               projectId: project.id,
+              messageId: message.id,
               senderId: person.id,
               senderName: person.name,
               senderAvatarPath: person.avatarPath,
-              messageText: message,
+              messageText: message.text,
+              imagePath: message.imagePath,
             );
 
     if (!mounted) {
@@ -135,7 +184,9 @@ class _CreateReplayNotificationPageState
       return;
     }
 
-    _messageController.clear();
+    setState(() {
+      _selectedMessageId = null;
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -253,10 +304,14 @@ class _CreateReplayNotificationPageState
                   },
                 ).toList(),
                 onChanged: (value) {
+                  if (value == null) return;
+
                   setState(() {
                     _selectedProjectId = value;
                     _selectedPersonId = null;
                   });
+
+                  _loadProjectMessages(value);
                 },
               ),
 
@@ -287,16 +342,49 @@ class _CreateReplayNotificationPageState
 
               const SizedBox(height: 16),
 
-              TextField(
-                controller: _messageController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
-                  hintText: 'Enter the notification message...',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-              ),
+              if (_selectedProjectId != null) ...[
+                const SizedBox(height: 16),
+                if (_loadingMessages)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (_projectMessages.isEmpty)
+                  const Text(
+                    'No messages found in this chat.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    value: _selectedMessageId,
+                    decoration: const InputDecoration(
+                      labelText: 'Message shown in notification',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _projectMessages.map((message) {
+                      return DropdownMenuItem<String>(
+                        value: message.id,
+                        child: SizedBox(
+                          width: 280,
+                          child: Text(
+                            message.text.isEmpty ? 'Photo' : message.text,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedMessageId = value;
+                      });
+                    },
+                  ),
+              ],
 
               const SizedBox(height: 24),
 

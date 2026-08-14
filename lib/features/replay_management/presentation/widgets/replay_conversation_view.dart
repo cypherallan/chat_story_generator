@@ -11,14 +11,13 @@ import '../../../message_management/presentation/widgets/typing_indicator.dart';
 
 import '../../../notification_management/presentation/pages/create_replay_notification_page.dart';
 import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
-
+import '../../../message_management/domain/usecases/get_messages.dart';
 import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
-import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-
+import '../../../notification_management/domain/entities/simulated_notification.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../notification_management/presentation/cubit/replay_notification_state.dart';
 
@@ -28,6 +27,7 @@ class ReplayConversationView extends StatefulWidget {
   final ConversationReplayCubit replayCubit;
   final ConversationReplayState state;
   final VoidCallback onBack;
+  final void Function(SimulatedNotification notification) onNotificationTap;
 
   const ReplayConversationView({
     super.key,
@@ -36,6 +36,7 @@ class ReplayConversationView extends StatefulWidget {
     required this.replayCubit,
     required this.state,
     required this.onBack,
+    required this.onNotificationTap,
   });
 
   @override
@@ -171,6 +172,7 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
           child: CreateReplayNotificationPage(
             projects: projects.projects,
             persons: persons,
+            getMessages: context.read<GetMessages>(),
           ),
         ),
       ),
@@ -338,14 +340,7 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                 left: 12,
                 right: 12,
                 child: SimulatedNotificationBanner(
-                  onTap: (projectId) {
-                    context
-                        .read<SimulatedNotificationCubit>()
-                        .hideNotification();
-
-                    // We will connect this to opening the referenced
-                    // conversation after confirming the banner appears.
-                  },
+                  onTap: widget.onNotificationTap,
                 ),
               ),
             ],

@@ -38,19 +38,21 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     );
   }
 
-  void showNotification({
-    required String projectId,
-    required String senderId,
-    required String senderName,
-    String? senderAvatarPath,
-    required String messageText,
-    String? imagePath,
-  }) {
+ void showNotification({
+  required String projectId,
+  required String messageId,
+  required String senderId,
+  required String senderName,
+  String? senderAvatarPath,
+  required String messageText,
+  String? imagePath,
+}) {
     if (isClosed) return;
 
-    final notification = SimulatedNotification(
+        final notification = SimulatedNotification(
       id: const Uuid().v4(),
       projectId: projectId,
+      messageId: messageId,
       senderId: senderId,
       senderName: senderName,
       senderAvatarPath: senderAvatarPath,

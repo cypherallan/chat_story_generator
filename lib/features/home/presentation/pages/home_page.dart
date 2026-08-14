@@ -10,7 +10,7 @@ import '../../../project_management/presentation/pages/projects_list_widget.dart
 import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
-
+import 'package:uuid/uuid.dart';
 import '../../../auth/presentation/pages/profile_page.dart';
 import '../../../../core/auth/auth_service.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
@@ -238,6 +238,7 @@ class _HomePageState extends State<HomePage> {
                                       .read<SimulatedNotificationCubit>()
                                       .showNotification(
                                         projectId: projectId,
+                                        messageId: const Uuid().v4(),
                                         senderId: sender.id,
                                         senderName: sender.name,
                                         senderAvatarPath: sender.avatarPath,
