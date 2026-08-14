@@ -1,0 +1,57 @@
+import '../../domain/entities/replay_notification.dart';
+
+class ReplayNotificationModel extends ReplayNotification {
+  const ReplayNotificationModel({
+    required super.id,
+    required super.projectId,
+    required super.senderId,
+    required super.senderName,
+    super.senderAvatarPath,
+    required super.messageText,
+    super.imagePath,
+    super.triggered,
+  });
+
+  factory ReplayNotificationModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return ReplayNotificationModel(
+      id: json['id'] ?? '',
+      projectId: json['projectId'] ?? '',
+      senderId: json['senderId'] ?? '',
+      senderName: json['senderName'] ?? '',
+      senderAvatarPath: json['senderAvatarPath'],
+      messageText: json['messageText'] ?? '',
+      imagePath: json['imagePath'],
+      triggered: json['triggered'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'projectId': projectId,
+      'senderId': senderId,
+      'senderName': senderName,
+      'senderAvatarPath': senderAvatarPath,
+      'messageText': messageText,
+      'imagePath': imagePath,
+      'triggered': triggered,
+    };
+  }
+
+  factory ReplayNotificationModel.fromEntity(
+    ReplayNotification notification,
+  ) {
+    return ReplayNotificationModel(
+      id: notification.id,
+      projectId: notification.projectId,
+      senderId: notification.senderId,
+      senderName: notification.senderName,
+      senderAvatarPath: notification.senderAvatarPath,
+      messageText: notification.messageText,
+      imagePath: notification.imagePath,
+      triggered: notification.triggered,
+    );
+  }
+}

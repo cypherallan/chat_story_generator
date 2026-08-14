@@ -9,12 +9,17 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
 
+import '../../../notification_management/presentation/pages/create_replay_notification_page.dart';
+import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
+
 import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
+
+import '../../../project_management/presentation/cubit/project_cubit.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -149,6 +154,28 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     widget.replayCubit.deleteMessageForMe(message);
   }
 
+  void _openCreateNotification() {
+    final projects = context.read<ProjectCubit>().state;
+
+    final persons = widget.persons;
+
+    if (projects is! ProjectLoaded) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<ReplayNotificationCubit>(),
+          child: CreateReplayNotificationPage(
+            projects: projects.projects,
+            persons: persons,
+          ),
+        ),
+      ),
+    );
+  }
+
   // ===========================================================================
   // BUILD
   // ===========================================================================
@@ -209,6 +236,25 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                         visible: true,
                       ),
                     const PlaybackBottomPanel(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          onPressed: _openCreateNotification,
+                          icon: const Icon(
+                            Icons.notifications_outlined,
+                          ),
+                          label: const Text(
+                            'Create Notification',
+                          ),
+                        ),
+                      ),
+                    ),
                     ReplayPlaybackControls(
                       state: state,
                       replayCubit: widget.replayCubit,

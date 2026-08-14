@@ -12,8 +12,9 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
-import '../../../message_management/domain/entities/message.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
+
+import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   const ConversationPlaybackPage({
@@ -68,6 +69,10 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           ),
           BlocProvider<ConversationReplayCubit>.value(
             value: _replayCubit,
+          ),
+          BlocProvider<ReplayNotificationCubit>(
+            create: (_) =>
+                di.sl<ReplayNotificationCubit>()..loadNotifications(),
           ),
         ],
         child: BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
@@ -187,33 +192,10 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
             );
           },
           (messages) async {
-            final backgroundMessages = <String, List<Message>>{};
-
-            for (final otherProject in projects) {
-              if (otherProject.id == project.id) {
-                continue;
-              }
-
-              final otherResult =
-                  await di.sl<GetMessages>()(otherProject.id).first;
-
-              if (!mounted) return;
-
-              otherResult.fold(
-                (_) {},
-                (otherMessages) {
-                  if (otherMessages.isNotEmpty) {
-                    backgroundMessages[otherProject.id] = otherMessages;
-                  }
-                },
-              );
-            }
-
             _replayCubit.load(
               messages,
               project.ownerId,
               personState.persons,
-              backgroundMessages: backgroundMessages,
             );
 
             _replayCubit.openConversation(

@@ -4,19 +4,13 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
   void load(
     List<Message> messages,
     String ownerId,
-    List<Person> persons, {
-    Map<String, List<Message>> backgroundMessages = const {},
-  }) {
+    List<Person> persons,
+  ) {
     _timer?.cancel();
-    _backgroundTimer?.cancel();
 
     _messages
       ..clear()
       ..addAll(messages);
-
-    _backgroundMessages
-      ..clear()
-      ..addAll(backgroundMessages);
 
     _ownerId = ownerId;
 

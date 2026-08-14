@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
@@ -7,10 +5,26 @@ import '../../domain/entities/simulated_notification.dart';
 import 'simulated_notification_state.dart';
 
 class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
-  Timer? _hideTimer;
-
   SimulatedNotificationCubit() : super(const SimulatedNotificationState());
 
+  /// Immediately displays a prepared notification.
+  ///
+  /// This does NOT create a Firebase message.
+  /// This does NOT modify any chat.
+  /// This simply makes the notification visible on screen.
+  void triggerNotification(
+    SimulatedNotification notification,
+  ) {
+    emit(
+      state.copyWith(
+        notification: notification,
+        visible: true,
+      ),
+    );
+  }
+
+  /// Convenience method for creating and immediately displaying
+  /// a notification.
   void showNotification({
     required String projectId,
     required String senderId,
@@ -18,10 +32,7 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     String? senderAvatarPath,
     required String messageText,
     String? imagePath,
-    Duration duration = const Duration(seconds: 4),
   }) {
-    _hideTimer?.cancel();
-
     final notification = SimulatedNotification(
       id: const Uuid().v4(),
       projectId: projectId,
@@ -33,23 +44,10 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       createdAt: DateTime.now(),
     );
 
-    emit(
-      state.copyWith(
-        notification: notification,
-        visible: true,
-      ),
-    );
-
-    _hideTimer = Timer(
-      duration,
-      hideNotification,
-    );
+    triggerNotification(notification);
   }
 
   void hideNotification() {
-    _hideTimer?.cancel();
-    _hideTimer = null;
-
     emit(
       state.copyWith(
         visible: false,
@@ -58,20 +56,11 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void clear() {
-    _hideTimer?.cancel();
-    _hideTimer = null;
-
-    emit(
-      state.copyWith(
-        visible: false,
-        clearNotification: true,
-      ),
-    );
+    emit(const SimulatedNotificationState());
   }
 
   @override
   Future<void> close() {
-    _hideTimer?.cancel();
     return super.close();
   }
 }

@@ -41,6 +41,15 @@ import 'features/message_management/domain/usecases/delete_message.dart';
 import 'features/message_management/presentation/cubit/message_cubit.dart';
 import 'features/project_management/domain/usecases/delete_projects.dart';
 
+import 'features/notification_management/data/datasources/replay_notification_firestore_data_source.dart';
+import 'features/notification_management/data/repositories/replay_notification_repository_impl.dart';
+import 'features/notification_management/domain/repositories/replay_notification_repository.dart';
+import 'features/notification_management/domain/usecases/add_replay_notification.dart';
+import 'features/notification_management/domain/usecases/delete_replay_notification.dart';
+import 'features/notification_management/domain/usecases/get_replay_notifications.dart';
+import 'features/notification_management/domain/usecases/update_replay_notification.dart';
+import 'features/notification_management/presentation/cubit/replay_notification_cubit.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -147,5 +156,54 @@ Future<void> init() async {
 
   sl.registerFactory(
     () => SimulatedNotificationCubit(),
+  );
+  // ===========================================================================
+// REPLAY NOTIFICATIONS
+// ===========================================================================
+
+  sl.registerLazySingleton<ReplayNotificationFirestoreDataSource>(
+    () => ReplayNotificationFirestoreDataSourceImpl(
+      sl(),
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<ReplayNotificationRepository>(
+    () => ReplayNotificationRepositoryImpl(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => GetReplayNotifications(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => AddReplayNotification(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => UpdateReplayNotification(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => DeleteReplayNotification(
+      sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => ReplayNotificationCubit(
+      getReplayNotifications: sl(),
+      addReplayNotification: sl(),
+      updateReplayNotification: sl(),
+      deleteReplayNotification: sl(),
+    ),
   );
 }
