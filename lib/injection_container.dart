@@ -155,12 +155,12 @@ Future<void> init() async {
     ),
   );
 
-  sl.registerLazySingleton(
+  sl.registerFactory(
     () => SimulatedNotificationCubit(),
   );
   // ===========================================================================
-// REPLAY NOTIFICATIONS
-// ===========================================================================
+  // REPLAY NOTIFICATIONS
+  // ===========================================================================
 
   sl.registerLazySingleton<ReplayNotificationFirestoreDataSource>(
     () => ReplayNotificationFirestoreDataSourceImpl(
