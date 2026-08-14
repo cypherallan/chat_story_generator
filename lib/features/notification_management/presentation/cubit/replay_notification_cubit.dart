@@ -110,6 +110,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
   ) async {
     if (isClosed) return;
 
+    // Show the notification immediately.
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
       senderId: notification.senderId,
@@ -117,6 +118,17 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
       senderAvatarPath: notification.senderAvatarPath,
       messageText: notification.messageText,
       imagePath: notification.imagePath,
+    );
+
+    // Remove it from the available trigger list.
+    final updatedList = state.notifications
+        .where((item) => item.id != notification.id)
+        .toList();
+
+    emit(
+      state.copyWith(
+        notifications: updatedList,
+      ),
     );
   }
 

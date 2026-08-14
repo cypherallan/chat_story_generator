@@ -155,7 +155,7 @@ Future<void> init() async {
     ),
   );
 
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => SimulatedNotificationCubit(),
   );
   // ===========================================================================

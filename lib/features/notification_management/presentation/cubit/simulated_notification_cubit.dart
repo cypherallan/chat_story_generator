@@ -3,28 +3,41 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/simulated_notification.dart';
 import 'simulated_notification_state.dart';
+import 'dart:async';
 
 class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   SimulatedNotificationCubit() : super(const SimulatedNotificationState());
 
-  /// Immediately displays a prepared notification.
-  ///
-  /// This does NOT create a Firebase message.
-  /// This does NOT modify any chat.
-  /// This simply makes the notification visible on screen.
+  Timer? _hideTimer;
+
   void triggerNotification(
     SimulatedNotification notification,
   ) {
+    // Cancel any previous auto-hide timer.
+    _hideTimer?.cancel();
+
     emit(
       state.copyWith(
         notification: notification,
         visible: true,
       ),
     );
+
+    // Automatically hide after 5 seconds.
+    _hideTimer = Timer(
+      const Duration(seconds: 5),
+      () {
+        if (isClosed) return;
+
+        emit(
+          state.copyWith(
+            visible: false,
+          ),
+        );
+      },
+    );
   }
 
-  /// Convenience method for creating and immediately displaying
-  /// a notification.
   void showNotification({
     required String projectId,
     required String senderId,
@@ -48,6 +61,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void hideNotification() {
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
     emit(
       state.copyWith(
         visible: false,
@@ -61,6 +77,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
 
   @override
   Future<void> close() {
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
     return super.close();
   }
 }

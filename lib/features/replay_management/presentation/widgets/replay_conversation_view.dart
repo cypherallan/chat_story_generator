@@ -20,6 +20,7 @@ import '../../../notification_management/presentation/widgets/simulated_notifica
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../notification_management/presentation/cubit/replay_notification_state.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -236,28 +237,98 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                         visible: true,
                       ),
                     const PlaybackBottomPanel(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: OutlinedButton.icon(
-                          onPressed: _openCreateNotification,
-                          icon: const Icon(
-                            Icons.notifications_outlined,
-                          ),
-                          label: const Text(
-                            'Create Notification',
-                          ),
-                        ),
-                      ),
-                    ),
-                    ReplayPlaybackControls(
-                      state: state,
-                      replayCubit: widget.replayCubit,
+                    BlocBuilder<ReplayNotificationCubit,
+                        ReplayNotificationState>(
+                      builder: (context, notificationState) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // CREATE NOTIFICATION
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 40,
+                                child: OutlinedButton.icon(
+                                  onPressed: _openCreateNotification,
+                                  icon: const Icon(
+                                    Icons.notifications_outlined,
+                                    size: 20,
+                                  ),
+                                  label: const Text(
+                                    'Create Notification',
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // SAVED NOTIFICATIONS
+                            if (notificationState.notifications.isNotEmpty)
+                              SizedBox(
+                                height: 90,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  itemCount:
+                                      notificationState.notifications.length,
+                                  itemBuilder: (context, index) {
+                                    final notification =
+                                        notificationState.notifications[index];
+
+                                    return Card(
+                                      margin: const EdgeInsets.only(
+                                        bottom: 4,
+                                      ),
+                                      child: ListTile(
+                                        dense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                        ),
+                                        leading: const Icon(
+                                          Icons.notifications_active_outlined,
+                                          size: 20,
+                                        ),
+                                        title: Text(
+                                          notification.senderName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        subtitle: Text(
+                                          notification.messageText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        trailing: ElevatedButton(
+                                          onPressed: () {
+                                            context
+                                                .read<ReplayNotificationCubit>()
+                                                .triggerNotification(
+                                                  notification,
+                                                );
+                                          },
+                                          child: const Text(
+                                            'TRIGGER',
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+
+                            // PLAYBACK CONTROLS — ALWAYS VISIBLE
+                            ReplayPlaybackControls(
+                              state: state,
+                              replayCubit: widget.replayCubit,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
