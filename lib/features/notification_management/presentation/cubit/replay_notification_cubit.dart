@@ -5,25 +5,25 @@ import '../../domain/entities/replay_notification.dart';
 import '../../domain/usecases/add_replay_notification.dart';
 import '../../domain/usecases/delete_replay_notification.dart';
 import '../../domain/usecases/get_replay_notifications.dart';
-import 'replay_notification_state.dart';
+import '../../domain/usecases/update_replay_notification.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
+import 'replay_notification_state.dart';
 
 class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
   final GetReplayNotifications getReplayNotifications;
   final AddReplayNotification addReplayNotification;
+  final UpdateReplayNotification updateReplayNotification;
   final DeleteReplayNotification deleteReplayNotification;
+
   final SimulatedNotificationCubit simulatedNotificationCubit;
 
   ReplayNotificationCubit({
     required this.getReplayNotifications,
     required this.addReplayNotification,
+    required this.updateReplayNotification,
     required this.deleteReplayNotification,
     required this.simulatedNotificationCubit,
   }) : super(const ReplayNotificationState());
-
-  // ===========================================================================
-  // LOAD
-  // ===========================================================================
 
   Future<void> loadNotifications() async {
     if (isClosed) return;
@@ -44,7 +44,6 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
         state.copyWith(
           notifications: notifications,
           loading: false,
-          clearError: true,
         ),
       );
     } catch (e) {
@@ -59,10 +58,6 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     }
   }
 
-  // ===========================================================================
-  // CREATE
-  // ===========================================================================
-
   Future<bool> createNotification({
     required String projectId,
     required String senderId,
@@ -71,8 +66,6 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     required String messageText,
     String? imagePath,
   }) async {
-    if (isClosed) return false;
-
     final notification = ReplayNotification(
       id: const Uuid().v4(),
       projectId: projectId,
@@ -112,9 +105,9 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     }
   }
 
-  void triggerNotification(
+  Future<void> triggerNotification(
     ReplayNotification notification,
-  ) {
+  ) async {
     if (isClosed) return;
 
     simulatedNotificationCubit.showNotification(
@@ -127,24 +120,47 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     );
   }
 
-  // ===========================================================================
-  // DELETE
-  // ===========================================================================
-
-  Future<void> removeNotification(
-    String id,
+  Future<void> updateNotification(
+    ReplayNotification notification,
   ) async {
-    if (isClosed) return;
+    try {
+      final saved = await updateReplayNotification(notification);
 
+      if (isClosed) return;
+
+      final updatedList = state.notifications.map((item) {
+        if (item.id == saved.id) {
+          return saved;
+        }
+
+        return item;
+      }).toList();
+
+      emit(
+        state.copyWith(
+          notifications: updatedList,
+          clearError: true,
+        ),
+      );
+    } catch (e) {
+      if (isClosed) return;
+
+      emit(
+        state.copyWith(
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> removeNotification(String id) async {
     try {
       await deleteReplayNotification(id);
 
       if (isClosed) return;
 
       final updatedList = state.notifications
-          .where(
-            (notification) => notification.id != id,
-          )
+          .where((notification) => notification.id != id)
           .toList();
 
       emit(

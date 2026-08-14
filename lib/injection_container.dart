@@ -49,6 +49,8 @@ import 'features/notification_management/domain/usecases/delete_replay_notificat
 import 'features/notification_management/domain/usecases/get_replay_notifications.dart';
 import 'features/notification_management/presentation/cubit/replay_notification_cubit.dart';
 
+import 'features/notification_management/domain/usecases/update_replay_notification.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -184,6 +186,13 @@ Future<void> init() async {
       sl(),
     ),
   );
+
+  sl.registerLazySingleton(
+    () => UpdateReplayNotification(
+      sl(),
+    ),
+  );
+
   sl.registerLazySingleton(
     () => DeleteReplayNotification(
       sl(),
@@ -194,6 +203,7 @@ Future<void> init() async {
     () => ReplayNotificationCubit(
       getReplayNotifications: sl(),
       addReplayNotification: sl(),
+      updateReplayNotification: sl(),
       deleteReplayNotification: sl(),
       simulatedNotificationCubit: sl<SimulatedNotificationCubit>(),
     ),

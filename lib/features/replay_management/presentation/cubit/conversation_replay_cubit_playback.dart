@@ -6,6 +6,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       return;
     }
 
+    notificationCubit.clear();
+
     emit(
       state.copyWith(
         playing: true,
@@ -74,7 +76,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     } else {
       _typeOtherPersonMessage(message);
     }
-
   }
 
   void _typeOtherPersonMessage(Message message) {

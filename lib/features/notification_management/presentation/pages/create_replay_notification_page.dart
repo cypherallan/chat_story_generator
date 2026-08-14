@@ -94,11 +94,6 @@ class _CreateReplayNotificationPageState
       return;
     }
 
-    if (message.isEmpty) {
-      _showError('Please enter a message.');
-      return;
-    }
-
     final success =
         await context.read<ReplayNotificationCubit>().createNotification(
               projectId: project.id,

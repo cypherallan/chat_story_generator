@@ -36,6 +36,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     _timer?.cancel();
 
+    notificationCubit.clear();
+
     emit(
       state.copyWith(
         screen: ReplayScreen.conversation,
