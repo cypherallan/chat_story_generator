@@ -152,7 +152,10 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       persons: persons,
       replayCubit: _replayCubit,
       state: replayState,
-      onBack: _replayCubit.showHome,
+      onBack: () {
+        context.read<SimulatedNotificationCubit>().clear();
+        _replayCubit.showHome();
+      },
     );
   }
 
@@ -160,6 +163,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     BuildContext context,
     Project project,
   ) async {
+    context.read<SimulatedNotificationCubit>().clear();
     final personState = context.read<PersonCubit>().state;
 
     if (personState is! PersonLoaded) {

@@ -88,7 +88,9 @@ class _CreateReplayNotificationPageState
     }
 
     if (person == null) {
-      _showError('Please select the person sending the notification.');
+      _showError(
+        'Please select the person sending the notification.',
+      );
       return;
     }
 
@@ -97,22 +99,26 @@ class _CreateReplayNotificationPageState
       return;
     }
 
-    await context.read<ReplayNotificationCubit>().createNotification(
-          projectId: project.id,
-          senderId: person.id,
-          senderName: person.name,
-          senderAvatarPath: person.avatarPath,
-          messageText: message,
-        );
+    final success =
+        await context.read<ReplayNotificationCubit>().createNotification(
+              projectId: project.id,
+              senderId: person.id,
+              senderName: person.name,
+              senderAvatarPath: person.avatarPath,
+              messageText: message,
+            );
 
     if (!mounted) {
       return;
     }
 
-    final state = context.read<ReplayNotificationCubit>().state;
+    if (!success) {
+      final error = context.read<ReplayNotificationCubit>().state.error;
 
-    if (state.error != null) {
-      _showError(state.error!);
+      _showError(
+        error ?? 'Failed to save notification.',
+      );
+
       return;
     }
 

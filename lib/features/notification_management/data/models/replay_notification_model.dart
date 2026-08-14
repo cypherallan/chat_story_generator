@@ -9,7 +9,6 @@ class ReplayNotificationModel extends ReplayNotification {
     super.senderAvatarPath,
     required super.messageText,
     super.imagePath,
-    super.triggered,
   });
 
   factory ReplayNotificationModel.fromJson(
@@ -23,7 +22,6 @@ class ReplayNotificationModel extends ReplayNotification {
       senderAvatarPath: json['senderAvatarPath'],
       messageText: json['messageText'] ?? '',
       imagePath: json['imagePath'],
-      triggered: json['triggered'] ?? false,
     );
   }
 
@@ -36,7 +34,6 @@ class ReplayNotificationModel extends ReplayNotification {
       'senderAvatarPath': senderAvatarPath,
       'messageText': messageText,
       'imagePath': imagePath,
-      'triggered': triggered,
     };
   }
 
@@ -51,7 +48,6 @@ class ReplayNotificationModel extends ReplayNotification {
       senderAvatarPath: notification.senderAvatarPath,
       messageText: notification.messageText,
       imagePath: notification.imagePath,
-      triggered: notification.triggered,
     );
   }
 }

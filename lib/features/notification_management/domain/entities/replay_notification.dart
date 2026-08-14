@@ -15,10 +15,6 @@ class ReplayNotification extends Equatable {
   final String messageText;
   final String? imagePath;
 
-  /// Whether this notification has already been triggered
-  /// during the current recording/replay.
-  final bool triggered;
-
   const ReplayNotification({
     required this.id,
     required this.projectId,
@@ -27,7 +23,6 @@ class ReplayNotification extends Equatable {
     this.senderAvatarPath,
     required this.messageText,
     this.imagePath,
-    this.triggered = false,
   });
 
   ReplayNotification copyWith({
@@ -38,7 +33,6 @@ class ReplayNotification extends Equatable {
     String? senderAvatarPath,
     String? messageText,
     String? imagePath,
-    bool? triggered,
   }) {
     return ReplayNotification(
       id: id ?? this.id,
@@ -48,7 +42,6 @@ class ReplayNotification extends Equatable {
       senderAvatarPath: senderAvatarPath ?? this.senderAvatarPath,
       messageText: messageText ?? this.messageText,
       imagePath: imagePath ?? this.imagePath,
-      triggered: triggered ?? this.triggered,
     );
   }
 
@@ -61,6 +54,5 @@ class ReplayNotification extends Equatable {
         senderAvatarPath,
         messageText,
         imagePath,
-        triggered,
       ];
 }
