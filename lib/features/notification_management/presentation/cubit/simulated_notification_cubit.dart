@@ -13,7 +13,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   void triggerNotification(
     SimulatedNotification notification,
   ) {
-    // Cancel any previous auto-hide timer.
+    if (isClosed) return;
+
     _hideTimer?.cancel();
 
     emit(
@@ -23,7 +24,6 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       ),
     );
 
-    // Automatically hide after 5 seconds.
     _hideTimer = Timer(
       const Duration(seconds: 5),
       () {
@@ -46,6 +46,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     required String messageText,
     String? imagePath,
   }) {
+    if (isClosed) return;
+
     final notification = SimulatedNotification(
       id: const Uuid().v4(),
       projectId: projectId,
@@ -61,6 +63,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void hideNotification() {
+    if (isClosed) return;
+
     _hideTimer?.cancel();
     _hideTimer = null;
 
@@ -72,6 +76,11 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void clear() {
+    if (isClosed) return;
+
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
     emit(const SimulatedNotificationState());
   }
 

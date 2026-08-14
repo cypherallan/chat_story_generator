@@ -48,7 +48,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   @override
   void dispose() {
     _replayCubit.close();
-    _notificationCubit.close();
     super.dispose();
   }
 
