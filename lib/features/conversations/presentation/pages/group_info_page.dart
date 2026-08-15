@@ -224,6 +224,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                       child: PersonsListPage(
                         addToGroupMode: true,
                         excludedIds: widget.project.participantIds,
+                        currentPersonId: widget.project.ownerId,
                       ),
                     ),
                   ),

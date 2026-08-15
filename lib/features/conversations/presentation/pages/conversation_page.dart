@@ -142,11 +142,22 @@ class _ConversationPageState extends State<ConversationPage> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => BlocProvider(
-          create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: context.read<ProjectCubit>(),
+            ),
+            BlocProvider.value(
+              value: context.read<PersonCubit>(),
+            ),
+            BlocProvider(
+              create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
+            ),
+          ],
           child: CreateNotificationPage(
             projects: projectState.projects,
             persons: personState.persons,
+            currentPersonId: widget.project.ownerId,
           ),
         ),
       ),

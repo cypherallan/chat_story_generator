@@ -11,12 +11,14 @@ import '../../../../injection_container.dart' as di;
 
 class ProjectsListWidget extends StatelessWidget {
   final Set<String> selectedChatIds;
+  final String? currentPersonId;
 
   final Function(String) onChatSelected;
   const ProjectsListWidget({
     super.key,
     required this.selectedChatIds,
     required this.onChatSelected,
+    required this.currentPersonId,
   });
 
   @override
@@ -24,17 +26,20 @@ class ProjectsListWidget extends StatelessWidget {
     return _ProjectsListBody(
       selectedChatIds: selectedChatIds,
       onChatSelected: onChatSelected,
+      currentPersonId: currentPersonId,
     );
   }
 }
 
 class _ProjectsListBody extends StatefulWidget {
   final Set<String> selectedChatIds;
+  final String? currentPersonId;
 
   final Function(String) onChatSelected;
   const _ProjectsListBody({
     required this.selectedChatIds,
     required this.onChatSelected,
+    required this.currentPersonId,
   });
 
   @override
@@ -66,7 +71,13 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
             }
 
             if (state is ProjectLoaded) {
-              final projects = [...state.projects];
+              final projects = state.projects
+    .where(
+      (project) =>
+          widget.currentPersonId == null ||
+          project.ownerId == widget.currentPersonId,
+    )
+    .toList();
 
               projects.sort((a, b) {
                 final aTime = a.lastMessageTime ?? a.createdAt;

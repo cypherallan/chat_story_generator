@@ -16,12 +16,14 @@ class PersonsListPage extends StatelessWidget {
   final bool selectionMode;
   final bool addToGroupMode;
   final List<String> excludedIds;
+  final String currentPersonId;
 
   const PersonsListPage({
     super.key,
     this.selectionMode = false,
     this.addToGroupMode = false,
     this.excludedIds = const [],
+    required this.currentPersonId,
   });
 
   @override
@@ -39,6 +41,7 @@ class PersonsListPage extends StatelessWidget {
         selectionMode: selectionMode,
         addToGroupMode: addToGroupMode,
         excludedIds: excludedIds,
+        currentPersonId: currentPersonId,
       ),
     );
   }
@@ -48,11 +51,13 @@ class _PersonsListView extends StatefulWidget {
   final bool selectionMode;
   final bool addToGroupMode;
   final List<String> excludedIds;
+  final String currentPersonId;
 
   const _PersonsListView({
     required this.selectionMode,
     required this.addToGroupMode,
     required this.excludedIds,
+    required this.currentPersonId,
   });
 
   @override
@@ -64,53 +69,6 @@ class _PersonsListViewState extends State<_PersonsListView> {
   final List<String> _selectedIds = [];
 
   String _searchQuery = '';
-  Future<String?> _selectOwner(
-    BuildContext context,
-    String contactId,
-  ) async {
-    final state = context.read<PersonCubit>().state;
-
-    if (state is! PersonLoaded) {
-      return null;
-    }
-
-    final owners = state.persons.where((p) => p.id != contactId).toList();
-
-    return showModalBottomSheet<String>(
-      context: context,
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              const Text(
-                "You are",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...owners.map(
-                (person) => ListTile(
-                  leading: PersonAvatar(
-                    person: person,
-                    radius: 20,
-                  ),
-                  title: Text(person.name),
-                  onTap: () {
-                    Navigator.pop(context, person.id);
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   void dispose() {
@@ -171,6 +129,10 @@ class _PersonsListViewState extends State<_PersonsListView> {
 
                 if (state is PersonLoaded) {
                   final filteredPersons = state.persons.where((person) {
+                    if (person.id == widget.currentPersonId) {
+                      return false;
+                    }
+
                     if (widget.excludedIds.contains(person.id)) {
                       return false;
                     }
@@ -242,17 +204,10 @@ class _PersonsListViewState extends State<_PersonsListView> {
                       return PersonCard(
                         person: person,
                         onMessage: () async {
-                          final senderId = await _selectOwner(
-                            context,
-                            person.id,
-                          );
-
-                          if (senderId == null) return;
-
                           final project = await context
                               .read<ProjectCubit>()
                               .openOrCreatePrivateChat(
-                                ownerId: senderId,
+                                ownerId: widget.currentPersonId,
                                 contactId: person.id,
                                 contactName: person.name,
                               );

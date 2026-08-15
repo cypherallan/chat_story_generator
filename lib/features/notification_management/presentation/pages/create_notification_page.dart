@@ -6,15 +6,18 @@ import '../../../project_management/domain/entities/project.dart';
 import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
 import '../../domain/entities/notification.dart' as notification_entity;
+import '../../../project_management/presentation/cubit/project_cubit.dart';
 
 class CreateNotificationPage extends StatefulWidget {
   final List<Project> projects;
   final List<Person> persons;
+  final String currentPersonId;
 
   const CreateNotificationPage({
     super.key,
     required this.projects,
     required this.persons,
+    required this.currentPersonId,
   });
 
   @override
@@ -23,8 +26,6 @@ class CreateNotificationPage extends StatefulWidget {
 
 class _CreateNotificationPageState extends State<CreateNotificationPage> {
   String? _selectedSenderId;
-  String? _selectedOwnerId;
-
   Project? _selectedProject;
 
   final TextEditingController _messageController = TextEditingController();
@@ -60,27 +61,6 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
     return null;
   }
 
-  Person? get _selectedOwner {
-    if (_selectedOwnerId == null) {
-      return null;
-    }
-
-    for (final person in widget.persons) {
-      if (person.id == _selectedOwnerId) {
-        return person;
-      }
-    }
-
-    return null;
-  }
-
-  /// Finds the direct chat between:
-  ///
-  /// sender = the person sending the notification
-  /// owner  = "you"
-  ///
-  /// This follows the same structure used when creating
-  /// a normal two-person chat.
   Project? _findDirectChat({
     required String senderId,
     required String ownerId,
@@ -105,14 +85,14 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
   }
 
   void _updateSelectedChat() {
-    if (_selectedSenderId == null || _selectedOwnerId == null) {
+    if (_selectedSenderId == null) {
       setState(() {
         _selectedProject = null;
       });
       return;
     }
 
-    if (_selectedSenderId == _selectedOwnerId) {
+    if (_selectedSenderId == widget.currentPersonId) {
       setState(() {
         _selectedProject = null;
       });
@@ -121,7 +101,7 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
 
     final project = _findDirectChat(
       senderId: _selectedSenderId!,
-      ownerId: _selectedOwnerId!,
+      ownerId: widget.currentPersonId,
     );
 
     setState(() {
@@ -131,8 +111,6 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
 
   Future<void> _save() async {
     final sender = _selectedSender;
-    final owner = _selectedOwner;
-    final project = _selectedProject;
 
     final messageText = _messageController.text.trim();
 
@@ -143,31 +121,23 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
       return;
     }
 
-    if (owner == null) {
-      _showError(
-        'Please select who you are.',
-      );
-      return;
-    }
-
-    if (sender.id == owner.id) {
-      _showError(
-        'The sender and "you" must be different people.',
-      );
-      return;
-    }
-
-    if (project == null) {
-      _showError(
-        'No direct chat exists between these two contacts.',
-      );
-      return;
-    }
-
     if (messageText.isEmpty) {
       _showError(
         'Please enter the notification message.',
       );
+      return;
+    }
+
+    final projectCubit = context.read<ProjectCubit>();
+
+    // Find the existing conversation or create it automatically.
+    final project = await projectCubit.openOrCreatePrivateChat(
+      ownerId: widget.currentPersonId,
+      contactId: sender.id,
+      contactName: sender.name,
+    );
+
+    if (!mounted) {
       return;
     }
 
@@ -194,6 +164,13 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
     }
 
     _messageController.clear();
+
+    // Refresh projects because a new conversation may have been created.
+    await projectCubit.loadProjects();
+
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -282,6 +259,7 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
                   border: OutlineInputBorder(),
                 ),
                 items: widget.persons
+                    .where((person) => person.id != widget.currentPersonId)
                     .map(
                       (person) => DropdownMenuItem<String>(
                         value: person.id,
@@ -301,78 +279,35 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
               const SizedBox(height: 16),
 
               // ============================================================
-              // WHO ARE YOU?
-              // ============================================================
+// AUTOMATICALLY FOUND CHAT
+// ============================================================
 
-              DropdownButtonFormField<String>(
-                value: _selectedOwnerId,
-                decoration: const InputDecoration(
-                  labelText: 'You are',
-                  border: OutlineInputBorder(),
-                ),
-                items: widget.persons
-                    .map(
-                      (person) => DropdownMenuItem<String>(
-                        value: person.id,
-                        child: Text(person.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedOwnerId = value;
-                  });
-
-                  _updateSelectedChat();
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // ============================================================
-              // AUTOMATICALLY FOUND CHAT
-              // ============================================================
-
-              if (_selectedSenderId != null && _selectedOwnerId != null)
+              if (_selectedSenderId != null)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: Colors.grey.shade100,
                   ),
-                  child: _selectedProject == null
-                      ? const Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                            ),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'No direct chat exists between these '
-                                'two contacts.',
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            const Icon(
-                              Icons.chat_outlined,
-                              color: Colors.green,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Chat found: ${_selectedProject!.title}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_outlined,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _selectedProject != null
+                              ? 'Chat found: ${_selectedProject!.title}'
+                              : 'A conversation will be created automatically.',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
                 ),
 
               const SizedBox(height: 16),

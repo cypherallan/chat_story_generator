@@ -321,7 +321,9 @@ class _HomePageState extends State<HomePage> {
                                             value: context.read<ProjectCubit>(),
                                           ),
                                         ],
-                                        child: const PersonsListPage(),
+                                        child: PersonsListPage(
+                                          currentPersonId: _currentPersonId!,
+                                        ),
                                       ),
                                     ),
                                   );
@@ -417,6 +419,7 @@ class _HomePageState extends State<HomePage> {
                         ProjectsListWidget(
                           selectedChatIds: selectedChatIds,
                           onChatSelected: toggleChatSelection,
+                          currentPersonId: _currentPersonId,
                         ),
                         const Center(child: Text("Updates")),
                         const Center(child: Text("Communities")),
