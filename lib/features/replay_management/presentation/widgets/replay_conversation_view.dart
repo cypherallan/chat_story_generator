@@ -8,18 +8,15 @@ import '../../../message_management/domain/entities/message.dart';
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
-
-import '../../../notification_management/presentation/pages/create_replay_notification_page.dart';
-import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
-import '../../../message_management/domain/usecases/get_messages.dart';
 import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
 import '../../../notification_management/domain/entities/simulated_notification.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
-import '../../../notification_management/presentation/cubit/replay_notification_state.dart';
+
+import '../../../notification_management/presentation/cubit/notification_cubit.dart';
+import '../../../notification_management/presentation/cubit/notification_state.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -156,29 +153,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     widget.replayCubit.deleteMessageForMe(message);
   }
 
-  void _openCreateNotification() {
-    final projects = context.read<ProjectCubit>().state;
-
-    final persons = widget.persons;
-
-    if (projects is! ProjectLoaded) {
-      return;
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: context.read<ReplayNotificationCubit>(),
-          child: CreateReplayNotificationPage(
-            projects: projects.projects,
-            persons: persons,
-            getMessages: context.read<GetMessages>(),
-          ),
-        ),
-      ),
-    );
-  }
-
   // ===========================================================================
   // BUILD
   // ===========================================================================
@@ -239,35 +213,21 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                         visible: true,
                       ),
                     const PlaybackBottomPanel(),
-                    BlocBuilder<ReplayNotificationCubit,
-                        ReplayNotificationState>(
+                    BlocBuilder<NotificationCubit, NotificationState>(
                       builder: (context, notificationState) {
                         return Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // CREATE NOTIFICATION
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 4,
                               ),
                               child: SizedBox(
                                 width: double.infinity,
                                 height: 40,
-                                child: OutlinedButton.icon(
-                                  onPressed: _openCreateNotification,
-                                  icon: const Icon(
-                                    Icons.notifications_outlined,
-                                    size: 20,
-                                  ),
-                                  label: const Text(
-                                    'Create Notification',
-                                  ),
-                                ),
                               ),
                             ),
-
-                            // SAVED NOTIFICATIONS
                             if (notificationState.notifications.isNotEmpty)
                               SizedBox(
                                 height: 90,
@@ -308,22 +268,18 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                                         trailing: ElevatedButton(
                                           onPressed: () {
                                             context
-                                                .read<ReplayNotificationCubit>()
+                                                .read<NotificationCubit>()
                                                 .triggerNotification(
                                                   notification,
                                                 );
                                           },
-                                          child: const Text(
-                                            'TRIGGER',
-                                          ),
+                                          child: const Text('TRIGGER'),
                                         ),
                                       ),
                                     );
                                   },
                                 ),
                               ),
-
-                            // PLAYBACK CONTROLS — ALWAYS VISIBLE
                             ReplayPlaybackControls(
                               state: state,
                               replayCubit: widget.replayCubit,

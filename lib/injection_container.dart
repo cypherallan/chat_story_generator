@@ -41,15 +41,17 @@ import 'features/message_management/domain/usecases/delete_message.dart';
 import 'features/message_management/presentation/cubit/message_cubit.dart';
 import 'features/project_management/domain/usecases/delete_projects.dart';
 
-import 'features/notification_management/data/datasources/replay_notification_firestore_data_source.dart';
-import 'features/notification_management/data/repositories/replay_notification_repository_impl.dart';
-import 'features/notification_management/domain/repositories/replay_notification_repository.dart';
-import 'features/notification_management/domain/usecases/add_replay_notification.dart';
-import 'features/notification_management/domain/usecases/delete_replay_notification.dart';
-import 'features/notification_management/domain/usecases/get_replay_notifications.dart';
-import 'features/notification_management/presentation/cubit/replay_notification_cubit.dart';
+import 'features/notification_management/data/datasources/notification_firestore_data_source.dart';
 
-import 'features/notification_management/domain/usecases/update_replay_notification.dart';
+import 'features/notification_management/data/repositories/notification_repository_impl.dart';
+
+import 'features/notification_management/domain/repositories/notification_repository.dart';
+import 'features/notification_management/domain/usecases/add_notification.dart';
+import 'features/notification_management/domain/usecases/delete_notification.dart';
+import 'features/notification_management/domain/usecases/get_notifications.dart';
+import 'features/notification_management/domain/usecases/update_notification.dart';
+
+import 'features/notification_management/presentation/cubit/notification_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -81,6 +83,13 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerLazySingleton<NotificationFirestoreDataSource>(
+    () => NotificationFirestoreDataSourceImpl(
+      sl(),
+      sl(),
+    ),
+  );
+
   // register person
   sl.registerLazySingleton(() => UpdatePerson(sl()));
 
@@ -93,6 +102,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<MessageRepository>(
     () => MessageRepositoryImpl(
+      sl(),
+    ),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(
       sl(),
     ),
   );
@@ -110,6 +124,30 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddMessage(sl()));
   sl.registerLazySingleton(() => UpdateMessage(sl()));
   sl.registerLazySingleton(() => DeleteMessage(sl()));
+
+  sl.registerLazySingleton(
+    () => GetNotifications(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => AddNotification(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => UpdateNotification(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => DeleteNotification(
+      sl(),
+    ),
+  );
 
   // Cubit
   // Person Cubit
@@ -158,53 +196,12 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => SimulatedNotificationCubit(),
   );
-  // ===========================================================================
-  // REPLAY NOTIFICATIONS
-  // ===========================================================================
-
-  sl.registerLazySingleton<ReplayNotificationFirestoreDataSource>(
-    () => ReplayNotificationFirestoreDataSourceImpl(
-      sl(),
-      sl(),
-    ),
-  );
-
-  sl.registerLazySingleton<ReplayNotificationRepository>(
-    () => ReplayNotificationRepositoryImpl(
-      sl(),
-    ),
-  );
-
-  sl.registerLazySingleton(
-    () => GetReplayNotifications(
-      sl(),
-    ),
-  );
-
-  sl.registerLazySingleton(
-    () => AddReplayNotification(
-      sl(),
-    ),
-  );
-
-  sl.registerLazySingleton(
-    () => UpdateReplayNotification(
-      sl(),
-    ),
-  );
-
-  sl.registerLazySingleton(
-    () => DeleteReplayNotification(
-      sl(),
-    ),
-  );
-
   sl.registerFactory(
-    () => ReplayNotificationCubit(
-      getReplayNotifications: sl(),
-      addReplayNotification: sl(),
-      updateReplayNotification: sl(),
-      deleteReplayNotification: sl(),
+    () => NotificationCubit(
+      getNotifications: sl(),
+      addNotification: sl(),
+      updateNotificationUseCase: sl(),
+      deleteNotification: sl(),
       simulatedNotificationCubit: sl<SimulatedNotificationCubit>(),
     ),
   );

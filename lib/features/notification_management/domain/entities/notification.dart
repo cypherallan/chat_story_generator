@@ -1,0 +1,64 @@
+import 'package:equatable/equatable.dart';
+
+class Notification extends Equatable {
+  final String id;
+
+  /// The conversation this notification belongs to.
+  final String projectId;
+
+  /// The actual message represented by this notification.
+  final String messageId;
+
+  /// The person who appears to have sent the notification.
+  final String senderId;
+  final String senderName;
+  final String? senderAvatarPath;
+
+  final String messageText;
+  final String? imagePath;
+
+  const Notification({
+    required this.id,
+    required this.projectId,
+    required this.messageId,
+    required this.senderId,
+    required this.senderName,
+    this.senderAvatarPath,
+    required this.messageText,
+    this.imagePath,
+  });
+
+  Notification copyWith({
+    String? id,
+    String? projectId,
+    String? messageId,
+    String? senderId,
+    String? senderName,
+    String? senderAvatarPath,
+    String? messageText,
+    String? imagePath,
+  }) {
+    return Notification(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      messageId: messageId ?? this.messageId,
+      senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
+      senderAvatarPath: senderAvatarPath ?? this.senderAvatarPath,
+      messageText: messageText ?? this.messageText,
+      imagePath: imagePath ?? this.imagePath,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        projectId,
+        messageId,
+        senderId,
+        senderName,
+        senderAvatarPath,
+        messageText,
+        imagePath,
+      ];
+}

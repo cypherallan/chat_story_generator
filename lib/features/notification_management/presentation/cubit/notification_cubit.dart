@@ -1,29 +1,28 @@
-/*import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../domain/entities/replay_notification.dart';
-import '../../domain/usecases/add_replay_notification.dart';
-import '../../domain/usecases/delete_replay_notification.dart';
-import '../../domain/usecases/get_replay_notifications.dart';
-import '../../domain/usecases/update_replay_notification.dart';
-import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import 'replay_notification_state.dart';
+import '../../domain/entities/notification.dart';
+import '../../domain/usecases/add_notification.dart';
+import '../../domain/usecases/delete_notification.dart';
+import '../../domain/usecases/get_notifications.dart';
+import '../../domain/usecases/update_notification.dart';
+import 'simulated_notification_cubit.dart';
+import 'notification_state.dart';
 
-class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
-  final GetReplayNotifications getReplayNotifications;
-  final AddReplayNotification addReplayNotification;
-  final UpdateReplayNotification updateReplayNotification;
-  final DeleteReplayNotification deleteReplayNotification;
-
+class NotificationCubit extends Cubit<NotificationState> {
+  final GetNotifications getNotifications;
+  final AddNotification addNotification;
+  final UpdateNotification updateNotificationUseCase;
+  final DeleteNotification deleteNotification;
   final SimulatedNotificationCubit simulatedNotificationCubit;
 
-  ReplayNotificationCubit({
-    required this.getReplayNotifications,
-    required this.addReplayNotification,
-    required this.updateReplayNotification,
-    required this.deleteReplayNotification,
+  NotificationCubit({
+    required this.getNotifications,
+    required this.addNotification,
+    required this.updateNotificationUseCase,
+    required this.deleteNotification,
     required this.simulatedNotificationCubit,
-  }) : super(const ReplayNotificationState());
+  }) : super(const NotificationState());
 
   Future<void> loadNotifications() async {
     if (isClosed) return;
@@ -36,7 +35,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     );
 
     try {
-      final notifications = await getReplayNotifications();
+      final notifications = await getNotifications();
 
       if (isClosed) return;
 
@@ -59,18 +58,17 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
   }
 
   Future<bool> createNotification({
-    required String projectId,
-    required String messageId,
-    required String senderId,
+  required String projectId,
+  required String senderId,
     required String senderName,
     String? senderAvatarPath,
     required String messageText,
     String? imagePath,
   }) async {
-    final notification = ReplayNotification(
-      id: const Uuid().v4(),
-      projectId: projectId,
-      messageId: messageId,
+    final notification = Notification(
+  id: const Uuid().v4(),
+  projectId: projectId,
+  messageId: const Uuid().v4(),
       senderId: senderId,
       senderName: senderName,
       senderAvatarPath: senderAvatarPath,
@@ -79,7 +77,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     );
 
     try {
-      final saved = await addReplayNotification(notification);
+      final saved = await addNotification(notification);
 
       if (isClosed) return false;
 
@@ -108,42 +106,26 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
   }
 
   Future<void> triggerNotification(
-    ReplayNotification notification,
+    Notification notification,
   ) async {
     if (isClosed) return;
 
-    // Show the notification immediately.
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
-
-      // A replay notification isn't a real Message entity,
-      // so use its own ID as the message ID.
-      messageId: notification.id,
-
+      messageId: notification.messageId,
       senderId: notification.senderId,
       senderName: notification.senderName,
       senderAvatarPath: notification.senderAvatarPath,
       messageText: notification.messageText,
       imagePath: notification.imagePath,
     );
-
-    // Remove it from the available trigger list.
-    final updatedList = state.notifications
-        .where((item) => item.id != notification.id)
-        .toList();
-
-    emit(
-      state.copyWith(
-        notifications: updatedList,
-      ),
-    );
   }
 
   Future<void> updateNotification(
-    ReplayNotification notification,
+    Notification notification,
   ) async {
     try {
-      final saved = await updateReplayNotification(notification);
+      final saved = await updateNotificationUseCase(notification);
 
       if (isClosed) return;
 
@@ -174,7 +156,7 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
 
   Future<void> removeNotification(String id) async {
     try {
-      await deleteReplayNotification(id);
+      await deleteNotification(id);
 
       if (isClosed) return;
 
@@ -199,4 +181,3 @@ class ReplayNotificationCubit extends Cubit<ReplayNotificationState> {
     }
   }
 }
-*/

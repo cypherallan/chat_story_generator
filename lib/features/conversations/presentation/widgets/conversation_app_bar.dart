@@ -19,6 +19,8 @@ class ConversationAppBar extends StatelessWidget
   final bool otherPersonTyping;
   final VoidCallback onClearSelection;
   final VoidCallback onPreviewPressed;
+  final VoidCallback onCreateNotification;
+  final VoidCallback onTriggerNotification;
   final Set<String> selectedMessageIds;
   final void Function(Message) onReplySelected;
   final void Function(String messageId, String emoji) onReactionSelected;
@@ -33,6 +35,8 @@ class ConversationAppBar extends StatelessWidget
     required this.otherPersonTyping,
     required this.onClearSelection,
     required this.onPreviewPressed,
+    required this.onCreateNotification,
+    required this.onTriggerNotification,
     required this.selectedMessageIds,
     required this.onReplySelected,
     required this.onReactionSelected,
@@ -192,6 +196,13 @@ class ConversationAppBar extends StatelessWidget
                 },
               ),
               PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'create_replay_notification') {
+                    onCreateNotification();
+                  } else if (value == 'trigger_replay_notification') {
+                    onTriggerNotification();
+                  }
+                },
                 itemBuilder: (_) => const [
                   PopupMenuItem(
                     value: "view_contact",
@@ -208,6 +219,15 @@ class ConversationAppBar extends StatelessWidget
                   PopupMenuItem(
                     value: "mute",
                     child: Text("Mute notifications"),
+                  ),
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: "create_replay_notification",
+                    child: Text("Create replay notification"),
+                  ),
+                  PopupMenuItem(
+                    value: "trigger_replay_notification",
+                    child: Text("Trigger replay notification"),
                   ),
                 ],
               ),

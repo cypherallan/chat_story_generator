@@ -13,12 +13,12 @@ import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import '../../../message_management/domain/entities/message.dart';
-import '../../../message_management/domain/entities/message_status.dart';
-import '../../../message_management/domain/usecases/add_message.dart';
-import 'package:uuid/uuid.dart';
-import '../../../project_management/domain/usecases/update_project.dart';
-import '../../../notification_management/presentation/cubit/replay_notification_cubit.dart';
+//import '../../../message_management/domain/entities/message.dart';
+//import '../../../message_management/domain/entities/message_status.dart';
+//import '../../../message_management/domain/usecases/add_message.dart';
+//import 'package:uuid/uuid.dart';
+//import '../../../project_management/domain/usecases/update_project.dart';
+import '../../../notification_management/presentation/cubit/notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   const ConversationPlaybackPage({
@@ -33,14 +33,14 @@ class ConversationPlaybackPage extends StatefulWidget {
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   late final SimulatedNotificationCubit _notificationCubit;
   late final ConversationReplayCubit _replayCubit;
-  late final AddMessage _addMessage;
+  //late final AddMessage _addMessage;
 
   @override
   void initState() {
     super.initState();
 
     _notificationCubit = di.sl<SimulatedNotificationCubit>();
-    _addMessage = di.sl<AddMessage>();
+    //_addMessage = di.sl<AddMessage>();
 
     _replayCubit = ConversationReplayCubit(
       notificationCubit: _notificationCubit,
@@ -75,9 +75,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           BlocProvider<ConversationReplayCubit>.value(
             value: _replayCubit,
           ),
-          BlocProvider<ReplayNotificationCubit>(
-            create: (_) =>
-                di.sl<ReplayNotificationCubit>()..loadNotifications(),
+          BlocProvider<NotificationCubit>(
+            create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
           ),
         ],
         child: BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
@@ -107,7 +106,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     );
   }
 
-  Future<void> _openNotificationChat(
+  /*Future<void> _openNotificationChat(
     BuildContext context,
     dynamic notification,
   ) async {
@@ -278,6 +277,13 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       projectId: project.id,
       messages: visibleMessages,
     );
+  }*/
+  void _openNotificationChat(
+    BuildContext context,
+    dynamic notification,
+  ) {
+    // Notification tap behavior will be migrated separately.
+    // For now, do nothing.
   }
 
   Widget _buildConversation(

@@ -1,0 +1,57 @@
+import '../../domain/entities/notification.dart';
+
+class NotificationModel extends Notification {
+  const NotificationModel({
+    required super.id,
+    required super.projectId,
+    required super.messageId,
+    required super.senderId,
+    required super.senderName,
+    super.senderAvatarPath,
+    required super.messageText,
+    super.imagePath,
+  });
+
+  factory NotificationModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return NotificationModel(
+      id: json['id'] ?? '',
+      projectId: json['projectId'] ?? '',
+      messageId: json['messageId'] ?? '',
+      senderId: json['senderId'] ?? '',
+      senderName: json['senderName'] ?? '',
+      senderAvatarPath: json['senderAvatarPath'],
+      messageText: json['messageText'] ?? '',
+      imagePath: json['imagePath'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'projectId': projectId,
+      'messageId': messageId,
+      'senderId': senderId,
+      'senderName': senderName,
+      'senderAvatarPath': senderAvatarPath,
+      'messageText': messageText,
+      'imagePath': imagePath,
+    };
+  }
+
+  factory NotificationModel.fromEntity(
+    Notification notification,
+  ) {
+    return NotificationModel(
+      id: notification.id,
+      projectId: notification.projectId,
+      messageId: notification.messageId,
+      senderId: notification.senderId,
+      senderName: notification.senderName,
+      senderAvatarPath: notification.senderAvatarPath,
+      messageText: notification.messageText,
+      imagePath: notification.imagePath,
+    );
+  }
+}

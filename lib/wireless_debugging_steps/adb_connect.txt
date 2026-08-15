@@ -1,0 +1,5 @@
+tap wireless debugging, pair with code
+note the Ip address:port and 6 digit code
+run: adb pair Ip address:port
+enter the 6 digit code when prompted
+run adb connect ip address:port (found at the home screen of wireless debugging) 

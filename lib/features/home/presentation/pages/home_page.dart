@@ -11,10 +11,9 @@ import '../../../notification_management/presentation/cubit/simulated_notificati
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
 import 'package:uuid/uuid.dart';
-import '../../../auth/presentation/pages/profile_page.dart';
-import '../../../../core/auth/auth_service.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../conversations/presentation/pages/conversation_page.dart';
+import '../../../person_management/domain/entities/person.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +25,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final Set<String> selectedChatIds = {};
 
+  String? _currentPersonId;
+
   bool get isSelectionMode => selectedChatIds.isNotEmpty;
 
   void toggleChatSelection(String id) {
@@ -36,6 +37,72 @@ class _HomePageState extends State<HomePage> {
         selectedChatIds.add(id);
       }
     });
+  }
+
+  Person? _getCurrentPerson(List<Person> persons) {
+    if (_currentPersonId == null) {
+      return persons.isEmpty ? null : persons.first;
+    }
+
+    for (final person in persons) {
+      if (person.id == _currentPersonId) {
+        return person;
+      }
+    }
+
+    return persons.isEmpty ? null : persons.first;
+  }
+
+  void _selectCurrentPerson(
+    BuildContext context,
+    List<Person> persons,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Text(
+                  'Who are you?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ...persons.map(
+                (person) {
+                  final isSelected = person.id == _currentPersonId;
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      child: Text(
+                        person.name.isNotEmpty
+                            ? person.name[0].toUpperCase()
+                            : '?',
+                      ),
+                    ),
+                    title: Text(person.name),
+                    trailing: isSelected ? const Icon(Icons.check) : null,
+                    onTap: () {
+                      setState(() {
+                        _currentPersonId = person.id;
+                      });
+
+                      Navigator.pop(sheetContext);
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void clearSelection() {
@@ -86,23 +153,85 @@ class _HomePageState extends State<HomePage> {
                             Text(selectedChatIds.length.toString()),
                           ],
                         )
-                      : GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProfilePage(
-                                  authService: di.sl<AuthService>(),
+                      : BlocBuilder<PersonCubit, PersonState>(
+                          builder: (context, personState) {
+                            if (personState is! PersonLoaded) {
+                              return const Text(
+                                'WhatsApp',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              );
+                            }
+
+                            final currentPerson = _getCurrentPerson(
+                              personState.persons,
+                            );
+
+                            if (currentPerson == null) {
+                              return const Text(
+                                'WhatsApp',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }
+
+                            // Establish the first person as the initial identity.
+                            if (_currentPersonId == null) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!mounted) return;
+
+                                if (_currentPersonId == null) {
+                                  setState(() {
+                                    _currentPersonId = currentPerson.id;
+                                  });
+                                }
+                              });
+                            }
+
+                            return GestureDetector(
+                              onTap: () {
+                                _selectCurrentPerson(
+                                  context,
+                                  personState.persons,
+                                );
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'WhatsApp',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.person,
+                                        size: 15,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        currentPerson.name,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             );
                           },
-                          child: const Text(
-                            "WhatsApp",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                         ),
                   actions: isSelectionMode
                       ? [
