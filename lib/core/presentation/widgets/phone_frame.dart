@@ -15,7 +15,6 @@ class PhoneFrame extends StatelessWidget {
     return Column(
       children: [
         const SimulatedStatusBar(),
-
         Expanded(
           child: child,
         ),

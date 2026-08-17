@@ -72,12 +72,12 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
 
             if (state is ProjectLoaded) {
               final projects = state.projects
-    .where(
-      (project) =>
-          widget.currentPersonId == null ||
-          project.ownerId == widget.currentPersonId,
-    )
-    .toList();
+                  .where(
+                    (project) =>
+                        widget.currentPersonId == null ||
+                        project.ownerId == widget.currentPersonId,
+                  )
+                  .toList();
 
               projects.sort((a, b) {
                 final aTime = a.lastMessageTime ?? a.createdAt;

@@ -76,7 +76,6 @@ abstract class _ConversationReplayCubitBase
     _activeDeletionMessageId = null;
   }
 
-
   void _typeOwnerMessage(Message message);
   void _startOwnerTyping(Message message);
   void _performSwipeThenType(Message message);

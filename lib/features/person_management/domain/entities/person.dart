@@ -40,7 +40,6 @@ class Person extends Equatable {
       avatarPath: avatarPath ?? this.avatarPath,
       bio: bio ?? this.bio,
       isVerified: isVerified ?? this.isVerified,
-
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
     );
