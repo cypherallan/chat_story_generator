@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../injection_container.dart' as di;
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../project_management/presentation/pages/add_project_page.dart';
 import '../../../project_management/presentation/pages/projects_list_widget.dart';
@@ -12,7 +11,6 @@ import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
 import 'package:uuid/uuid.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-import '../../../conversations/presentation/pages/conversation_page.dart';
 import '../../../person_management/domain/entities/person.dart';
 
 class HomePage extends StatefulWidget {
@@ -425,59 +423,6 @@ class _HomePageState extends State<HomePage> {
                         const Center(child: Text("Communities")),
                         const Center(child: Text("Calls")),
                       ],
-                    ),
-                    SimulatedNotificationBanner(
-                      onTap: (projectId) async {
-                        final projectCubit = context.read<ProjectCubit>();
-                        final personCubit = context.read<PersonCubit>();
-
-                        final projectState = projectCubit.state;
-
-                        if (projectState is! ProjectLoaded) {
-                          return;
-                        }
-
-                        final matches = projectState.projects.where(
-                          (project) => project.id == projectId,
-                        );
-
-                        if (matches.isEmpty) {
-                          return;
-                        }
-
-                        final project = matches.first;
-
-                        await projectCubit.clearUnreadCount(project.id);
-
-                        if (!context.mounted) return;
-
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MultiBlocProvider(
-                              providers: [
-                                BlocProvider.value(
-                                  value: projectCubit,
-                                ),
-                                BlocProvider(
-                                  create: (_) => di.sl<MessageCubit>()
-                                    ..loadMessages(project.id),
-                                ),
-                                BlocProvider.value(
-                                  value: personCubit,
-                                ),
-                              ],
-                              child: ConversationPage(
-                                project: project,
-                              ),
-                            ),
-                          ),
-                        );
-
-                        if (context.mounted) {
-                          projectCubit.loadProjects();
-                        }
-                      },
                     ),
                   ],
                 ),

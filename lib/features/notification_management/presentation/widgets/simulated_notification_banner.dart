@@ -71,6 +71,10 @@ class _SimulatedNotificationBannerState
     _animationController.reverse();
   }
 
+  void _dismiss() {
+    context.read<SimulatedNotificationCubit>().hideNotification();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<SimulatedNotificationCubit, SimulatedNotificationState>(
@@ -89,105 +93,114 @@ class _SimulatedNotificationBannerState
         builder: (context, state) {
           final notification = state.notification;
 
-          if (notification == null) {
+          if (notification == null || !state.visible) {
             return const SizedBox.shrink();
           }
 
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: GestureDetector(
-                onTap: () {
-                  context.read<SimulatedNotificationCubit>().hideNotification();
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Dismissible(
+                    key: ValueKey(notification.id),
+                    direction: DismissDirection.horizontal,
+                    onDismissed: (_) {
+                      _dismiss();
+                    },
+                    child: GestureDetector(
+                      onTap: () {
+                        context
+                            .read<SimulatedNotificationCubit>()
+                            .hideNotification();
 
-                  widget.onTap(notification);
-                },
-                child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.white,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.white,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        ProfileAvatar(
-                          imagePath: notification.senderAvatarPath,
-                          name: notification.senderName,
-                          radius: 25,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                        widget.onTap(notification);
+                      },
+                      child: Material(
+                        elevation: 8,
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      notification.senderName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'now',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
+                              ProfileAvatar(
+                                imagePath: notification.senderAvatarPath,
+                                name: notification.senderName,
+                                radius: 25,
                               ),
-                              const SizedBox(height: 3),
-                              Row(
-                                children: [
-                                  if (notification.imagePath != null) ...[
-                                    Icon(
-                                      Icons.image_outlined,
-                                      size: 16,
-                                      color: Colors.grey.shade600,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            notification.senderName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'now',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(height: 3),
+                                    Row(
+                                      children: [
+                                        if (notification.imagePath != null) ...[
+                                          Icon(
+                                            Icons.image_outlined,
+                                            size: 16,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Expanded(
+                                          child: Text(
+                                            notification.messageText.isEmpty
+                                                ? 'Photo'
+                                                : notification.messageText,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
-                                  Expanded(
-                                    child: Text(
-                                      notification.messageText.isEmpty
-                                          ? 'Photo'
-                                          : notification.messageText,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.chevron_right,
-                          color: Colors.grey.shade500,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

@@ -14,6 +14,9 @@ import '../../../notification_management/presentation/cubit/notification_cubit.d
 import '../../../notification_management/presentation/pages/create_notification_page.dart';
 import '../../../notification_management/domain/entities/notification.dart'
     as notification_entity;
+import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
+import '../../../notification_management/domain/entities/simulated_notification.dart';
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -30,6 +33,7 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   final GlobalKey<ConversationPageBodyState> _bodyKey =
       GlobalKey<ConversationPageBodyState>();
+  late final SimulatedNotificationCubit _simulatedNotificationCubit;
 
   // Local mirrors so the AppBar can rebuild
   Set<String> _typingPersonIds = {};
@@ -49,10 +53,74 @@ class _ConversationPageState extends State<ConversationPage> {
     });
   }
 
+  Future<void> _onNotificationTapped(
+    SimulatedNotification notification,
+  ) async {
+    final projectCubit = context.read<ProjectCubit>();
+    final personCubit = context.read<PersonCubit>();
+
+    final projectState = projectCubit.state;
+
+    if (projectState is! ProjectLoaded) {
+      return;
+    }
+
+    final matches = projectState.projects.where(
+      (project) => project.id == notification.projectId,
+    );
+
+    if (matches.isEmpty) {
+      return;
+    }
+
+    final project = matches.first;
+
+    await projectCubit.clearUnreadCount(project.id);
+
+    if (!mounted) return;
+
+    // If the notification belongs to the conversation
+    // we are already viewing, there is nothing else to open.
+    if (project.id == widget.project.id) {
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: projectCubit,
+            ),
+            BlocProvider(
+              create: (_) => di.sl<MessageCubit>()..loadMessages(project.id),
+            ),
+            BlocProvider.value(
+              value: personCubit,
+            ),
+          ],
+          child: BlocProvider(
+            create: (_) => di.sl<SimulatedNotificationCubit>(),
+            child: ConversationPage(
+              project: project,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (mounted) {
+      await projectCubit.loadProjects();
+    }
+  }
+
   Future<void> _triggerReplayNotification() async {
     final notificationCubit = di.sl<NotificationCubit>();
 
     await notificationCubit.loadNotifications();
+
+    final simulatedNotificationCubit = _simulatedNotificationCubit;
 
     if (!mounted) return;
 
@@ -123,7 +191,7 @@ class _ConversationPageState extends State<ConversationPage> {
       return;
     }
 
-    notificationCubit.triggerNotification(
+    simulatedNotificationCubit.triggerSavedNotification(
       selectedNotification,
     );
   }
@@ -167,13 +235,28 @@ class _ConversationPageState extends State<ConversationPage> {
   @override
   void initState() {
     super.initState();
+
+    _simulatedNotificationCubit = di.sl<SimulatedNotificationCubit>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final body = _bodyKey.currentState;
+
       if (body != null) {
-        context.read<PersonCubit>().setPersonOnline(body.selectedSenderId);
+        context.read<PersonCubit>().setPersonOnline(
+              body.selectedSenderId,
+            );
       }
-      context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
+
+      context.read<ProjectCubit>().clearUnreadCount(
+            widget.project.id,
+          );
     });
+  }
+
+  @override
+  void dispose() {
+    _simulatedNotificationCubit.close();
+    super.dispose();
   }
 
   @override
@@ -222,10 +305,25 @@ class _ConversationPageState extends State<ConversationPage> {
             await _bodyKey.currentState?.deleteSelectedMessages();
           },
         ),
-        body: ConversationPageBody(
-          key: _bodyKey,
-          project: widget.project,
-          onChanged: _onBodyChanged,
+        body: Stack(
+          children: [
+            ConversationPageBody(
+              key: _bodyKey,
+              project: widget.project,
+              onChanged: _onBodyChanged,
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: BlocProvider.value(
+                value: _simulatedNotificationCubit,
+                child: SimulatedNotificationBanner(
+                  onTap: _onNotificationTapped,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
