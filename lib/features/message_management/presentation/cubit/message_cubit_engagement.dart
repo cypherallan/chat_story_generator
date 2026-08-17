@@ -18,14 +18,19 @@ mixin MessageCubitEngagementMixin on Cubit<MessageState> {
   }) async {
     if (state is! MessageLoaded) return;
 
-    final messages = (state as MessageLoaded).messages;
+    final currentMessages =
+        List<Message>.from((state as MessageLoaded).messages);
 
-    final messagesToRead = messages.where(
-      (m) =>
-          m.projectId == projectId && m.senderId != currentUserId && m.isUnread,
-    );
+    final updatedMessages = <Message>[];
 
-    for (final message in messagesToRead) {
+    for (final message in currentMessages) {
+      if (message.projectId != projectId ||
+          message.senderId == currentUserId ||
+          !message.isUnread) {
+        updatedMessages.add(message);
+        continue;
+      }
+
       final updatedMessage = message.copyWith(
         status: MessageStatus.read,
         isUnread: false,
@@ -34,12 +39,16 @@ mixin MessageCubitEngagementMixin on Cubit<MessageState> {
       final result = await updateMessage(updatedMessage);
 
       result.fold(
-        (_) {},
-        (_) async {
-          await updateProjectPreview(updatedMessage);
+        (_) {
+          updatedMessages.add(message);
+        },
+        (_) {
+          updatedMessages.add(updatedMessage);
         },
       );
     }
+
+    emit(MessageLoaded(updatedMessages));
   }
 
   Future<void> editMessage(Message message) async {

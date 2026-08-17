@@ -220,12 +220,15 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                       typingPersonIds.add(selectedSenderId);
                       otherPersonTyping = true;
                     });
+
                     _notifyParent();
-                    context.read<MessageCubit>().markMessagesAsRead(
-                          projectId: widget.project.id,
-                          currentUserId: widget.project.ownerId,
-                        );
+                    return;
                   }
+
+                  context.read<MessageCubit>().markMessagesAsRead(
+                        projectId: widget.project.id,
+                        currentUserId: widget.project.ownerId,
+                      );
                 },
                 onTypingStopped: () {
                   if (mounted) {
