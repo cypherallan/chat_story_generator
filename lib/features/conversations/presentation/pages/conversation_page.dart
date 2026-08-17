@@ -133,7 +133,6 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<void> _triggerReplayNotification() async {
-
     final notificationCubit = di.sl<NotificationCubit>();
 
     await notificationCubit.loadNotifications();
@@ -191,7 +190,6 @@ class _ConversationPageState extends State<ConversationPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     onTap: () {
-
                       Navigator.of(sheetContext).pop(notification);
                     },
                   );
@@ -210,7 +208,7 @@ class _ConversationPageState extends State<ConversationPage> {
     final messageCubit = context.read<MessageCubit>();
     final projectCubit = context.read<ProjectCubit>();
 
-    await messageCubit.createNotificationMessage(
+    final messageCreated = await messageCubit.createNotificationMessage(
       messageId: selectedNotification.messageId,
       projectId: selectedNotification.projectId,
       senderId: selectedNotification.senderId,
@@ -219,15 +217,15 @@ class _ConversationPageState extends State<ConversationPage> {
       imagePath: selectedNotification.imagePath,
     );
 
+    if (!messageCreated) {
+      return;
+    }
 
     if (selectedNotification.senderId != widget.project.ownerId) {
-
       await projectCubit.incrementUnreadCount(
         selectedNotification.projectId,
       );
-
-    } else {
-    }
+    } else {}
 
     if (!mounted) {
       return;
@@ -235,6 +233,10 @@ class _ConversationPageState extends State<ConversationPage> {
 
     _simulatedNotificationCubit.triggerSavedNotification(
       selectedNotification,
+    );
+
+    await notificationCubit.removeNotification(
+      selectedNotification.id,
     );
   }
 
