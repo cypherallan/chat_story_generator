@@ -225,9 +225,15 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                     return;
                   }
 
+                  // Only the owner can clear unread messages.
                   context.read<MessageCubit>().markMessagesAsRead(
                         projectId: widget.project.id,
                         currentUserId: widget.project.ownerId,
+                      );
+
+                  // Also clear the unread counter shown on the Home chat list.
+                  context.read<ProjectCubit>().clearUnreadCount(
+                        widget.project.id,
                       );
                 },
                 onTypingStopped: () {
@@ -261,6 +267,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         text: caption,
                         imagePath: file.path,
                         replyingTo: replyingTo,
+                        isUnread: selectedSenderId != widget.project.ownerId,
                       );
 
                   setState(() => replyingTo = null);
@@ -282,6 +289,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                             .name,
                         text: text,
                         replyingTo: replyingTo,
+                        isUnread: senderId != widget.project.ownerId,
                       );
 
                   if (senderId != widget.project.ownerId) {

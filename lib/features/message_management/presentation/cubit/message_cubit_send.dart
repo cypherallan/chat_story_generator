@@ -59,6 +59,7 @@ mixin MessageCubitSendMixin on Cubit<MessageState> {
     required String text,
     String? imagePath,
     Message? replyingTo,
+    bool isUnread = false,
   }) async {
     final messageId = const Uuid().v4();
 
@@ -66,10 +67,12 @@ mixin MessageCubitSendMixin on Cubit<MessageState> {
       id: messageId,
       projectId: projectId,
       senderId: senderId,
+      senderName: senderName,
       text: text,
       imagePath: imagePath,
       createdAt: DateTime.now(),
       status: MessageStatus.sending,
+      isUnread: isUnread,
       replyToMessageId: replyingTo?.id,
       replyToSenderId: replyingTo?.senderId,
       replyToSenderName: replyingTo?.replyToSenderName ?? senderName,
