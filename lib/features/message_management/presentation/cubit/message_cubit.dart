@@ -114,12 +114,10 @@ class MessageCubit extends Cubit<MessageState>
 
   @override
   Future<void> updateProjectPreview(Message message) async {
-
     final result = await getProjects();
 
     await result.fold<Future<void>>(
-      (failure) async {
-      },
+      (failure) async {},
       (projects) async {
         final index = projects.indexWhere(
           (p) => p.id == message.projectId,
@@ -142,10 +140,8 @@ class MessageCubit extends Cubit<MessageState>
         final updateResult = await updateProject(updated);
 
         updateResult.fold(
-          (failure) {
-          },
-          (_) {
-          },
+          (failure) {},
+          (_) {},
         );
       },
     );
