@@ -117,7 +117,9 @@ class MessageCubit extends Cubit<MessageState>
     final result = await getProjects();
 
     await result.fold<Future<void>>(
-      (failure) async {},
+      (failure) async {
+        emit(MessageError(failure.message));
+      },
       (projects) async {
         final index = projects.indexWhere(
           (p) => p.id == message.projectId,
@@ -128,6 +130,7 @@ class MessageCubit extends Cubit<MessageState>
         }
 
         final project = projects[index];
+
 
         final updated = project.copyWith(
           lastMessage: message.text,
@@ -140,7 +143,9 @@ class MessageCubit extends Cubit<MessageState>
         final updateResult = await updateProject(updated);
 
         updateResult.fold(
-          (failure) {},
+          (failure) {
+            emit(MessageError(failure.message));
+          },
           (_) {},
         );
       },
