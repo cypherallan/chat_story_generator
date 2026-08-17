@@ -15,7 +15,7 @@ import '../../../../core/storage/firebase_storage_service.dart';
 import 'message_cubit_send.dart';
 import 'message_cubit_engagement.dart';
 import 'message_cubit_delete.dart';
-
+import '../../domain/entities/message_status.dart';
 part 'message_state.dart';
 
 class MessageCubit extends Cubit<MessageState>
@@ -79,57 +79,74 @@ class MessageCubit extends Cubit<MessageState>
     );
   }
 
-  /// Refreshes a project's preview fields (last message, sender, status...)
-  /// based on the current in-memory message list.
-  ///
-  /// Shared by the send/engagement/delete mixins so every mutation to a
-  /// conversation keeps the project list preview in sync.
+  Future<bool> addNotificationMessage({
+    required String projectId,
+    required String messageId,
+    required String senderId,
+    required String senderName,
+    required String text,
+    String? imagePath,
+  }) async {
+    final message = Message(
+      id: messageId,
+      projectId: projectId,
+      senderId: senderId,
+      senderName: senderName,
+      text: text,
+      imagePath: imagePath,
+      createdAt: DateTime.now(),
+      status: MessageStatus.delivered,
+      isUnread: true,
+    );
+
+    final result = await addMessage(message);
+
+    return result.fold(
+      (failure) {
+        emit(MessageError(failure.message));
+        return false;
+      },
+      (_) {
+        return true;
+      },
+    );
+  }
+
   @override
   Future<void> updateProjectPreview(Message message) async {
+
     final result = await getProjects();
 
-    result.fold(
-      (_) {},
+    await result.fold<Future<void>>(
+      (failure) async {
+      },
       (projects) async {
         final index = projects.indexWhere(
           (p) => p.id == message.projectId,
         );
 
-        if (index == -1) return;
-
-        final project = projects[index];
-
-        if (state is! MessageLoaded) return;
-
-        final messages = (state as MessageLoaded)
-            .messages
-            .where((m) => m.projectId == message.projectId)
-            .toList();
-
-        if (messages.isEmpty) {
-          final updated = project.copyWith(
-            lastMessage: '',
-            lastMessageImagePath: null,
-            lastMessageTime: null,
-            lastSenderId: null,
-            lastMessageStatus: null,
-          );
-
-          await updateProject(updated);
+        if (index == -1) {
           return;
         }
 
-        final latestMessage = messages.last;
+        final project = projects[index];
 
         final updated = project.copyWith(
-          lastMessage: latestMessage.text,
-          lastMessageImagePath: latestMessage.imagePath,
-          lastMessageTime: latestMessage.createdAt,
-          lastSenderId: latestMessage.senderId,
-          lastMessageStatus: latestMessage.status,
+          lastMessage: message.text,
+          lastMessageImagePath: message.imagePath,
+          lastMessageTime: message.createdAt,
+          lastSenderId: message.senderId,
+          lastMessageStatus: message.status,
         );
 
-        await updateProject(updated);
+        final updateResult = await updateProject(updated);
+
+        updateResult.fold(
+          (failure) {
+          },
+          (_) {
+          },
+        );
       },
     );
   }

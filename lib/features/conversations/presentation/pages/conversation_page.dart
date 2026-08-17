@@ -77,10 +77,27 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final project = matches.first;
 
+    final messageCubit = di.sl<MessageCubit>();
+
+    final added = await messageCubit.addNotificationMessage(
+      projectId: notification.projectId,
+      messageId: notification.messageId,
+      senderId: notification.senderId,
+      senderName: notification.senderName,
+      text: notification.messageText,
+      imagePath: notification.imagePath,
+    );
+
+    await messageCubit.close();
+
+    if (!added) {
+      return;
+    }
+
+    await projectCubit.clearUnreadCount(project.id);
+
     if (!mounted) return;
 
-    // If the notification belongs to the conversation
-    // we are already viewing, there is nothing else to open.
     if (project.id == widget.project.id) {
       return;
     }
@@ -116,11 +133,14 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<void> _triggerReplayNotification() async {
+
     final notificationCubit = di.sl<NotificationCubit>();
 
     await notificationCubit.loadNotifications();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     final notifications = notificationCubit.state.notifications;
 
@@ -132,7 +152,6 @@ class _ConversationPageState extends State<ConversationPage> {
           ),
         ),
       );
-
       return;
     }
 
@@ -157,9 +176,7 @@ class _ConversationPageState extends State<ConversationPage> {
               ...notifications.map(
                 (notification) {
                   return ListTile(
-                    leading: const Icon(
-                      Icons.notifications_outlined,
-                    ),
+                    leading: const Icon(Icons.notifications_outlined),
                     title: Text(
                       notification.senderName,
                       style: const TextStyle(
@@ -174,6 +191,7 @@ class _ConversationPageState extends State<ConversationPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     onTap: () {
+
                       Navigator.of(sheetContext).pop(notification);
                     },
                   );
@@ -201,14 +219,19 @@ class _ConversationPageState extends State<ConversationPage> {
       imagePath: selectedNotification.imagePath,
     );
 
-// This is an incoming message, so it should be unread.
+
     if (selectedNotification.senderId != widget.project.ownerId) {
+
       await projectCubit.incrementUnreadCount(
         selectedNotification.projectId,
       );
+
+    } else {
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     _simulatedNotificationCubit.triggerSavedNotification(
       selectedNotification,

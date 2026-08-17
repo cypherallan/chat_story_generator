@@ -8,7 +8,7 @@ import '../../domain/usecases/delete_project.dart';
 import '../../domain/usecases/delete_projects.dart';
 import '../../domain/usecases/get_projects.dart';
 import '../../domain/usecases/update_project.dart';
-
+import '../../../message_management/domain/entities/message.dart';
 part 'project_state.dart';
 
 class ProjectCubit extends Cubit<ProjectState> {
@@ -153,11 +153,19 @@ class ProjectCubit extends Cubit<ProjectState> {
     final result = await getProjects();
 
     result.fold(
-      (failure) => emit(ProjectError(failure.message)),
+      (failure) {
+        emit(ProjectError(failure.message));
+      },
       (projects) async {
-        final project = projects.firstWhere(
+        final projectIndex = projects.indexWhere(
           (p) => p.id == projectId,
         );
+
+        if (projectIndex == -1) {
+          return;
+        }
+
+        final project = projects[projectIndex];
 
         final updated = project.copyWith(
           unreadCount: project.unreadCount + 1,
@@ -166,7 +174,47 @@ class ProjectCubit extends Cubit<ProjectState> {
         final updateResult = await updateProject(updated);
 
         updateResult.fold(
-          (failure) => emit(ProjectError(failure.message)),
+          (failure) {
+            emit(ProjectError(failure.message));
+          },
+          (_) async {
+            await loadProjects();
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> recordIncomingMessage({
+    required String projectId,
+    required Message message,
+  }) async {
+    final result = await getProjects();
+
+    await result.fold(
+      (failure) async {
+        emit(ProjectError(failure.message));
+      },
+      (projects) async {
+        final project = projects.firstWhere(
+          (p) => p.id == projectId,
+        );
+
+        final updated = project.copyWith(
+          lastMessage: message.text,
+          lastMessageImagePath: message.imagePath,
+          lastMessageTime: message.createdAt,
+          lastSenderId: message.senderId,
+          lastMessageStatus: message.status,
+          unreadCount: project.unreadCount + 1,
+        );
+
+        final updateResult = await updateProject(updated);
+
+        await updateResult.fold(
+          (failure) async {
+            emit(ProjectError(failure.message));
+          },
           (_) async {
             await loadProjects();
           },

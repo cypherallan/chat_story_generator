@@ -22,14 +22,13 @@ mixin MessageCubitEngagementMixin on Cubit<MessageState> {
 
     final messagesToRead = messages.where(
       (m) =>
-          m.projectId == projectId &&
-          m.senderId != currentUserId &&
-          m.status == MessageStatus.delivered,
+          m.projectId == projectId && m.senderId != currentUserId && m.isUnread,
     );
 
     for (final message in messagesToRead) {
       final updatedMessage = message.copyWith(
         status: MessageStatus.read,
+        isUnread: false,
       );
 
       final result = await updateMessage(updatedMessage);

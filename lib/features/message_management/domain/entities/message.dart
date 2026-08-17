@@ -10,6 +10,7 @@ class Message extends Equatable {
   final String? imagePath;
   final DateTime createdAt;
   final MessageStatus status;
+  final bool isUnread;
   final bool isDeleted;
   final bool isEdited;
   final String? replyToMessageId;
@@ -31,6 +32,7 @@ class Message extends Equatable {
     this.imagePath,
     required this.createdAt,
     this.status = MessageStatus.sent,
+    this.isUnread = false,
     this.isDeleted = false,
     this.isEdited = false,
     this.replyToMessageId,
@@ -51,6 +53,7 @@ class Message extends Equatable {
     String? imagePath,
     DateTime? createdAt,
     MessageStatus? status,
+    bool? isUnread,
     bool? isEdited,
     bool? isDeleted,
     String? replyToMessageId,
@@ -70,6 +73,7 @@ class Message extends Equatable {
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      isUnread: isUnread ?? this.isUnread,
       isEdited: isEdited ?? this.isEdited,
       isDeleted: isDeleted ?? this.isDeleted,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
@@ -92,6 +96,7 @@ class Message extends Equatable {
         imagePath,
         createdAt,
         status,
+        isUnread,
         isEdited,
         isDeleted,
         replyToMessageId,

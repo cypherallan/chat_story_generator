@@ -19,8 +19,8 @@ mixin MessageCubitSendMixin on Cubit<MessageState> {
   Future<void> updateProjectPreview(Message message);
 
   Future<void> createNotificationMessage({
-    required String messageId,
     required String projectId,
+    required String messageId,
     required String senderId,
     required String senderName,
     required String text,
@@ -35,16 +35,21 @@ mixin MessageCubitSendMixin on Cubit<MessageState> {
       imagePath: imagePath,
       createdAt: DateTime.now(),
       status: MessageStatus.delivered,
+      isUnread: true,
     );
 
     final result = await addMessage(message);
 
-    result.fold(
-      (failure) {
+    await result.fold<Future<void>>(
+      (failure) async {
+
         emit(MessageError(failure.message));
       },
-      (_) async {
-        await updateProjectPreview(message);
+      (savedMessage) async {
+
+
+        await updateProjectPreview(savedMessage);
+
       },
     );
   }
