@@ -65,13 +65,31 @@ class MessageCubit extends Cubit<MessageState>
             emit(MessageError(failure.message));
           },
           (messages) {
+            final mergedMessages = <String, Message>{};
+
+            // Firestore messages first.
+            for (final message in messages) {
+              mergedMessages[message.id] = message;
+            }
+
+            // Add pending messages only if Firestore does not already
+            // contain the same message.
+            for (final pending in _pendingMessages.where(
+              (pending) => pending.projectId == projectId,
+            )) {
+              mergedMessages.putIfAbsent(
+                pending.id,
+                () => pending,
+              );
+            }
+
+            final combinedMessages = mergedMessages.values.toList()
+              ..sort(
+                (a, b) => a.createdAt.compareTo(b.createdAt),
+              );
+
             emit(
-              MessageLoaded([
-                ...messages,
-                ..._pendingMessages.where(
-                  (pending) => pending.projectId == projectId,
-                ),
-              ]),
+              MessageLoaded(combinedMessages),
             );
           },
         );
@@ -130,7 +148,6 @@ class MessageCubit extends Cubit<MessageState>
         }
 
         final project = projects[index];
-
 
         final updated = project.copyWith(
           lastMessage: message.text,
