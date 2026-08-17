@@ -13,16 +13,13 @@ import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-//import '../../../message_management/domain/entities/message.dart';
-//import '../../../message_management/domain/entities/message_status.dart';
-//import '../../../message_management/domain/usecases/add_message.dart';
-//import 'package:uuid/uuid.dart';
-//import '../../../project_management/domain/usecases/update_project.dart';
-import '../../../notification_management/presentation/cubit/notification_cubit.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
+  final String ownerId;
+
   const ConversationPlaybackPage({
     super.key,
+    required this.ownerId,
   });
 
   @override
@@ -33,14 +30,12 @@ class ConversationPlaybackPage extends StatefulWidget {
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   late final SimulatedNotificationCubit _notificationCubit;
   late final ConversationReplayCubit _replayCubit;
-  //late final AddMessage _addMessage;
 
   @override
   void initState() {
     super.initState();
 
     _notificationCubit = di.sl<SimulatedNotificationCubit>();
-    //_addMessage = di.sl<AddMessage>();
 
     _replayCubit = ConversationReplayCubit(
       notificationCubit: _notificationCubit,
@@ -75,9 +70,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           BlocProvider<ConversationReplayCubit>.value(
             value: _replayCubit,
           ),
-          BlocProvider<NotificationCubit>(
-            create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
-          ),
         ],
         child: BlocBuilder<ConversationReplayCubit, ConversationReplayState>(
           builder: (context, replayState) {
@@ -96,7 +88,20 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   }
 
   Widget _buildHome(BuildContext context) {
+    final personState = context.watch<PersonCubit>().state;
+    final projectState = context.watch<ProjectCubit>().state;
+
+    if (personState is! PersonLoaded || projectState is! ProjectLoaded) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return ReplayHomeView(
+      projects: projectState.projects,
+      ownerId: widget.ownerId,
       onChatTap: (project) {
         _openReplayConversation(
           context,
@@ -105,10 +110,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       },
     );
   }
-  void _openNotificationChat(
-    BuildContext context,
-    dynamic notification,
-  ) {}
 
   Widget _buildConversation(
     BuildContext context,
@@ -164,12 +165,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         context.read<SimulatedNotificationCubit>().clear();
         _replayCubit.showHome();
       },
-      onNotificationTap: (notification) {
-        _openNotificationChat(
-          context,
-          notification,
-        );
-      },
     );
   }
 
@@ -212,7 +207,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           (messages) async {
             _replayCubit.load(
               messages,
-              project.ownerId,
+              widget.ownerId,
               personState.persons,
             );
 

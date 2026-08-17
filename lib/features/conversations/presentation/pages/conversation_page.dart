@@ -335,7 +335,9 @@ class _ConversationPageState extends State<ConversationPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const ConversationPlaybackPage(),
+                    builder: (_) => ConversationPlaybackPage(
+                      ownerId: widget.project.ownerId,
+                    ),
                   ),
                 );
               },

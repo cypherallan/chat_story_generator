@@ -8,17 +8,25 @@ class ReplayHomeChatList extends StatelessWidget {
   final List<Project> projects;
   final List<Person> persons;
   final void Function(Project project) onChatTap;
+  final String ownerId;
 
   const ReplayHomeChatList({
     super.key,
     required this.projects,
     required this.persons,
     required this.onChatTap,
+    required this.ownerId,
   });
 
   @override
   Widget build(BuildContext context) {
-    final sortedProjects = [...projects];
+    final filteredProjects = projects
+        .where(
+          (project) => project.ownerId == ownerId,
+        )
+        .toList();
+
+    final sortedProjects = [...filteredProjects];
 
     sortedProjects.sort((a, b) {
       final aTime = a.lastMessageTime ?? a.createdAt;
@@ -120,7 +128,9 @@ class ReplayHomeChatList extends StatelessWidget {
           trailing: chat.lastMessageTime == null
               ? null
               : Text(
-                  _formatTime(chat.lastMessageTime!),
+                  _formatTime(
+                    chat.lastMessageTime!,
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
@@ -135,7 +145,6 @@ class ReplayHomeChatList extends StatelessWidget {
   Widget _buildAvatar(ChatListItem chat) {
     final imagePath = chat.groupImagePath ?? chat.avatarPath;
 
-    // No image: use the chat/group name initial.
     if (imagePath == null || imagePath.isEmpty) {
       final fallbackLetter =
           chat.chatName.isNotEmpty ? chat.chatName[0].toUpperCase() : '?';
@@ -152,7 +161,6 @@ class ReplayHomeChatList extends StatelessWidget {
       );
     }
 
-    // Only load actual network URLs as network images.
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return CircleAvatar(
         radius: 25,
@@ -160,8 +168,6 @@ class ReplayHomeChatList extends StatelessWidget {
       );
     }
 
-    // Local paths are not treated as network URLs.
-    // For now, use the chat/group initial instead.
     final fallbackLetter =
         chat.chatName.isNotEmpty ? chat.chatName[0].toUpperCase() : '?';
 
@@ -185,6 +191,7 @@ class ReplayHomeChatList extends StatelessWidget {
             : time.hour;
 
     final minute = time.minute.toString().padLeft(2, '0');
+
     final period = time.hour >= 12 ? 'PM' : 'AM';
 
     return '$hour:$minute $period';

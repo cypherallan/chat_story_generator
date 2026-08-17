@@ -12,11 +12,6 @@ import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
-import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
-import '../../../notification_management/domain/entities/simulated_notification.dart';
-
-import '../../../notification_management/presentation/cubit/notification_cubit.dart';
-import '../../../notification_management/presentation/cubit/notification_state.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -24,7 +19,6 @@ class ReplayConversationView extends StatefulWidget {
   final ConversationReplayCubit replayCubit;
   final ConversationReplayState state;
   final VoidCallback onBack;
-  final void Function(SimulatedNotification notification) onNotificationTap;
 
   const ReplayConversationView({
     super.key,
@@ -33,7 +27,6 @@ class ReplayConversationView extends StatefulWidget {
     required this.replayCubit,
     required this.state,
     required this.onBack,
-    required this.onNotificationTap,
   });
 
   @override
@@ -213,90 +206,11 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                         visible: true,
                       ),
                     const PlaybackBottomPanel(),
-                    BlocBuilder<NotificationCubit, NotificationState>(
-                      builder: (context, notificationState) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 40,
-                              ),
-                            ),
-                            if (notificationState.notifications.isNotEmpty)
-                              SizedBox(
-                                height: 90,
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  itemCount:
-                                      notificationState.notifications.length,
-                                  itemBuilder: (context, index) {
-                                    final notification =
-                                        notificationState.notifications[index];
-
-                                    return Card(
-                                      margin: const EdgeInsets.only(
-                                        bottom: 4,
-                                      ),
-                                      child: ListTile(
-                                        dense: true,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                        ),
-                                        leading: const Icon(
-                                          Icons.notifications_active_outlined,
-                                          size: 20,
-                                        ),
-                                        title: Text(
-                                          notification.senderName,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        subtitle: Text(
-                                          notification.messageText,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        trailing: ElevatedButton(
-                                          onPressed: () {
-                                            context
-                                                .read<NotificationCubit>()
-                                                .triggerNotification(
-                                                  notification,
-                                                );
-                                          },
-                                          child: const Text('TRIGGER'),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ReplayPlaybackControls(
-                              state: state,
-                              replayCubit: widget.replayCubit,
-                            ),
-                          ],
-                        );
-                      },
+                    ReplayPlaybackControls(
+                      state: state,
+                      replayCubit: widget.replayCubit,
                     ),
                   ],
-                ),
-              ),
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 8,
-                left: 12,
-                right: 12,
-                child: SimulatedNotificationBanner(
-                  onTap: widget.onNotificationTap,
                 ),
               ),
             ],
