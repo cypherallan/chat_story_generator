@@ -36,7 +36,9 @@ class ConversationMessageList extends StatelessWidget {
     return BlocBuilder<PersonCubit, PersonState>(
       builder: (context, personState) {
         if (personState is! PersonLoaded) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         }
 
         return BlocConsumer<MessageCubit, MessageState>(
@@ -47,11 +49,15 @@ class ConversationMessageList extends StatelessWidget {
           },
           builder: (context, messageState) {
             if (messageState is MessageLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
             }
 
             if (messageState is MessageError) {
-              return Center(child: Text(messageState.message));
+              return Center(
+                child: Text(messageState.message),
+              );
             }
 
             if (messageState is MessageLoaded) {
@@ -59,27 +65,86 @@ class ConversationMessageList extends StatelessWidget {
                 return const Center(
                   child: Text(
                     'No messages yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
                   ),
                 );
               }
 
-              final messages = messageState.messages.reversed.toList();
+              // Original order: oldest -> newest.
+              final chronologicalMessages =
+                  List<Message>.from(messageState.messages)
+                    ..sort(
+                      (a, b) => a.createdAt.compareTo(b.createdAt),
+                    );
+
+              // Only incoming unread messages count.
+              final unreadMessages = chronologicalMessages
+                  .where(
+                    (message) =>
+                        message.isUnread && message.senderId != project.ownerId,
+                  )
+                  .toList();
+
+              final unreadCount = unreadMessages.length;
+
+              // The first unread message in chronological order.
+              final firstUnreadMessageId =
+                  unreadMessages.isNotEmpty ? unreadMessages.first.id : null;
+
+              // The ListView is reversed, so we display newest -> oldest.
+              final messages = chronologicalMessages.reversed.toList();
 
               return ListView.builder(
                 controller: scrollController,
                 reverse: true,
-                itemCount: messages.length,
+                itemCount: messages.length + (unreadCount > 0 ? 1 : 0),
                 itemBuilder: (context, index) {
-                  final message = messages[index];
+                  /*
+                   * Because the ListView is reversed, index 0 represents
+                   * the newest message.
+                   *
+                   * We insert the unread divider immediately before the
+                   * oldest unread message when viewed normally.
+                   */
+                  if (unreadCount > 0) {
+                    final unreadDividerIndex = messages.indexWhere(
+                      (message) => message.id == firstUnreadMessageId,
+                    );
+
+                    if (index == unreadDividerIndex + 1) {
+                      return _UnreadMessagesDivider(
+                        count: unreadCount,
+                      );
+                    }
+                  }
+
+                  final messageIndex = unreadCount > 0 &&
+                          messages.indexWhere(
+                                (message) => message.id == firstUnreadMessageId,
+                              ) <
+                              index
+                      ? index - 1
+                      : index;
+
+                  if (messageIndex < 0 || messageIndex >= messages.length) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final message = messages[messageIndex];
 
                   final previousMessage =
-                      index > 0 ? messages[index - 1] : null;
-                  final nextMessage =
-                      index < messages.length - 1 ? messages[index + 1] : null;
+                      messageIndex > 0 ? messages[messageIndex - 1] : null;
+
+                  final nextMessage = messageIndex < messages.length - 1
+                      ? messages[messageIndex + 1]
+                      : null;
 
                   final isFirstInGroup = previousMessage == null ||
                       previousMessage.senderId != message.senderId;
+
                   final isLastInGroup = nextMessage == null ||
                       nextMessage.senderId != message.senderId;
 
@@ -114,7 +179,9 @@ class ConversationMessageList extends StatelessWidget {
                         },
                         onReplyTap: message.replyToMessageId == null
                             ? null
-                            : () => onReplyTap(message.replyToMessageId!),
+                            : () => onReplyTap(
+                                  message.replyToMessageId!,
+                                ),
                         message: message,
                         sender: sender,
                         isMine: isMine,
@@ -132,6 +199,50 @@ class ConversationMessageList extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _UnreadMessagesDivider extends StatelessWidget {
+  final int count;
+
+  const _UnreadMessagesDivider({
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 12,
+        horizontal: 8,
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Divider(
+              thickness: 1,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+            ),
+            child: Text(
+              '$count unread ${count == 1 ? 'message' : 'messages'}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Expanded(
+            child: Divider(
+              thickness: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
