@@ -23,7 +23,7 @@ mixin MessageCubitEngagementMixin on Cubit<MessageState> {
     final messagesToRead = messages.where(
       (m) =>
           m.projectId == projectId &&
-          m.senderId == currentUserId &&
+          m.senderId != currentUserId &&
           m.status == MessageStatus.delivered,
     );
 

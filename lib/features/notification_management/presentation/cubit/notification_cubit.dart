@@ -58,17 +58,17 @@ class NotificationCubit extends Cubit<NotificationState> {
   }
 
   Future<bool> createNotification({
-  required String projectId,
-  required String senderId,
+    required String projectId,
+    required String senderId,
     required String senderName,
     String? senderAvatarPath,
     required String messageText,
     String? imagePath,
   }) async {
     final notification = Notification(
-  id: const Uuid().v4(),
-  projectId: projectId,
-  messageId: const Uuid().v4(),
+      id: const Uuid().v4(),
+      projectId: projectId,
+      messageId: const Uuid().v4(),
       senderId: senderId,
       senderName: senderName,
       senderAvatarPath: senderAvatarPath,

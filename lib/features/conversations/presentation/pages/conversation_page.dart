@@ -77,8 +77,6 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final project = matches.first;
 
-    await projectCubit.clearUnreadCount(project.id);
-
     if (!mounted) return;
 
     // If the notification belongs to the conversation
@@ -190,6 +188,27 @@ class _ConversationPageState extends State<ConversationPage> {
     if (!mounted || selectedNotification == null) {
       return;
     }
+
+    final messageCubit = context.read<MessageCubit>();
+    final projectCubit = context.read<ProjectCubit>();
+
+    await messageCubit.createNotificationMessage(
+      messageId: selectedNotification.messageId,
+      projectId: selectedNotification.projectId,
+      senderId: selectedNotification.senderId,
+      senderName: selectedNotification.senderName,
+      text: selectedNotification.messageText,
+      imagePath: selectedNotification.imagePath,
+    );
+
+// This is an incoming message, so it should be unread.
+    if (selectedNotification.senderId != widget.project.ownerId) {
+      await projectCubit.incrementUnreadCount(
+        selectedNotification.projectId,
+      );
+    }
+
+    if (!mounted) return;
 
     _simulatedNotificationCubit.triggerSavedNotification(
       selectedNotification,
