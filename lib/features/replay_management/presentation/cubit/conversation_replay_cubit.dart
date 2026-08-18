@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../../../message_management/domain/entities/message.dart';
 import 'conversation_replay_state.dart';
-
+import '../../../notification_management/domain/usecases/get_notifications.dart';
 import '../../../message_management/domain/usecases/get_messages.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
 
@@ -25,11 +25,13 @@ abstract class _ConversationReplayCubitBase
     required this.notificationCubit,
     required this.getMessages,
     required this.getProjects,
+    required this.getNotifications,
   }) : super(const ConversationReplayState());
 
   final SimulatedNotificationCubit notificationCubit;
   final GetMessages getMessages;
   final GetProjects getProjects;
+  final GetNotifications getNotifications;
   List<Person> _persons = [];
   void setPersons(List<Person> persons) {
     _persons = List<Person>.from(persons);
@@ -42,6 +44,8 @@ abstract class _ConversationReplayCubitBase
   final List<Message> _messages = [];
 
   final Random _random = Random();
+
+  int? _replayNotificationMessageCount;
 
   String _ownerId = '';
 
@@ -106,10 +110,12 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
     required SimulatedNotificationCubit notificationCubit,
     required GetMessages getMessages,
     required GetProjects getProjects,
+    required GetNotifications getNotifications,
   }) : super(
           notificationCubit: notificationCubit,
           getMessages: getMessages,
           getProjects: getProjects,
+          getNotifications: getNotifications,
         );
 
   @override

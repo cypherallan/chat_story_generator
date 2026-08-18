@@ -12,6 +12,7 @@ import 'playback_chat_list.dart' as playback_chat_list;
 import 'playback_header.dart' as playback_header;
 import 'playback_bottom_panel.dart';
 import 'replay_playback_controls.dart';
+import '../widgets/replay_notification_banner.dart';
 
 class ReplayConversationView extends StatefulWidget {
   final Project project;
@@ -213,6 +214,16 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                   ],
                 ),
               ),
+              if (state.replayNotification != null)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: ReplayNotificationBanner(
+                    notification: state.replayNotification!,
+                    interaction: state.replayNotificationInteraction,
+                  ),
+                ),
             ],
           ),
         );

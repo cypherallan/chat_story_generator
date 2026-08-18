@@ -13,13 +13,16 @@ import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
+import '../../../notification_management/domain/usecases/get_notifications.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final String ownerId;
+  final SimulatedNotificationCubit notificationCubit;
 
   const ConversationPlaybackPage({
     super.key,
     required this.ownerId,
+    required this.notificationCubit,
   });
 
   @override
@@ -28,19 +31,17 @@ class ConversationPlaybackPage extends StatefulWidget {
 }
 
 class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
-  late final SimulatedNotificationCubit _notificationCubit;
   late final ConversationReplayCubit _replayCubit;
 
   @override
   void initState() {
     super.initState();
 
-    _notificationCubit = di.sl<SimulatedNotificationCubit>();
-
     _replayCubit = ConversationReplayCubit(
-      notificationCubit: _notificationCubit,
+      notificationCubit: widget.notificationCubit,
       getMessages: di.sl<GetMessages>(),
       getProjects: di.sl<GetProjects>(),
+      getNotifications: di.sl<GetNotifications>(),
     );
 
     _replayCubit.showHome();
@@ -65,7 +66,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
             create: (_) => di.sl<PersonCubit>()..loadPersons(),
           ),
           BlocProvider<SimulatedNotificationCubit>.value(
-            value: _notificationCubit,
+            value: widget.notificationCubit,
           ),
           BlocProvider<ConversationReplayCubit>.value(
             value: _replayCubit,
@@ -172,7 +173,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     BuildContext context,
     Project project,
   ) async {
-    context.read<SimulatedNotificationCubit>().clear();
     final personState = context.read<PersonCubit>().state;
 
     if (personState is! PersonLoaded) {
@@ -209,6 +209,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
               messages,
               widget.ownerId,
               personState.persons,
+              project.id,
             );
 
             _replayCubit.openConversation(

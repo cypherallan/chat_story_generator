@@ -51,6 +51,19 @@ class _SimulatedNotificationBannerState
       parent: _animationController,
       curve: Curves.easeOut,
     );
+
+    // IMPORTANT:
+    // The notification may already be visible before this widget
+    // is created (for example, when entering Replay).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final state = context.read<SimulatedNotificationCubit>().state;
+
+      if (state.visible && state.notification != null) {
+        _animationController.forward();
+      }
+    });
   }
 
   @override
@@ -72,7 +85,7 @@ class _SimulatedNotificationBannerState
   }
 
   void _dismiss() {
-    context.read<SimulatedNotificationCubit>().hideNotification();
+    context.read<SimulatedNotificationCubit>().recordSwipe();
   }
 
   @override
@@ -112,9 +125,7 @@ class _SimulatedNotificationBannerState
                     },
                     child: GestureDetector(
                       onTap: () {
-                        context
-                            .read<SimulatedNotificationCubit>()
-                            .hideNotification();
+                        context.read<SimulatedNotificationCubit>().recordTap();
 
                         widget.onTap(notification);
                       },

@@ -175,7 +175,9 @@ class _ConversationPageState extends State<ConversationPage> {
               ...notifications.map(
                 (notification) {
                   return ListTile(
-                    leading: const Icon(Icons.notifications_outlined),
+                    leading: const Icon(
+                      Icons.notifications_outlined,
+                    ),
                     title: Text(
                       notification.senderName,
                       style: const TextStyle(
@@ -205,38 +207,48 @@ class _ConversationPageState extends State<ConversationPage> {
       return;
     }
 
-    final messageCubit = context.read<MessageCubit>();
-    final projectCubit = context.read<ProjectCubit>();
+    // ------------------------------------------------------------
+    // DETERMINE WHERE THE NOTIFICATION SHOULD APPEAR IN REPLAY
+    // ------------------------------------------------------------
 
-    final messageCreated = await messageCubit.createNotificationMessage(
-      messageId: selectedNotification.messageId,
-      projectId: selectedNotification.projectId,
-      senderId: selectedNotification.senderId,
-      senderName: selectedNotification.senderName,
-      text: selectedNotification.messageText,
-      imagePath: selectedNotification.imagePath,
+    final messageState = context.read<MessageCubit>().state;
+
+    int triggerMessageIndex = 0;
+
+    if (messageState is MessageLoaded) {
+      triggerMessageIndex = messageState.messages.length;
+    }
+
+    print(
+      'REPLAY DEBUG: triggering notification '
+      '${selectedNotification.messageText}',
     );
 
-    if (!messageCreated) {
-      return;
-    }
+    print(
+      'REPLAY DEBUG: current conversation message count = '
+      '$triggerMessageIndex',
+    );
 
-    if (selectedNotification.senderId != widget.project.ownerId) {
-      await projectCubit.incrementUnreadCount(
-        selectedNotification.projectId,
-      );
-    } else {}
+    print(
+      'REPLAY DEBUG: notification projectId = '
+      '${selectedNotification.projectId}',
+    );
 
-    if (!mounted) {
-      return;
-    }
+    print(
+      'REPLAY DEBUG: current projectId = '
+      '${widget.project.id}',
+    );
+
+    // ------------------------------------------------------------
+    // SHOW ONLY THE SIMULATED NOTIFICATION
+    //
+    // DO NOT create a real Message.
+    // DO NOT update the chat preview.
+    // ------------------------------------------------------------
 
     _simulatedNotificationCubit.triggerSavedNotification(
       selectedNotification,
-    );
-
-    await notificationCubit.removeNotification(
-      selectedNotification.id,
+      triggerMessageIndex: triggerMessageIndex,
     );
   }
 
@@ -261,6 +273,9 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
             BlocProvider.value(
               value: context.read<PersonCubit>(),
+            ),
+            BlocProvider.value(
+              value: context.read<MessageCubit>(),
             ),
             BlocProvider(
               create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
@@ -337,6 +352,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   MaterialPageRoute(
                     builder: (_) => ConversationPlaybackPage(
                       ownerId: widget.project.ownerId,
+                      notificationCubit: _simulatedNotificationCubit,
                     ),
                   ),
                 );

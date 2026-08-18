@@ -5,6 +5,7 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     List<Message> messages,
     String ownerId,
     List<Person> persons,
+    String projectId,
   ) {
     _timer?.cancel();
 
@@ -17,6 +18,48 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     _persons
       ..clear()
       ..addAll(persons);
+
+// ------------------------------------------------------------
+// FIND WHERE THE TRIGGERED NOTIFICATION BELONGS IN THE REPLAY
+// ------------------------------------------------------------
+
+    _replayNotificationMessageCount = null;
+
+    final notification = notificationCubit.state.notification;
+
+    if (notification != null) {
+      print(
+        'REPLAY DEBUG: notification exists',
+      );
+
+      print(
+        'REPLAY DEBUG: notification projectId = ${notification.projectId}',
+      );
+
+      print(
+        'REPLAY DEBUG: replay projectId = $projectId',
+      );
+
+      print(
+        'REPLAY DEBUG: triggerMessageIndex = '
+        '${notification.triggerMessageIndex}',
+      );
+
+      _replayNotificationMessageCount = notification.triggerMessageIndex;
+
+      print(
+        'REPLAY DEBUG: _replayNotificationMessageCount = '
+        '$_replayNotificationMessageCount',
+      );
+    } else {
+      print(
+        'REPLAY DEBUG: notification is NULL inside load()',
+      );
+    }
+
+    // ------------------------------------------------------------
+    // AVAILABLE EMOJIS
+    // ------------------------------------------------------------
 
     final Set<String> emojiSet = {};
 

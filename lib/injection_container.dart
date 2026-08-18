@@ -190,6 +190,7 @@ Future<void> init() async {
       notificationCubit: sl<SimulatedNotificationCubit>(),
       getMessages: sl<GetMessages>(),
       getProjects: sl<GetProjects>(),
+      getNotifications: sl<GetNotifications>(),
     ),
   );
 

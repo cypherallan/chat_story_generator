@@ -7,6 +7,8 @@ import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
 import '../../domain/entities/notification.dart' as notification_entity;
 import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../message_management/presentation/cubit/message_cubit.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateNotificationPage extends StatefulWidget {
   final List<Project> projects;
@@ -141,8 +143,32 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
       return;
     }
 
+    final messageId = const Uuid().v4();
+
+    final messageCubit = context.read<MessageCubit>();
+
+    final messageCreated = await messageCubit.addNotificationMessage(
+      projectId: project.id,
+      messageId: messageId,
+      senderId: sender.id,
+      senderName: sender.name,
+      text: messageText,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!messageCreated) {
+      _showError(
+        'Failed to create notification message.',
+      );
+      return;
+    }
+
     final success = await context.read<NotificationCubit>().createNotification(
           projectId: project.id,
+          messageId: '',
           senderId: sender.id,
           senderName: sender.name,
           senderAvatarPath: sender.avatarPath,
@@ -279,8 +305,8 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
               const SizedBox(height: 16),
 
               // ============================================================
-// AUTOMATICALLY FOUND CHAT
-// ============================================================
+              // AUTOMATICALLY FOUND CHAT
+              // ============================================================
 
               if (_selectedSenderId != null)
                 Container(

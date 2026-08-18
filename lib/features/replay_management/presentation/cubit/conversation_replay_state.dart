@@ -1,10 +1,17 @@
 import 'package:equatable/equatable.dart';
-
+import '../../../notification_management/domain/entities/simulated_notification.dart';
 import '../../../message_management/domain/entities/message.dart';
 
 enum ReplayScreen {
   home,
   conversation,
+}
+
+enum ReplayNotificationInteraction {
+  none,
+  tapped,
+  swiped,
+  expired,
 }
 
 class ConversationReplayState extends Equatable {
@@ -28,6 +35,9 @@ class ConversationReplayState extends Equatable {
   final int emojiPressCount;
   final ReplayScreen screen;
   final String? currentProjectId;
+  final SimulatedNotification? replayNotification;
+  final ReplayNotificationInteraction replayNotificationInteraction;
+  final int? replayNotificationMessageCount;
 
   // Swipe + reply preview
   final String? swipingMessageId;
@@ -65,6 +75,9 @@ class ConversationReplayState extends Equatable {
     this.emojiPressCount = 0,
     this.screen = ReplayScreen.home,
     this.currentProjectId,
+    this.replayNotification,
+    this.replayNotificationInteraction = ReplayNotificationInteraction.none,
+    this.replayNotificationMessageCount,
     this.swipingMessageId,
     this.swipeOffset = 0,
     this.replyPreviewText,
@@ -99,6 +112,9 @@ class ConversationReplayState extends Equatable {
     int? emojiPressCount,
     ReplayScreen? screen,
     String? currentProjectId,
+    SimulatedNotification? replayNotification,
+    ReplayNotificationInteraction? replayNotificationInteraction,
+    int? replayNotificationMessageCount,
     String? swipingMessageId,
     double? swipeOffset,
     String? replyPreviewText,
@@ -133,6 +149,11 @@ class ConversationReplayState extends Equatable {
       deleteDialogVisible: deleteDialogVisible ?? this.deleteDialogVisible,
       deleteCancelPressed: deleteCancelPressed ?? this.deleteCancelPressed,
       deleteForMePressed: deleteForMePressed ?? this.deleteForMePressed,
+      replayNotification: replayNotification ?? this.replayNotification,
+      replayNotificationInteraction:
+          replayNotificationInteraction ?? this.replayNotificationInteraction,
+      replayNotificationMessageCount:
+          replayNotificationMessageCount ?? this.replayNotificationMessageCount,
       deletingMessageId: deletingMessageId ?? this.deletingMessageId,
       availableEmojis: availableEmojis ?? this.availableEmojis,
       lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
@@ -178,6 +199,9 @@ class ConversationReplayState extends Equatable {
         emojiPressCount,
         screen,
         currentProjectId,
+        replayNotification,
+        replayNotificationInteraction,
+        replayNotificationMessageCount,
         swipingMessageId,
         swipeOffset,
         replyPreviewText,

@@ -59,6 +59,8 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   Future<bool> createNotification({
     required String projectId,
+    required String messageId,
+    int? triggerMessageIndex,
     required String senderId,
     required String senderName,
     String? senderAvatarPath,
@@ -68,7 +70,8 @@ class NotificationCubit extends Cubit<NotificationState> {
     final notification = Notification(
       id: const Uuid().v4(),
       projectId: projectId,
-      messageId: const Uuid().v4(),
+      messageId: messageId,
+      triggerMessageIndex: triggerMessageIndex,
       senderId: senderId,
       senderName: senderName,
       senderAvatarPath: senderAvatarPath,
@@ -113,6 +116,7 @@ class NotificationCubit extends Cubit<NotificationState> {
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
       messageId: notification.messageId,
+      triggerMessageIndex: notification.triggerMessageIndex,
       senderId: notification.senderId,
       senderName: notification.senderName,
       senderAvatarPath: notification.senderAvatarPath,

@@ -37,6 +37,16 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
 
   bool get isSelectionMode => selectedMessageIds.isNotEmpty;
 
+  int get currentMessageCount {
+    final messageState = context.read<MessageCubit>().state;
+
+    if (messageState is MessageLoaded) {
+      return messageState.messages.length;
+    }
+
+    return 0;
+  }
+
   @override
   void initState() {
     super.initState();
