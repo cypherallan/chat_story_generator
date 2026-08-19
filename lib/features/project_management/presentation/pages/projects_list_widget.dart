@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/project_cubit.dart';
 import '../../presentation/widgets/chat_list_item_widget.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
-import '../../../conversations/presentation/pages/conversation_page.dart';
+import '../../../conversation_management/presentation/pages/conversation_page.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../models/chat_list_item.dart';

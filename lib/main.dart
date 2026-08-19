@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'core/app/app_initializer.dart';
 import 'core/auth/auth_service.dart';
 import 'features/auth/presentation/pages/login_page.dart';
-import 'features/home/presentation/pages/home_page.dart';
+import 'features/home_management/presentation/pages/home_page.dart';
 import 'injection_container.dart' as di;
 import 'package:firebase_auth/firebase_auth.dart';
 

@@ -1,10 +1,14 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
+  bool _replayNotificationShown = false;
+
   void play() {
     if (state.playing || state.finished) {
       return;
     }
+
+    _replayNotificationShown = false;
 
     emit(
       state.copyWith(
@@ -54,7 +58,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     // ------------------------------------------------------------
 
     if (_replayNotificationMessageCount != null &&
-        state.currentIndex == _replayNotificationMessageCount) {
+        state.currentIndex == _replayNotificationMessageCount &&
+        !_replayNotificationShown) {
       _replayNotification();
       return;
     }
@@ -104,19 +109,18 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       return;
     }
 
-    final projectId = notification.projectId;
-
     emit(
       state.copyWith(
         replayNotification: null,
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
-        playing: false,
-        paused: false,
       ),
     );
 
-    await openConversationFromNotification(
-      projectId: projectId,
+    notificationCubit.hideNotificationPreserveInteraction();
+
+    _timer = Timer(
+      const Duration(milliseconds: 300),
+      _playNext,
     );
   }
 
@@ -138,13 +142,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     // conversation. Replay only reproduces that visual result.
     notificationCubit.hideNotificationPreserveInteraction();
 
-    // Continue replay after the notification point.
-    emit(
-      state.copyWith(
-        currentIndex: state.currentIndex + 1,
-      ),
-    );
-
     _timer = Timer(
       const Duration(milliseconds: 300),
       _playNext,
@@ -156,15 +153,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   // ============================================================
 
   void _replayNotification() {
+    _replayNotificationShown = true;
+
     final notification = notificationCubit.currentNotification;
 
     if (notification == null) {
-      emit(
-        state.copyWith(
-          currentIndex: state.currentIndex + 1,
-        ),
-      );
-
       _timer = Timer(
         const Duration(milliseconds: 300),
         _playNext,
@@ -181,12 +174,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
 
     // ------------------------------------------------------------
+    // REPRODUCE THE INTERACTION THAT WAS RECORDED IN THE
+    // ORIGINAL / NORMAL CONVERSATION.
+    //
     // IMPORTANT:
-    //
-    // We do NOT wait for a user to tap or swipe.
-    //
-    // The interaction was already recorded in the normal
-    // conversation and is reproduced automatically here.
+    // The replay viewer does NOT interact with the banner.
     // ------------------------------------------------------------
 
     switch (notificationCubit.interaction) {
@@ -217,33 +209,16 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         break;
 
       case NotificationInteraction.expired:
-        _timer = Timer(
-          const Duration(seconds: 5),
-          () {
-            if (!state.playing) {
-              return;
-            }
-
-            emit(
-              state.copyWith(
-                replayNotification: null,
-                replayNotificationInteraction:
-                    ReplayNotificationInteraction.expired,
-                currentIndex: state.currentIndex + 1,
-              ),
-            );
-
-            _playNext();
-          },
-        );
-        break;
-
       case NotificationInteraction.none:
-        // No recorded interaction.
-        // Treat it like a normal notification that remains
-        // visible until it expires.
+        // ----------------------------------------------------------
+        // Notification was ignored.
+        //
+        // Let the viewer see it for a few seconds, then remove it
+        // and CONTINUE THE ORIGINAL REPLAY.
+        // ----------------------------------------------------------
+
         _timer = Timer(
-          const Duration(seconds: 5),
+          const Duration(seconds: 3),
           () {
             if (!state.playing) {
               return;
@@ -254,11 +229,13 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
                 replayNotification: null,
                 replayNotificationInteraction:
                     ReplayNotificationInteraction.expired,
-                currentIndex: state.currentIndex + 1,
               ),
             );
 
-            _playNext();
+            _timer = Timer(
+              const Duration(milliseconds: 300),
+              _playNext,
+            );
           },
         );
         break;

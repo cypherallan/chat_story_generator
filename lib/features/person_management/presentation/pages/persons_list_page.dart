@@ -9,7 +9,7 @@ import 'add_participant_page.dart';
 
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-import '../../../conversations/presentation/pages/conversation_page.dart';
+import '../../../conversation_management/presentation/pages/conversation_page.dart';
 import '../widgets/person_avatar.dart';
 
 class PersonsListPage extends StatelessWidget {
