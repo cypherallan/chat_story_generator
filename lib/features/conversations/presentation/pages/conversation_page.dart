@@ -19,6 +19,8 @@ import '../../../notification_management/domain/entities/simulated_notification.
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 import '../../../../core/presentation/widgets/phone_frame.dart';
+import '../../../message_management/domain/entities/message_status.dart';
+import '../../../message_management/domain/entities/message.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -220,10 +222,38 @@ class _ConversationPageState extends State<ConversationPage> {
     }
 
     // ------------------------------------------------------------
-    // SHOW ONLY THE SIMULATED NOTIFICATION
+    // UPDATE HOME CHAT PREVIEW + UNREAD COUNT
     //
-    // DO NOT create a real Message.
-    // DO NOT update the chat preview.
+    // This is only the chat-list representation of the incoming
+    // notification. The actual Message is NOT created here.
+    //
+    // The real message is created later when the user taps
+    // the notification.
+    // ------------------------------------------------------------
+
+    final previewMessage = Message(
+      id: selectedNotification.messageId,
+      projectId: selectedNotification.projectId,
+      senderId: selectedNotification.senderId,
+      senderName: selectedNotification.senderName,
+      text: selectedNotification.messageText,
+      imagePath: selectedNotification.imagePath,
+      createdAt: DateTime.now(),
+      status: MessageStatus.delivered,
+      isUnread: true,
+    );
+
+    await context.read<ProjectCubit>().recordIncomingMessage(
+          projectId: selectedNotification.projectId,
+          message: previewMessage,
+        );
+
+    if (!mounted) {
+      return;
+    }
+
+    // ------------------------------------------------------------
+    // SHOW THE SIMULATED NOTIFICATION
     // ------------------------------------------------------------
 
     _simulatedNotificationCubit.triggerSavedNotification(
