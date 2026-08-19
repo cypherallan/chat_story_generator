@@ -7,6 +7,11 @@ enum ReplayScreen {
   conversation,
 }
 
+enum ReplayStartMethod {
+  time,
+  message,
+}
+
 enum ReplayNotificationInteraction {
   none,
   tapped,
@@ -43,6 +48,8 @@ class ConversationReplayState extends Equatable {
   final DateTime? replayEndTime;
   final DateTime? availableStartTime;
   final DateTime? availableEndTime;
+  final ReplayStartMethod replayStartMethod;
+  final String? replayStartMessageId;
 
   // Swipe + reply preview
   final String? swipingMessageId;
@@ -87,6 +94,8 @@ class ConversationReplayState extends Equatable {
     this.replayEndTime,
     this.availableStartTime,
     this.availableEndTime,
+    this.replayStartMethod = ReplayStartMethod.time,
+    this.replayStartMessageId,
     this.swipingMessageId,
     this.swipeOffset = 0,
     this.replyPreviewText,
@@ -128,6 +137,8 @@ class ConversationReplayState extends Equatable {
     DateTime? replayEndTime,
     DateTime? availableStartTime,
     DateTime? availableEndTime,
+    ReplayStartMethod? replayStartMethod,
+    String? replayStartMessageId,
     String? swipingMessageId,
     double? swipeOffset,
     String? replyPreviewText,
@@ -174,6 +185,8 @@ class ConversationReplayState extends Equatable {
       replayEndTime: replayEndTime ?? this.replayEndTime,
       availableStartTime: availableStartTime ?? this.availableStartTime,
       availableEndTime: availableEndTime ?? this.availableEndTime,
+      replayStartMethod: replayStartMethod ?? this.replayStartMethod,
+      replayStartMessageId: replayStartMessageId ?? this.replayStartMessageId,
       deletingMessageId: deletingMessageId ?? this.deletingMessageId,
       availableEmojis: availableEmojis ?? this.availableEmojis,
       lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
@@ -226,6 +239,8 @@ class ConversationReplayState extends Equatable {
         replayEndTime,
         availableStartTime,
         availableEndTime,
+        replayStartMethod,
+        replayStartMessageId,
         swipingMessageId,
         swipeOffset,
         replyPreviewText,

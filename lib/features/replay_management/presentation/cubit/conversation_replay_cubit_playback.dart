@@ -7,17 +7,37 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (state.playing || state.finished) {
       return;
     }
-    if (state.replayStartTime != null) {
-      _replayStartIndex = _messages.indexWhere(
-        (message) => !message.createdAt.isBefore(state.replayStartTime!),
-      );
 
-      if (_replayStartIndex == -1) {
-        _replayStartIndex = _messages.length;
+    // ------------------------------------------------------------
+    // DETERMINE REPLAY START POSITION
+    // ------------------------------------------------------------
+
+    if (state.replayStartMethod == ReplayStartMethod.time) {
+      if (state.replayStartTime != null) {
+        _replayStartIndex = _messages.indexWhere(
+          (message) => !message.createdAt.isBefore(
+            state.replayStartTime!,
+          ),
+        );
+
+        if (_replayStartIndex == -1) {
+          _replayStartIndex = _messages.length;
+        }
+      } else {
+        _replayStartIndex = 0;
       }
-    } else {
-      _replayStartIndex = 0;
     }
+
+    // ------------------------------------------------------------
+    // MESSAGE MODE
+    // ------------------------------------------------------------
+    //
+    // The start index was already calculated by
+    // setReplayStartMessage().
+    //
+    // The selected message is already visible, so replay starts
+    // with the message immediately after it.
+    // ------------------------------------------------------------
 
     _replayNotificationShown = false;
 

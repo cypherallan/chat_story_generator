@@ -2,11 +2,6 @@ part of 'conversation_replay_cubit.dart';
 
 mixin _NavigationMixin on _ConversationReplayCubitBase {
   void showHome() {
-    // Leaving the conversation pauses deletion timing.
-    //
-    // IMPORTANT:
-    // Time spent on the home screen must NOT count toward
-    // the deletion delay.
     _pauseDeletionTimer();
 
     _timer?.cancel();
@@ -30,8 +25,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
   }
 
   void openConversation(String projectId) {
-    // If we are leaving one conversation and opening another,
-    // stop counting active deletion time.
     _pauseDeletionTimer();
 
     _timer?.cancel();
@@ -62,15 +55,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _pauseDeletionTimer();
 
     _timer?.cancel();
-
-    // The notification interaction has already been recorded.
     notificationCubit.clear();
-
-    // Load the actual messages belonging to the target conversation.
-    //
-    // This is important because the notification may belong to a
-    // completely different conversation from the one currently being
-    // replayed.
     final result = await getMessages(projectId).first;
 
     result.fold(
@@ -105,21 +90,14 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             screen: ReplayScreen.conversation,
             currentProjectId: projectId,
             clearReplayNotification: true,
-
-            // Show the complete existing conversation.
             visibleMessages: visibleMessages,
-
-            // Tapping a notification opens the chat normally.
-            // It must NOT start/restart replay.
             currentIndex: visibleMessages.length,
             playing: false,
             paused: false,
             finished: true,
-
             typing: false,
             typingPersonId: null,
             onlinePersonId: null,
-
             keyboardVisible: false,
             emojiKeyboardVisible: false,
             composerText: '',
@@ -162,27 +140,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
       selectedTime = availableEnd;
     }
 
-    // ------------------------------------------------------------
-    // BUILD THE CONVERSATION HISTORY
-    // ------------------------------------------------------------
-    //
-    // Messages before the selected replay time already existed in
-    // the conversation. They should therefore be visible immediately
-    // when replay starts, but they must NOT be replayed/typed again.
-    //
-    // Example:
-    //
-    // 17:37  -> visible immediately
-    // 18:21  -> replay starts here
-    // 18:22  -> streamed
-    // 18:23  -> streamed
-    // 18:23  -> streamed
-    // 18:35  -> streamed
-    //
-    // _messages remains the COMPLETE conversation. We only prepare
-    // visibleMessages here.
-    // ------------------------------------------------------------
-
     final previousMessages = _messages
         .where(
           (message) => message.createdAt.isBefore(selectedTime),
@@ -203,17 +160,50 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     emit(
       state.copyWith(
+        replayStartMethod: ReplayStartMethod.time,
+        replayStartMessageId: null,
         replayStartTime: selectedTime,
-
-        // Show the messages that existed before replay began.
         visibleMessages: previousMessages,
-
-        // Replay starts at the first message at/after the
-        // selected time.
         currentIndex: firstReplayIndex,
+        playing: false,
+        paused: false,
+        finished: false,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+      ),
+    );
+  }
 
-        // The replay has not finished simply because we changed
-        // the starting point.
+  void setReplayStartMessage(String messageId) {
+    final index = _messages.indexWhere(
+      (message) => message.id == messageId,
+    );
+
+    if (index == -1) {
+      return;
+    }
+
+    final selectedMessage = _messages[index];
+
+    // The selected message is the last message already visible.
+    // Replay begins with the message immediately after it.
+    _replayStartIndex = index + 1;
+
+    final loadedMessages = _messages.take(index + 1).toList();
+
+    emit(
+      state.copyWith(
+        replayStartMethod: ReplayStartMethod.message,
+        replayStartMessageId: selectedMessage.id,
+        replayStartTime: selectedMessage.createdAt,
+
+        // Show all history through the selected message.
+        visibleMessages: loadedMessages,
+
+        // First message to be replayed.
+        currentIndex: _replayStartIndex,
+
         playing: false,
         paused: false,
         finished: false,
