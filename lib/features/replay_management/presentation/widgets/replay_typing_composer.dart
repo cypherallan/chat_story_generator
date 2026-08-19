@@ -48,9 +48,9 @@ class ReplayTypingComposer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          IconButton(
+          const IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(
+            icon: Icon(
               Icons.emoji_emotions_outlined,
               color: Colors.grey,
             ),
