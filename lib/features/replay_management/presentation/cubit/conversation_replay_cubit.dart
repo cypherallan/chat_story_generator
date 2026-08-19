@@ -42,6 +42,7 @@ abstract class _ConversationReplayCubitBase
   // ===========================================================================
 
   final List<Message> _messages = [];
+  int _replayStartIndex = 0;
 
   final Random _random = Random();
 

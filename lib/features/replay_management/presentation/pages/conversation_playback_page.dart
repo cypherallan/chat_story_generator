@@ -12,6 +12,7 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
 import '../widgets/replay_home_view.dart';
+import '../../../message_management/domain/entities/message.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import '../../../notification_management/domain/usecases/get_notifications.dart';
 
@@ -205,12 +206,39 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
             );
           },
           (messages) async {
+            // ------------------------------------------------------------
+            // LOAD THE CONVERSATION FIRST
+            // ------------------------------------------------------------
+
             _replayCubit.load(
               messages,
               widget.ownerId,
               personState.persons,
               project.id,
             );
+
+            // ------------------------------------------------------------
+            // ASK WHERE REPLAY SHOULD START
+            // ------------------------------------------------------------
+
+            final startTime = await _showReplayStartTimePicker(
+              context,
+              messages,
+            );
+
+            if (!mounted || startTime == null) {
+              return;
+            }
+
+            // ------------------------------------------------------------
+            // SAVE THE SELECTED START TIME
+            // ------------------------------------------------------------
+
+            _replayCubit.setReplayStartTime(startTime);
+
+            // ------------------------------------------------------------
+            // OPEN THE CONVERSATION
+            // ------------------------------------------------------------
 
             _replayCubit.openConversation(
               project.id,
@@ -219,5 +247,165 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         );
       },
     );
+  }
+
+  Future<DateTime?> _showReplayStartTimePicker(
+    BuildContext context,
+    List<Message> messages,
+  ) async {
+    if (messages.isEmpty) {
+      return null;
+    }
+
+    final sortedMessages = List<Message>.from(messages)
+      ..sort(
+        (a, b) => a.createdAt.compareTo(b.createdAt),
+      );
+
+    final firstMessageTime = sortedMessages.first.createdAt;
+    final lastMessageTime = sortedMessages.last.createdAt;
+
+    DateTime selectedDate = firstMessageTime;
+    TimeOfDay selectedTime = TimeOfDay.fromDateTime(
+      firstMessageTime,
+    );
+
+    final result = await showDialog<DateTime>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final selectedDateTime = DateTime(
+              selectedDate.year,
+              selectedDate.month,
+              selectedDate.day,
+              selectedTime.hour,
+              selectedTime.minute,
+            );
+
+            return AlertDialog(
+              title: const Text('Replay starting point'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Choose where you want the replay to begin.',
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Start replay from',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_today),
+                    title: Text(
+                      MaterialLocalizations.of(context)
+                          .formatMediumDate(selectedDate),
+                    ),
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(
+                          firstMessageTime.year,
+                          firstMessageTime.month,
+                          firstMessageTime.day,
+                        ),
+                        lastDate: DateTime(
+                          lastMessageTime.year,
+                          lastMessageTime.month,
+                          lastMessageTime.day,
+                        ),
+                      );
+
+                      if (pickedDate != null) {
+                        setDialogState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.access_time),
+                    title: Text(
+                      selectedTime.format(context),
+                    ),
+                    onTap: () async {
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                      );
+
+                      if (pickedTime != null) {
+                        setDialogState(() {
+                          selectedTime = pickedTime;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Available: '
+                    '${MaterialLocalizations.of(context).formatMediumDate(firstMessageTime)} '
+                    '${TimeOfDay.fromDateTime(firstMessageTime).format(context)}'
+                    ' – '
+                    '${MaterialLocalizations.of(context).formatMediumDate(lastMessageTime)} '
+                    '${TimeOfDay.fromDateTime(lastMessageTime).format(context)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('CANCEL'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (selectedDateTime.isBefore(firstMessageTime)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Start time cannot be before the first message.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (selectedDateTime.isAfter(lastMessageTime)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Start time cannot be after the last message.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.of(dialogContext).pop(
+                      selectedDateTime,
+                    );
+                  },
+                  child: const Text('CONTINUE'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    return result;
   }
 }

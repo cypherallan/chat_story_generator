@@ -39,6 +39,11 @@ class ConversationReplayState extends Equatable {
   final ReplayNotificationInteraction replayNotificationInteraction;
   final int? replayNotificationMessageCount;
 
+  final DateTime? replayStartTime;
+  final DateTime? replayEndTime;
+  final DateTime? availableStartTime;
+  final DateTime? availableEndTime;
+
   // Swipe + reply preview
   final String? swipingMessageId;
   final double swipeOffset;
@@ -78,6 +83,10 @@ class ConversationReplayState extends Equatable {
     this.replayNotification,
     this.replayNotificationInteraction = ReplayNotificationInteraction.none,
     this.replayNotificationMessageCount,
+    this.replayStartTime,
+    this.replayEndTime,
+    this.availableStartTime,
+    this.availableEndTime,
     this.swipingMessageId,
     this.swipeOffset = 0,
     this.replyPreviewText,
@@ -115,6 +124,10 @@ class ConversationReplayState extends Equatable {
     SimulatedNotification? replayNotification,
     ReplayNotificationInteraction? replayNotificationInteraction,
     int? replayNotificationMessageCount,
+    DateTime? replayStartTime,
+    DateTime? replayEndTime,
+    DateTime? availableStartTime,
+    DateTime? availableEndTime,
     String? swipingMessageId,
     double? swipeOffset,
     String? replyPreviewText,
@@ -157,6 +170,10 @@ class ConversationReplayState extends Equatable {
           replayNotificationInteraction ?? this.replayNotificationInteraction,
       replayNotificationMessageCount:
           replayNotificationMessageCount ?? this.replayNotificationMessageCount,
+      replayStartTime: replayStartTime ?? this.replayStartTime,
+      replayEndTime: replayEndTime ?? this.replayEndTime,
+      availableStartTime: availableStartTime ?? this.availableStartTime,
+      availableEndTime: availableEndTime ?? this.availableEndTime,
       deletingMessageId: deletingMessageId ?? this.deletingMessageId,
       availableEmojis: availableEmojis ?? this.availableEmojis,
       lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
@@ -205,6 +222,10 @@ class ConversationReplayState extends Equatable {
         replayNotification,
         replayNotificationInteraction,
         replayNotificationMessageCount,
+        replayStartTime,
+        replayEndTime,
+        availableStartTime,
+        availableEndTime,
         swipingMessageId,
         swipeOffset,
         replyPreviewText,

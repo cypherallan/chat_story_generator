@@ -7,6 +7,17 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (state.playing || state.finished) {
       return;
     }
+    if (state.replayStartTime != null) {
+      _replayStartIndex = _messages.indexWhere(
+        (message) => !message.createdAt.isBefore(state.replayStartTime!),
+      );
+
+      if (_replayStartIndex == -1) {
+        _replayStartIndex = _messages.length;
+      }
+    } else {
+      _replayStartIndex = 0;
+    }
 
     _replayNotificationShown = false;
 
@@ -47,10 +58,46 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
   }
 
+  Duration _replayMessageGap(
+    Message previous,
+    Message current,
+  ) {
+    final originalGap = current.createdAt.difference(
+      previous.createdAt,
+    );
+
+    if (originalGap.isNegative || originalGap == Duration.zero) {
+      return Duration.zero;
+    }
+
+    final seconds = originalGap.inMilliseconds / 1000.0;
+
+    var replaySeconds = 0.8 + (log(seconds + 1) * 1.2);
+
+    replaySeconds = max(replaySeconds, 0.8);
+    replaySeconds = min(replaySeconds, 6.0);
+
+    return Duration(
+      milliseconds: (replaySeconds * 1000).round(),
+    );
+  }
+
   @override
   void _playNext() {
     if (!state.playing) {
       return;
+    }
+
+    // ------------------------------------------------------------
+    // START FROM SELECTED REPLAY POSITION
+    // ------------------------------------------------------------
+
+    if (state.currentIndex < _replayStartIndex) {
+      emit(
+        state.copyWith(
+          currentIndex: _replayStartIndex,
+        ),
+      );
     }
 
     // ------------------------------------------------------------
@@ -87,13 +134,30 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       return;
     }
 
-    final message = _messages[state.currentIndex];
+    final messageIndex = state.currentIndex;
+    final message = _messages[messageIndex];
 
-    if (message.senderId == _ownerId) {
-      _typeOwnerMessage(message);
-    } else {
-      _typeOtherPersonMessage(message);
-    }
+    final gap = messageIndex == 0
+        ? Duration.zero
+        : _replayMessageGap(
+            _messages[messageIndex - 1],
+            message,
+          );
+
+    _timer = Timer(
+      gap,
+      () {
+        if (!state.playing) {
+          return;
+        }
+
+        if (message.senderId == _ownerId) {
+          _typeOwnerMessage(message);
+        } else {
+          _typeOtherPersonMessage(message);
+        }
+      },
+    );
   }
 
   // ============================================================
