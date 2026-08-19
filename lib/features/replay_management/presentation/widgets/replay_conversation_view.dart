@@ -51,8 +51,19 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
   void _onReplyTap(String messageId) {}
 
-  void _onReplayNotificationTap() {
+  Future<void> _onReplayNotificationTap() async {
+    final notification =
+        widget.replayCubit.notificationCubit.currentNotification;
+
+    if (notification == null) {
+      return;
+    }
+
     widget.replayCubit.notificationCubit.recordTap();
+
+    await widget.replayCubit.openConversationFromNotification(
+      projectId: notification.projectId,
+    );
   }
 
   void _onReplayNotificationSwipe() {

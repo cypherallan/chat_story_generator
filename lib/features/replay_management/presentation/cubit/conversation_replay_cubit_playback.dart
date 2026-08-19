@@ -1,37 +1,10 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase {
-  bool _replayNotificationShown = false;
-  StreamSubscription? _notificationInteractionSubscription;
-
   void play() {
     if (state.playing || state.finished) {
       return;
     }
-
-    _replayNotificationShown = false;
-
-    _notificationInteractionSubscription?.cancel();
-
-    _notificationInteractionSubscription = notificationCubit.stream.listen((_) {
-      if (!state.playing) {
-        return;
-      }
-
-      switch (notificationCubit.interaction) {
-        case NotificationInteraction.tapped:
-          _handleReplayNotificationTap();
-          break;
-
-        case NotificationInteraction.swiped:
-          _handleReplayNotificationSwipe();
-          break;
-
-        case NotificationInteraction.none:
-        case NotificationInteraction.expired:
-          break;
-      }
-    });
 
     emit(
       state.copyWith(
@@ -63,9 +36,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
   void stop() {
     _timer?.cancel();
 
-    _notificationInteractionSubscription?.cancel();
-    _notificationInteractionSubscription = null;
-
     emit(
       const ConversationReplayState(
         keyboardVisible: false,
@@ -84,8 +54,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     // ------------------------------------------------------------
 
     if (_replayNotificationMessageCount != null &&
-        state.currentIndex == _replayNotificationMessageCount &&
-        !_replayNotificationShown) {
+        state.currentIndex == _replayNotificationMessageCount) {
       _replayNotification();
       return;
     }
@@ -127,11 +96,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
       ),
     );
-
-    // The actual opening of the referenced conversation
-    // will be connected in the next step.
-    _notificationInteractionSubscription?.cancel();
-    _notificationInteractionSubscription = null;
   }
 
   void _handleReplayNotificationSwipe() {
@@ -145,9 +109,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     );
 
     notificationCubit.hideNotification();
-
-    _notificationInteractionSubscription?.cancel();
-    _notificationInteractionSubscription = null;
 
     // Continue replay from the message after the notification point.
     emit(
@@ -163,8 +124,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
   }
 
   void _replayNotification() {
-    _replayNotificationShown = true;
-
     final notification = notificationCubit.state.notification;
 
     if (notification == null) {
@@ -179,27 +138,45 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       ),
     );
 
-    _timer = Timer(
-      const Duration(seconds: 5),
-      () {
-        if (!state.playing) {
-          return;
-        }
+    final recordedInteraction = notificationCubit.interaction;
 
-        emit(
-          state.copyWith(
-            replayNotification: null,
-            replayNotificationInteraction:
-                ReplayNotificationInteraction.expired,
-            currentIndex: state.currentIndex,
-          ),
+    switch (recordedInteraction) {
+      case NotificationInteraction.tapped:
+        _timer = Timer(
+          const Duration(seconds: 3),
+          _handleReplayNotificationTap,
         );
+        break;
 
-        notificationCubit.recordExpired();
+      case NotificationInteraction.swiped:
+        _timer = Timer(
+          const Duration(seconds: 3),
+          _handleReplayNotificationSwipe,
+        );
+        break;
 
-        _playNext();
-      },
-    );
+      case NotificationInteraction.expired:
+      case NotificationInteraction.none:
+        _timer = Timer(
+          const Duration(seconds: 5),
+          () {
+            if (!state.playing) {
+              return;
+            }
+
+            emit(
+              state.copyWith(
+                replayNotification: null,
+                replayNotificationInteraction:
+                    ReplayNotificationInteraction.expired,
+              ),
+            );
+
+            _playNext();
+          },
+        );
+        break;
+    }
   }
 
   void _typeOtherPersonMessage(Message message) {

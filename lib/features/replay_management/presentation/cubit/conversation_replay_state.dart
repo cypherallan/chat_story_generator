@@ -125,6 +125,7 @@ class ConversationReplayState extends Equatable {
     bool clearSwipe = false,
     bool clearReplyPreview = false,
     bool clearSelection = false,
+    bool clearReplayNotification = false,
     bool? deleteDialogVisible,
     bool? deleteCancelPressed,
     bool? deleteForMePressed,
@@ -149,7 +150,9 @@ class ConversationReplayState extends Equatable {
       deleteDialogVisible: deleteDialogVisible ?? this.deleteDialogVisible,
       deleteCancelPressed: deleteCancelPressed ?? this.deleteCancelPressed,
       deleteForMePressed: deleteForMePressed ?? this.deleteForMePressed,
-      replayNotification: replayNotification ?? this.replayNotification,
+      replayNotification: clearReplayNotification
+          ? null
+          : (replayNotification ?? this.replayNotification),
       replayNotificationInteraction:
           replayNotificationInteraction ?? this.replayNotificationInteraction,
       replayNotificationMessageCount:

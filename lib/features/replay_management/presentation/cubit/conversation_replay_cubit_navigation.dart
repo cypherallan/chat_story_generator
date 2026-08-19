@@ -56,44 +56,83 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _resumeActiveDeletion();
   }
 
-  void openConversationFromNotification({
+  Future<void> openConversationFromNotification({
     required String projectId,
-    required List<Message> messages,
-  }) {
+  }) async {
     _pauseDeletionTimer();
 
     _timer?.cancel();
 
-    notificationCubit.hideNotificationPreserveInteraction();
+    // The notification interaction has already been recorded.
+    notificationCubit.clear();
 
-    final visibleMessages = List<Message>.from(messages);
+    // Load the actual messages belonging to the target conversation.
+    //
+    // This is important because the notification may belong to a
+    // completely different conversation from the one currently being
+    // replayed.
+    final result = await getMessages(projectId).first;
 
-    emit(
-      state.copyWith(
-        screen: ReplayScreen.conversation,
-        currentProjectId: projectId,
+    result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            screen: ReplayScreen.conversation,
+            currentProjectId: projectId,
+            visibleMessages: const [],
+            currentIndex: 0,
+            playing: false,
+            paused: false,
+            finished: true,
+            typing: false,
+            typingPersonId: null,
+            onlinePersonId: null,
+            keyboardVisible: false,
+            emojiKeyboardVisible: false,
+            composerText: '',
+            pressedKey: null,
+            pressedEmoji: null,
+            lastPressedEmoji: null,
+            shiftPressed: false,
+          ),
+        );
+      },
+      (messages) {
+        final visibleMessages = List<Message>.from(messages);
 
-        // Open directly at the notification point.
-        // No replay animation or typing.
-        visibleMessages: visibleMessages,
-        currentIndex: _messages.length,
-        playing: false,
-        paused: false,
-        finished: true,
+        emit(
+          state.copyWith(
+            screen: ReplayScreen.conversation,
+            currentProjectId: projectId,
+            clearReplayNotification: true,
 
-        typing: false,
-        typingPersonId: null,
-        onlinePersonId: null,
+            // Show the complete existing conversation.
+            visibleMessages: visibleMessages,
 
-        keyboardVisible: false,
-        emojiKeyboardVisible: false,
-        composerText: '',
-        pressedKey: null,
-        pressedEmoji: null,
-        lastPressedEmoji: null,
-        shiftPressed: false,
-      ),
+            // Tapping a notification opens the chat normally.
+            // It must NOT start/restart replay.
+            currentIndex: visibleMessages.length,
+            playing: false,
+            paused: false,
+            finished: true,
+
+            typing: false,
+            typingPersonId: null,
+            onlinePersonId: null,
+
+            keyboardVisible: false,
+            emojiKeyboardVisible: false,
+            composerText: '',
+            pressedKey: null,
+            pressedEmoji: null,
+            lastPressedEmoji: null,
+            shiftPressed: false,
+          ),
+        );
+      },
     );
+
+    _resumeActiveDeletion();
   }
 
   void goBackToHome() {
