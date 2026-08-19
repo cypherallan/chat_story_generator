@@ -1,6 +1,6 @@
 part of 'conversation_replay_cubit.dart';
 
-mixin _PlaybackMixin on _ConversationReplayCubitBase {
+mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   void play() {
     if (state.playing || state.finished) {
       return;
@@ -59,6 +59,10 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       return;
     }
 
+    // ------------------------------------------------------------
+    // REPLAY FINISHED
+    // ------------------------------------------------------------
+
     if (state.currentIndex >= _messages.length) {
       emit(
         state.copyWith(
@@ -87,16 +91,38 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     }
   }
 
-  void _handleReplayNotificationTap() {
+  // ============================================================
+  // RECORDED TAP
+  // ============================================================
+
+  Future<void> _handleReplayNotificationTap() async {
     _timer?.cancel();
+
+    final notification = notificationCubit.currentNotification;
+
+    if (notification == null) {
+      return;
+    }
+
+    final projectId = notification.projectId;
 
     emit(
       state.copyWith(
         replayNotification: null,
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
+        playing: false,
+        paused: false,
       ),
     );
+
+    await openConversationFromNotification(
+      projectId: projectId,
+    );
   }
+
+  // ============================================================
+  // RECORDED SWIPE
+  // ============================================================
 
   void _handleReplayNotificationSwipe() {
     _timer?.cancel();
@@ -108,9 +134,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       ),
     );
 
-    notificationCubit.hideNotification();
+    // The notification was already swiped in the normal
+    // conversation. Replay only reproduces that visual result.
+    notificationCubit.hideNotificationPreserveInteraction();
 
-    // Continue replay from the message after the notification point.
+    // Continue replay after the notification point.
     emit(
       state.copyWith(
         currentIndex: state.currentIndex + 1,
@@ -123,11 +151,25 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     );
   }
 
+  // ============================================================
+  // SHOW RECORDED NOTIFICATION
+  // ============================================================
+
   void _replayNotification() {
-    final notification = notificationCubit.state.notification;
+    final notification = notificationCubit.currentNotification;
 
     if (notification == null) {
-      _playNext();
+      emit(
+        state.copyWith(
+          currentIndex: state.currentIndex + 1,
+        ),
+      );
+
+      _timer = Timer(
+        const Duration(milliseconds: 300),
+        _playNext,
+      );
+
       return;
     }
 
@@ -138,25 +180,43 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       ),
     );
 
-    final recordedInteraction = notificationCubit.interaction;
+    // ------------------------------------------------------------
+    // IMPORTANT:
+    //
+    // We do NOT wait for a user to tap or swipe.
+    //
+    // The interaction was already recorded in the normal
+    // conversation and is reproduced automatically here.
+    // ------------------------------------------------------------
 
-    switch (recordedInteraction) {
+    switch (notificationCubit.interaction) {
       case NotificationInteraction.tapped:
         _timer = Timer(
           const Duration(seconds: 3),
-          _handleReplayNotificationTap,
+          () {
+            if (!state.playing) {
+              return;
+            }
+
+            _handleReplayNotificationTap();
+          },
         );
         break;
 
       case NotificationInteraction.swiped:
         _timer = Timer(
           const Duration(seconds: 3),
-          _handleReplayNotificationSwipe,
+          () {
+            if (!state.playing) {
+              return;
+            }
+
+            _handleReplayNotificationSwipe();
+          },
         );
         break;
 
       case NotificationInteraction.expired:
-      case NotificationInteraction.none:
         _timer = Timer(
           const Duration(seconds: 5),
           () {
@@ -169,6 +229,32 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
                 replayNotification: null,
                 replayNotificationInteraction:
                     ReplayNotificationInteraction.expired,
+                currentIndex: state.currentIndex + 1,
+              ),
+            );
+
+            _playNext();
+          },
+        );
+        break;
+
+      case NotificationInteraction.none:
+        // No recorded interaction.
+        // Treat it like a normal notification that remains
+        // visible until it expires.
+        _timer = Timer(
+          const Duration(seconds: 5),
+          () {
+            if (!state.playing) {
+              return;
+            }
+
+            emit(
+              state.copyWith(
+                replayNotification: null,
+                replayNotificationInteraction:
+                    ReplayNotificationInteraction.expired,
+                currentIndex: state.currentIndex + 1,
               ),
             );
 
@@ -178,6 +264,10 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
         break;
     }
   }
+
+  // ============================================================
+  // OTHER PERSON MESSAGE
+  // ============================================================
 
   void _typeOtherPersonMessage(Message message) {
     final delay = _humanTypingDuration(

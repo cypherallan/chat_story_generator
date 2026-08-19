@@ -7,15 +7,11 @@ import '../cubit/conversation_replay_state.dart';
 class ReplayNotificationBanner extends StatefulWidget {
   final SimulatedNotification notification;
   final ReplayNotificationInteraction interaction;
-  final VoidCallback onTap;
-  final VoidCallback onSwipe;
 
   const ReplayNotificationBanner({
     super.key,
     required this.notification,
     required this.interaction,
-    required this.onTap,
-    required this.onSwipe,
   });
 
   @override
@@ -77,14 +73,7 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
         break;
 
       case ReplayNotificationInteraction.swiped:
-        _controller.reverse();
-        break;
-
       case ReplayNotificationInteraction.tapped:
-        _controller.value = 0;
-        widget.onTap();
-        break;
-
       case ReplayNotificationInteraction.expired:
         _controller.reverse();
         break;
@@ -110,86 +99,82 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
               elevation: 8,
               borderRadius: BorderRadius.circular(16),
               color: Colors.white,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: widget.onTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ProfileAvatar(
-                        imagePath: widget.notification.senderAvatarPath,
-                        name: widget.notification.senderName,
-                        radius: 25,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    widget.notification.senderName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ProfileAvatar(
+                      imagePath: widget.notification.senderAvatarPath,
+                      name: widget.notification.senderName,
+                      radius: 25,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.notification.senderName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'now',
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'now',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              if (widget.notification.imagePath != null) ...[
+                                Icon(
+                                  Icons.image_outlined,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  widget.notification.messageText.isEmpty
+                                      ? 'Photo'
+                                      : widget.notification.messageText,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                if (widget.notification.imagePath != null) ...[
-                                  Icon(
-                                    Icons.image_outlined,
-                                    size: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  const SizedBox(width: 4),
-                                ],
-                                Expanded(
-                                  child: Text(
-                                    widget.notification.messageText.isEmpty
-                                        ? 'Photo'
-                                        : widget.notification.messageText,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

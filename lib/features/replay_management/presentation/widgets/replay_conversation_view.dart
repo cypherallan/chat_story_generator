@@ -51,25 +51,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
   void _onReplyTap(String messageId) {}
 
-  Future<void> _onReplayNotificationTap() async {
-    final notification =
-        widget.replayCubit.notificationCubit.currentNotification;
-
-    if (notification == null) {
-      return;
-    }
-
-    widget.replayCubit.notificationCubit.recordTap();
-
-    await widget.replayCubit.openConversationFromNotification(
-      projectId: notification.projectId,
-    );
-  }
-
-  void _onReplayNotificationSwipe() {
-    widget.replayCubit.notificationCubit.recordSwipe();
-  }
-
   Future<void> _showDeleteDialog(
     BuildContext context,
     ConversationReplayState state,
@@ -241,8 +222,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                   child: ReplayNotificationBanner(
                     notification: state.replayNotification!,
                     interaction: state.replayNotificationInteraction,
-                    onTap: _onReplayNotificationTap,
-                    onSwipe: _onReplayNotificationSwipe,
                   ),
                 ),
             ],
