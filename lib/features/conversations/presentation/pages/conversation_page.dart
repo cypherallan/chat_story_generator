@@ -78,21 +78,6 @@ class _ConversationPageState extends State<ConversationPage> {
     }
 
     final project = matches.first;
-    final messageCubit = di.sl<MessageCubit>();
-
-    final added = await messageCubit.addNotificationMessage(
-      projectId: notification.projectId,
-      messageId: notification.messageId,
-      senderId: notification.senderId,
-      senderName: notification.senderName,
-      text: notification.messageText,
-      imagePath: notification.imagePath,
-    );
-    await messageCubit.close();
-
-    if (!added) {
-      return;
-    }
 
     await projectCubit.clearUnreadCount(project.id);
 
@@ -112,11 +97,18 @@ class _ConversationPageState extends State<ConversationPage> {
             BlocProvider.value(
               value: projectCubit,
             ),
-            BlocProvider(
-              create: (_) => di.sl<MessageCubit>()..loadMessages(project.id),
+            BlocProvider<MessageCubit>(
+              create: (_) {
+                final cubit = di.sl<MessageCubit>();
+                cubit.loadMessages(project.id);
+                return cubit;
+              },
             ),
             BlocProvider.value(
               value: personCubit,
+            ),
+            BlocProvider(
+              create: (_) => di.sl<SimulatedNotificationCubit>(),
             ),
           ],
           child: BlocProvider(
@@ -220,18 +212,36 @@ class _ConversationPageState extends State<ConversationPage> {
     if (messageState is MessageLoaded) {
       triggerMessageIndex = messageState.messages.length;
     }
+// ------------------------------------------------------------
+// CREATE THE REAL INCOMING MESSAGE
+//
+// The notification represents a real incoming message.
+// Create it immediately when the notification is triggered.
+//
+// This means:
+// 1. The message is saved to Firestore.
+// 2. It appears in the conversation history.
+// 3. It can remain unread if the owner does not open the chat.
+// 4. The Home chat preview/counter can represent the same message.
+// ------------------------------------------------------------
 
-    // ------------------------------------------------------------
-    // UPDATE HOME CHAT PREVIEW + UNREAD COUNT
-    //
-    // This is only the chat-list representation of the incoming
-    // notification. The actual Message is NOT created here.
-    //
-    // The real message is created later when the user taps
-    // the notification.
-    // ------------------------------------------------------------
+    final messageCubit = context.read<MessageCubit>();
 
-    final previewMessage = Message(
+    final added = await messageCubit.addNotificationMessage(
+      projectId: selectedNotification.projectId,
+      messageId: selectedNotification.messageId,
+      senderId: selectedNotification.senderId,
+      senderName: selectedNotification.senderName,
+      text: selectedNotification.messageText,
+      imagePath: selectedNotification.imagePath,
+    );
+
+    if (!added) {
+      return;
+    }
+
+// Update Home chat preview and unread counter.
+    final message = Message(
       id: selectedNotification.messageId,
       projectId: selectedNotification.projectId,
       senderId: selectedNotification.senderId,
@@ -245,13 +255,12 @@ class _ConversationPageState extends State<ConversationPage> {
 
     await context.read<ProjectCubit>().recordIncomingMessage(
           projectId: selectedNotification.projectId,
-          message: previewMessage,
+          message: message,
         );
 
     if (!mounted) {
       return;
     }
-
     // ------------------------------------------------------------
     // SHOW THE SIMULATED NOTIFICATION
     // ------------------------------------------------------------

@@ -143,11 +143,11 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
     }
 
     // IMPORTANT:
-    // Generate ONE ID for the future notification message.
+    // Generate ONE ID for the future incoming message.
     //
-    // We do NOT create the real Message here.
-    // The actual unread message will be created when
-    // the notification is tapped.
+    // We do NOT create the Message here.
+    // The actual Message will be created when this
+    // notification is TRIGGERED.
     final messageId = const Uuid().v4();
 
     final success = await context.read<NotificationCubit>().createNotification(
