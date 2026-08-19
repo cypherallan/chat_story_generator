@@ -166,6 +166,19 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     );
   }
 
+  void hideNotificationPreserveInteraction() {
+    if (isClosed) return;
+
+    _hideTimer?.cancel();
+    _hideTimer = null;
+
+    emit(
+      state.copyWith(
+        visible: false,
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // CLEAR
   // ---------------------------------------------------------------------------

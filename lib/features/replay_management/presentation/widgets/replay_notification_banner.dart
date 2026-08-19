@@ -7,11 +7,15 @@ import '../cubit/conversation_replay_state.dart';
 class ReplayNotificationBanner extends StatefulWidget {
   final SimulatedNotification notification;
   final ReplayNotificationInteraction interaction;
+  final VoidCallback onTap;
+  final VoidCallback onSwipe;
 
   const ReplayNotificationBanner({
     super.key,
     required this.notification,
     required this.interaction,
+    required this.onTap,
+    required this.onSwipe,
   });
 
   @override
@@ -56,6 +60,35 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
         _controller.forward();
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant ReplayNotificationBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.interaction != widget.interaction) {
+      _handleInteraction();
+    }
+  }
+
+  void _handleInteraction() {
+    switch (widget.interaction) {
+      case ReplayNotificationInteraction.none:
+        break;
+
+      case ReplayNotificationInteraction.swiped:
+        _controller.reverse();
+        break;
+
+      case ReplayNotificationInteraction.tapped:
+        _controller.reverse();
+        widget.onTap();
+        break;
+
+      case ReplayNotificationInteraction.expired:
+        _controller.reverse();
+        break;
+    }
   }
 
   @override

@@ -2,12 +2,36 @@ part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase {
   bool _replayNotificationShown = false;
+  StreamSubscription? _notificationInteractionSubscription;
+
   void play() {
     if (state.playing || state.finished) {
       return;
     }
 
     _replayNotificationShown = false;
+
+    _notificationInteractionSubscription?.cancel();
+
+    _notificationInteractionSubscription = notificationCubit.stream.listen((_) {
+      if (!state.playing) {
+        return;
+      }
+
+      switch (notificationCubit.interaction) {
+        case NotificationInteraction.tapped:
+          _handleReplayNotificationTap();
+          break;
+
+        case NotificationInteraction.swiped:
+          _handleReplayNotificationSwipe();
+          break;
+
+        case NotificationInteraction.none:
+        case NotificationInteraction.expired:
+          break;
+      }
+    });
 
     emit(
       state.copyWith(
@@ -39,6 +63,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
   void stop() {
     _timer?.cancel();
 
+    _notificationInteractionSubscription?.cancel();
+    _notificationInteractionSubscription = null;
+
     emit(
       const ConversationReplayState(
         keyboardVisible: false,
@@ -51,11 +78,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     if (!state.playing) {
       return;
     }
-    print(
-      'REPLAY DEBUG: currentIndex=${state.currentIndex}, '
-      'notificationIndex=$_replayNotificationMessageCount, '
-      'messages=${_messages.length}',
-    );
 
     // ------------------------------------------------------------
     // REPLAY NOTIFICATION EVENT
@@ -64,7 +86,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     if (_replayNotificationMessageCount != null &&
         state.currentIndex == _replayNotificationMessageCount &&
         !_replayNotificationShown) {
-      print('REPLAY DEBUG: *** NOTIFICATION TRIGGER REACHED ***');
       _replayNotification();
       return;
     }
@@ -97,32 +118,59 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
     }
   }
 
-  void _replayNotification() {
-    print('REPLAY DEBUG: _replayNotification() CALLED');
+  void _handleReplayNotificationTap() {
+    _timer?.cancel();
 
+    emit(
+      state.copyWith(
+        replayNotification: null,
+        replayNotificationInteraction: ReplayNotificationInteraction.tapped,
+      ),
+    );
+
+    // The actual opening of the referenced conversation
+    // will be connected in the next step.
+    _notificationInteractionSubscription?.cancel();
+    _notificationInteractionSubscription = null;
+  }
+
+  void _handleReplayNotificationSwipe() {
+    _timer?.cancel();
+
+    emit(
+      state.copyWith(
+        replayNotification: null,
+        replayNotificationInteraction: ReplayNotificationInteraction.swiped,
+      ),
+    );
+
+    notificationCubit.hideNotification();
+
+    _notificationInteractionSubscription?.cancel();
+    _notificationInteractionSubscription = null;
+
+    // Continue replay from the message after the notification point.
+    emit(
+      state.copyWith(
+        currentIndex: state.currentIndex + 1,
+      ),
+    );
+
+    _timer = Timer(
+      const Duration(milliseconds: 300),
+      _playNext,
+    );
+  }
+
+  void _replayNotification() {
     _replayNotificationShown = true;
 
     final notification = notificationCubit.state.notification;
 
-    print(
-      'REPLAY DEBUG: notification from SimulatedNotificationCubit = '
-      '${notification == null ? 'NULL' : notification.messageText}',
-    );
-
     if (notification == null) {
-      print(
-        'REPLAY DEBUG: NO SIMULATED NOTIFICATION AVAILABLE — '
-        'skipping banner',
-      );
-
       _playNext();
       return;
     }
-
-    print(
-      'REPLAY DEBUG: EMITTING replayNotification = '
-      '${notification.messageText}',
-    );
 
     emit(
       state.copyWith(
@@ -131,21 +179,12 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase {
       ),
     );
 
-    print(
-      'REPLAY DEBUG: state.replayNotification after emit = '
-      '${state.replayNotification?.messageText}',
-    );
-
     _timer = Timer(
       const Duration(seconds: 5),
       () {
         if (!state.playing) {
           return;
         }
-
-        print(
-          'REPLAY DEBUG: notification display finished',
-        );
 
         emit(
           state.copyWith(

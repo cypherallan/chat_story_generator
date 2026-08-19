@@ -76,7 +76,6 @@ class _ConversationPageState extends State<ConversationPage> {
     }
 
     final project = matches.first;
-
     final messageCubit = di.sl<MessageCubit>();
 
     final added = await messageCubit.addNotificationMessage(
@@ -87,7 +86,6 @@ class _ConversationPageState extends State<ConversationPage> {
       text: notification.messageText,
       imagePath: notification.imagePath,
     );
-
     await messageCubit.close();
 
     if (!added) {
@@ -96,7 +94,9 @@ class _ConversationPageState extends State<ConversationPage> {
 
     await projectCubit.clearUnreadCount(project.id);
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     if (project.id == widget.project.id) {
       return;
@@ -218,26 +218,6 @@ class _ConversationPageState extends State<ConversationPage> {
     if (messageState is MessageLoaded) {
       triggerMessageIndex = messageState.messages.length;
     }
-
-    print(
-      'REPLAY DEBUG: triggering notification '
-      '${selectedNotification.messageText}',
-    );
-
-    print(
-      'REPLAY DEBUG: current conversation message count = '
-      '$triggerMessageIndex',
-    );
-
-    print(
-      'REPLAY DEBUG: notification projectId = '
-      '${selectedNotification.projectId}',
-    );
-
-    print(
-      'REPLAY DEBUG: current projectId = '
-      '${widget.project.id}',
-    );
 
     // ------------------------------------------------------------
     // SHOW ONLY THE SIMULATED NOTIFICATION

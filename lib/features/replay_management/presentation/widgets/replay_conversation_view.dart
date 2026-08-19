@@ -51,6 +51,14 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
   void _onReplyTap(String messageId) {}
 
+  void _onReplayNotificationTap() {
+    widget.replayCubit.notificationCubit.recordTap();
+  }
+
+  void _onReplayNotificationSwipe() {
+    widget.replayCubit.notificationCubit.recordSwipe();
+  }
+
   Future<void> _showDeleteDialog(
     BuildContext context,
     ConversationReplayState state,
@@ -222,6 +230,8 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                   child: ReplayNotificationBanner(
                     notification: state.replayNotification!,
                     interaction: state.replayNotificationInteraction,
+                    onTap: _onReplayNotificationTap,
+                    onSwipe: _onReplayNotificationSwipe,
                   ),
                 ),
             ],

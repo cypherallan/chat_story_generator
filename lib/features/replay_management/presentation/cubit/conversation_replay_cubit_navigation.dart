@@ -64,7 +64,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     _timer?.cancel();
 
-    notificationCubit.clear();
+    notificationCubit.hideNotificationPreserveInteraction();
 
     final visibleMessages = List<Message>.from(messages);
 
