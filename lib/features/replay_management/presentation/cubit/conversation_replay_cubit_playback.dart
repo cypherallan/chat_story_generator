@@ -137,12 +137,18 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     final messageIndex = state.currentIndex;
     final message = _messages[messageIndex];
 
-    final gap = messageIndex == 0
-        ? Duration.zero
-        : _replayMessageGap(
-            _messages[messageIndex - 1],
-            message,
-          );
+    Duration gap;
+
+    if (messageIndex == 0) {
+      gap = Duration.zero;
+    } else {
+      final previousMessage = _messages[messageIndex - 1];
+
+      gap = _replayMessageGap(
+        previousMessage,
+        message,
+      );
+    }
 
     _timer = Timer(
       gap,
