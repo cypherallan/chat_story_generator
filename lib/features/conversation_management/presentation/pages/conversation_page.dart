@@ -201,6 +201,24 @@ class _ConversationPageState extends State<ConversationPage> {
       return;
     }
 
+    final project = await context
+        .read<ProjectCubit>()
+        .findProject(selectedNotification.projectId);
+
+    if (project == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'The conversation for this notification no longer exists.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     // ------------------------------------------------------------
     // DETERMINE WHERE THE NOTIFICATION SHOULD APPEAR IN REPLAY
     // ------------------------------------------------------------
@@ -212,18 +230,6 @@ class _ConversationPageState extends State<ConversationPage> {
     if (messageState is MessageLoaded) {
       triggerMessageIndex = messageState.messages.length;
     }
-// ------------------------------------------------------------
-// CREATE THE REAL INCOMING MESSAGE
-//
-// The notification represents a real incoming message.
-// Create it immediately when the notification is triggered.
-//
-// This means:
-// 1. The message is saved to Firestore.
-// 2. It appears in the conversation history.
-// 3. It can remain unread if the owner does not open the chat.
-// 4. The Home chat preview/counter can represent the same message.
-// ------------------------------------------------------------
 
     final messageCubit = context.read<MessageCubit>();
 
@@ -239,8 +245,6 @@ class _ConversationPageState extends State<ConversationPage> {
     if (!added) {
       return;
     }
-
-// Update Home chat preview and unread counter.
     final message = Message(
       id: selectedNotification.messageId,
       projectId: selectedNotification.projectId,

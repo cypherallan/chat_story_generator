@@ -185,6 +185,22 @@ class ProjectCubit extends Cubit<ProjectState> {
     );
   }
 
+  Future<Project?> findProject(String projectId) async {
+    final result = await getProjects();
+
+    return result.fold(
+      (_) => null,
+      (projects) {
+        for (final project in projects) {
+          if (project.id == projectId) {
+            return project;
+          }
+        }
+        return null;
+      },
+    );
+  }
+
   Future<void> recordIncomingMessage({
     required String projectId,
     required Message message,
@@ -196,9 +212,20 @@ class ProjectCubit extends Cubit<ProjectState> {
         emit(ProjectError(failure.message));
       },
       (projects) async {
-        final project = projects.firstWhere(
+        final projectIndex = projects.indexWhere(
           (p) => p.id == projectId,
         );
+
+        if (projectIndex == -1) {
+          emit(
+            ProjectError(
+              'Project not found for incoming message: $projectId',
+            ),
+          );
+          return;
+        }
+
+        final project = projects[projectIndex];
 
         final updated = project.copyWith(
           lastMessage: message.text,
