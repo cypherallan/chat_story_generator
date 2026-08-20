@@ -21,8 +21,10 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
 
   // Records what happened to the notification in the normal conversation.
   NotificationInteraction _interaction = NotificationInteraction.none;
+  SimulatedNotification? _recordedNotification;
 
   NotificationInteraction get interaction => _interaction;
+  SimulatedNotification? get recordedNotification => _recordedNotification;
 
   SimulatedNotification? get currentNotification => state.notification;
 
@@ -95,8 +97,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     _hideTimer?.cancel();
     _hideTimer = null;
 
-    // A new notification starts with no recorded interaction.
+    // A new notification starts a new recorded replay event.
     _interaction = NotificationInteraction.none;
+    _recordedNotification = notification;
 
     emit(
       state.copyWith(
@@ -188,8 +191,6 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
 
     _hideTimer?.cancel();
     _hideTimer = null;
-
-    _interaction = NotificationInteraction.none;
 
     emit(
       const SimulatedNotificationState(),

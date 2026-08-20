@@ -233,7 +233,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   void _replayNotification() {
     _replayNotificationShown = true;
 
-    final notification = notificationCubit.currentNotification;
+    final notification = notificationCubit.recordedNotification;
 
     if (notification == null) {
       _timer = Timer(
