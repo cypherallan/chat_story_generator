@@ -89,7 +89,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _pauseDeletionTimer();
     _timer?.cancel();
 
-    // Save the A/B replay state so we can restore it after C.
+    // Save the A/B replay state.
     _returnMessages
       ..clear()
       ..addAll(_messages);
@@ -115,14 +115,30 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
         );
       },
       (messages) {
-        // Switch the replay engine to C's conversation.
         _messages
           ..clear()
           ..addAll(messages);
 
-        // C must be replayed from the beginning.
-        _replayStartIndex = 0;
+        final notification = notificationCubit.currentNotification;
+
+        var replyStartIndex = 0;
+
+        if (notification != null) {
+          final notificationIndex = _messages.indexWhere(
+            (message) => message.id == notification.messageId,
+          );
+
+          if (notificationIndex != -1) {
+            replyStartIndex = notificationIndex + 1;
+          }
+        }
+
+        _replayStartIndex = replyStartIndex;
         _replayNotificationMessageCount = null;
+
+        // Only show C's conversation as it existed when the
+        // notification was opened.
+        final messagesBeforeReply = _messages.take(replyStartIndex).toList();
 
         emit(
           state.copyWith(
@@ -130,11 +146,11 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             currentProjectId: projectId,
             clearReplayNotification: true,
 
-            // Start C with no messages visible.
-            visibleMessages: const [],
+            // Notification and everything before it is already visible.
+            // The reply and everything after it will be replayed.
+            visibleMessages: messagesBeforeReply,
 
-            // Let _playNext() replay every C message.
-            currentIndex: 0,
+            currentIndex: replyStartIndex,
 
             playing: true,
             paused: false,
@@ -149,7 +165,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             composerText: '',
             pressedKey: null,
             pressedEmoji: null,
-            lastPressedEmoji: null,
             shiftPressed: false,
           ),
         );

@@ -3,3 +3,23 @@ note the Ip address:port and 6 digit code
 run: adb pair Ip address:port
 enter the 6 digit code when prompted
 run adb connect ip address:port (found at the home screen of wireless debugging) 
+
+CONVERSATION:
+create notification inside B from C: c2
+A/C
+A: a1
+C: c1
+A: a2
+
+A/B CONVERSATION
+B: 1
+A: 2
+
+trigger notifcation from C: c2
+tap on banner, inside A/C:
+
+A: a3
+
+Back to A/B
+B: 3
+A: 4
