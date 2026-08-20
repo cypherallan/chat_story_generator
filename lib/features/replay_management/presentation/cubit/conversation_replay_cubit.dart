@@ -38,6 +38,10 @@ abstract class _ConversationReplayCubitBase
   }
 
   final List<Message> _messages = [];
+  final List<Message> _returnMessages = [];
+  String? _returnProjectId;
+  int _returnMessageIndex = 0;
+  int? _returnNotificationMessageCount;
   int _replayStartIndex = 0;
 
   final Random _random = Random();

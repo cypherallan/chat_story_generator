@@ -87,9 +87,17 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     required String projectId,
   }) async {
     _pauseDeletionTimer();
-
     _timer?.cancel();
-    notificationCubit.clear();
+
+    // Save the A/B replay state so we can restore it after C.
+    _returnMessages
+      ..clear()
+      ..addAll(_messages);
+
+    _returnProjectId = state.currentProjectId;
+    _returnMessageIndex = state.currentIndex;
+    _returnNotificationMessageCount = _replayNotificationMessageCount;
+
     final result = await getMessages(projectId).first;
 
     result.fold(
@@ -102,37 +110,41 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             currentIndex: 0,
             playing: false,
             paused: true,
-            finished: false,
-            typing: false,
-            typingPersonId: null,
-            onlinePersonId: null,
-            keyboardVisible: false,
-            emojiKeyboardVisible: false,
-            composerText: '',
-            pressedKey: null,
-            pressedEmoji: null,
-            lastPressedEmoji: null,
-            shiftPressed: false,
+            finished: true,
           ),
         );
       },
       (messages) {
-        final visibleMessages = List<Message>.from(messages);
+        // Switch the replay engine to C's conversation.
+        _messages
+          ..clear()
+          ..addAll(messages);
+
+        // C must be replayed from the beginning.
+        _replayStartIndex = 0;
+        _replayNotificationMessageCount = null;
 
         emit(
           state.copyWith(
             screen: ReplayScreen.conversation,
             currentProjectId: projectId,
             clearReplayNotification: true,
-            visibleMessages: visibleMessages,
-            currentIndex: visibleMessages.length,
-            playing: false,
+
+            // Start C with no messages visible.
+            visibleMessages: const [],
+
+            // Let _playNext() replay every C message.
+            currentIndex: 0,
+
+            playing: true,
             paused: false,
-            finished: true,
+            finished: false,
+
             typing: false,
             typingPersonId: null,
             onlinePersonId: null,
-            keyboardVisible: false,
+
+            keyboardVisible: true,
             emojiKeyboardVisible: false,
             composerText: '',
             pressedKey: null,
@@ -141,10 +153,55 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             shiftPressed: false,
           ),
         );
+
+        _playNext();
       },
     );
+  }
 
-    _resumeActiveDeletion();
+  void returnFromNotificationConversation() {
+    _timer?.cancel();
+
+    if (_returnMessages.isEmpty || _returnProjectId == null) {
+      return;
+    }
+
+    final projectId = _returnProjectId;
+    final returnIndex = _returnMessageIndex;
+
+    _messages
+      ..clear()
+      ..addAll(_returnMessages);
+
+    _returnMessages.clear();
+
+    _replayNotificationMessageCount = _returnNotificationMessageCount;
+    _returnNotificationMessageCount = null;
+    _returnProjectId = null;
+
+    emit(
+      state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: projectId,
+        visibleMessages: _messages.take(returnIndex).toList(),
+        currentIndex: returnIndex,
+        playing: true,
+        paused: false,
+        finished: false,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+        keyboardVisible: true,
+        emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        shiftPressed: false,
+        replayNotification: null,
+      ),
+    );
+
+    _playNext();
   }
 
   void goBackToHome() {

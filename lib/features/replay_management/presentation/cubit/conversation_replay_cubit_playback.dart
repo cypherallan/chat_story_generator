@@ -107,6 +107,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     if (state.currentIndex >= _messages.length) {
+      if (_returnMessages.isNotEmpty && _returnProjectId != null) {
+        returnFromNotificationConversation();
+        return;
+      }
+
       emit(
         state.copyWith(
           playing: false,
@@ -182,16 +187,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       projectId: notification.projectId,
     );
 
-    // Reproduce the back-arrow press that happened in the
-    // original conversation automatically.
-    _timer = Timer(
-      const Duration(seconds: 3),
-      () {
-        if (isClosed) return;
-
-        handleReplayNotificationBack();
-      },
-    );
+    // C is now replayed normally.
+    // returnFromNotificationConversation() must only happen
+    // after the recorded C conversation has finished.
   }
 
   void _handleReplayNotificationSwipe() {
