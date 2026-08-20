@@ -193,6 +193,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _replayNotificationMessageCount = _returnNotificationMessageCount;
     _returnNotificationMessageCount = null;
     _returnProjectId = null;
+    _replayStartIndex = returnIndex;
 
     emit(
       state.copyWith(
