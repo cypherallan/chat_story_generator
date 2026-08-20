@@ -170,14 +170,27 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       state.copyWith(
         replayNotification: null,
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
+        playing: false,
+        paused: true,
+        finished: false,
       ),
     );
 
     notificationCubit.hideNotificationPreserveInteraction();
 
+    await openConversationFromNotification(
+      projectId: notification.projectId,
+    );
+
+    // Reproduce the back-arrow press that happened in the
+    // original conversation automatically.
     _timer = Timer(
-      const Duration(milliseconds: 300),
-      _playNext,
+      const Duration(seconds: 3),
+      () {
+        if (isClosed) return;
+
+        handleReplayNotificationBack();
+      },
     );
   }
 

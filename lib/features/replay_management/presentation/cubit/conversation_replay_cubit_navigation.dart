@@ -24,6 +24,40 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     );
   }
 
+  void handleReplayNotificationBack() {
+    final originalProjectId =
+        _messages.isNotEmpty ? _messages.first.projectId : null;
+
+    if (originalProjectId == null) {
+      return;
+    }
+
+    final returnIndex = _replayNotificationMessageCount ?? state.currentIndex;
+
+    final restoredMessages = _messages.take(returnIndex).toList();
+
+    emit(
+      state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: originalProjectId,
+        visibleMessages: restoredMessages,
+        currentIndex: returnIndex,
+        playing: true,
+        paused: false,
+        finished: false,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+        keyboardVisible: true,
+        emojiKeyboardVisible: false,
+        composerText: '',
+        replayNotification: null,
+      ),
+    );
+
+    _playNext();
+  }
+
   void openConversation(String projectId) {
     _pauseDeletionTimer();
 
@@ -67,8 +101,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             visibleMessages: const [],
             currentIndex: 0,
             playing: false,
-            paused: false,
-            finished: true,
+            paused: true,
+            finished: false,
             typing: false,
             typingPersonId: null,
             onlinePersonId: null,
@@ -114,6 +148,33 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
   }
 
   void goBackToHome() {
+    if (state.screen == ReplayScreen.conversation &&
+        state.currentProjectId != null &&
+        state.paused) {
+      final originalProjectId =
+          _messages.isNotEmpty ? _messages.first.projectId : null;
+
+      if (originalProjectId != null &&
+          originalProjectId != state.currentProjectId) {
+        notificationCubit.clear();
+
+        emit(
+          state.copyWith(
+            screen: ReplayScreen.conversation,
+            currentProjectId: originalProjectId,
+            visibleMessages: _messages,
+            playing: true,
+            paused: false,
+            finished: false,
+            replayNotification: null,
+          ),
+        );
+
+        _playNext();
+        return;
+      }
+    }
+
     showHome();
   }
 
@@ -187,7 +248,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
         replayStartTime: selectedMessage.createdAt,
         visibleMessages: loadedMessages,
         currentIndex: _replayStartIndex,
-
         playing: false,
         paused: false,
         finished: false,

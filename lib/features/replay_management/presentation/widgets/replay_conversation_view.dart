@@ -169,7 +169,7 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
             preferredSize: const Size.fromHeight(kToolbarHeight),
             child: playback_header.PlaybackHeader(
               project: widget.project,
-              onBack: widget.onBack,
+              onBack: widget.replayCubit.goBackToHome,
               isSelectionMode: isSelectionMode,
               selectedCount: selectedIds.length,
               onClearSelection: () {
