@@ -17,6 +17,7 @@ class PlaybackHeader extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onClearSelection;
   final bool deleteIconPressed;
+  final bool backTapPressed;
 
   const PlaybackHeader({
     super.key,
@@ -26,6 +27,7 @@ class PlaybackHeader extends StatelessWidget {
     required this.selectedCount,
     required this.onClearSelection,
     this.deleteIconPressed = false,
+    required this.backTapPressed,
   });
 
   Person? _findPerson(List<Person> persons, String id) {
@@ -164,9 +166,25 @@ class PlaybackHeader extends StatelessWidget {
       padding: const EdgeInsets.only(left: 0, right: 4),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: onBack,
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: onBack,
+              ),
+              if (backTapPressed)
+                IgnorePointer(
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withOpacity(0.18),
+                    ),
+                  ),
+                ),
+            ],
           ),
           _buildPersonAvatar(
             person,

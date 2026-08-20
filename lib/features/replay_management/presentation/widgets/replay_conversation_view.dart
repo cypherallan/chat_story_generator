@@ -177,6 +177,8 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
                 // Manual clearing will be handled later.
               },
               deleteIconPressed: state.deleteIconPressed,
+              backTapPressed:
+                  state.visualInteraction == ReplayVisualInteraction.backTap,
             ),
           ),
           body: Stack(

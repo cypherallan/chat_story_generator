@@ -19,6 +19,13 @@ enum ReplayNotificationInteraction {
   expired,
 }
 
+enum ReplayVisualInteraction {
+  none,
+  notificationTap,
+  notificationSwipe,
+  backTap,
+}
+
 class ConversationReplayState extends Equatable {
   final List<Message> visibleMessages;
   final bool playing;
@@ -54,12 +61,13 @@ class ConversationReplayState extends Equatable {
   final String? replyPreviewText;
   final String? replyPreviewSenderName;
   final Set<String> selectedMessageIds;
-  final bool deleteIconPressed; 
+  final bool deleteIconPressed;
   final bool showDeleteConfirmation;
   final bool deleteDialogVisible;
   final bool deleteCancelPressed;
   final bool deleteForMePressed;
   final String? deletingMessageId;
+  final ReplayVisualInteraction visualInteraction;
 
   const ConversationReplayState({
     this.visibleMessages = const [],
@@ -102,6 +110,7 @@ class ConversationReplayState extends Equatable {
     this.deleteCancelPressed = false,
     this.deleteForMePressed = false,
     this.deletingMessageId,
+    this.visualInteraction = ReplayVisualInteraction.none,
   });
 
   ConversationReplayState copyWith({
@@ -149,6 +158,7 @@ class ConversationReplayState extends Equatable {
     bool? deleteCancelPressed,
     bool? deleteForMePressed,
     String? deletingMessageId,
+    ReplayVisualInteraction? visualInteraction,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -202,6 +212,7 @@ class ConversationReplayState extends Equatable {
       deleteIconPressed: deleteIconPressed ?? this.deleteIconPressed,
       showDeleteConfirmation:
           showDeleteConfirmation ?? this.showDeleteConfirmation,
+      visualInteraction: visualInteraction ?? this.visualInteraction,
     );
   }
 
@@ -247,5 +258,6 @@ class ConversationReplayState extends Equatable {
         deleteCancelPressed,
         deleteForMePressed,
         deletingMessageId,
+        visualInteraction,
       ];
 }

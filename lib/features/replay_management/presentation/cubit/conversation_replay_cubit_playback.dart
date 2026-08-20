@@ -173,7 +173,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     emit(
       state.copyWith(
-        replayNotification: null,
+        visualInteraction: ReplayVisualInteraction.notificationTap,
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
         playing: false,
         paused: true,
@@ -181,15 +181,19 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       ),
     );
 
+    await Future.delayed(
+      const Duration(milliseconds: 350),
+    );
+
+    if (isClosed) {
+      return;
+    }
+
     notificationCubit.hideNotificationPreserveInteraction();
 
     await openConversationFromNotification(
       projectId: notification.projectId,
     );
-
-    // C is now replayed normally.
-    // returnFromNotificationConversation() must only happen
-    // after the recorded C conversation has finished.
   }
 
   void _handleReplayNotificationSwipe() {
@@ -197,15 +201,32 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     emit(
       state.copyWith(
-        replayNotification: null,
+        visualInteraction: ReplayVisualInteraction.notificationSwipe,
         replayNotificationInteraction: ReplayNotificationInteraction.swiped,
       ),
     );
-    notificationCubit.hideNotificationPreserveInteraction();
 
     _timer = Timer(
-      const Duration(milliseconds: 300),
-      _playNext,
+      const Duration(milliseconds: 450),
+      () {
+        if (isClosed) {
+          return;
+        }
+
+        notificationCubit.hideNotificationPreserveInteraction();
+
+        emit(
+          state.copyWith(
+            replayNotification: null,
+            visualInteraction: ReplayVisualInteraction.none,
+          ),
+        );
+
+        _timer = Timer(
+          const Duration(milliseconds: 300),
+          _playNext,
+        );
+      },
     );
   }
 
