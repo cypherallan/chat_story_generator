@@ -12,15 +12,11 @@ import 'conversation_page_body.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../notification_management/presentation/cubit/notification_cubit.dart';
 import '../../../notification_management/presentation/pages/create_notification_page.dart';
-import '../../../notification_management/domain/entities/notification.dart'
-    as notification_entity;
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
-import '../../../notification_management/domain/entities/simulated_notification.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 import '../../../../core/presentation/widgets/phone_frame.dart';
-import '../../../message_management/domain/entities/message_status.dart';
-import '../../../message_management/domain/entities/message.dart';
+import '../widgets/conversation_notification_actions.dart';
 
 class ConversationPage extends StatefulWidget {
   final Project project;
@@ -38,6 +34,7 @@ class _ConversationPageState extends State<ConversationPage> {
   final GlobalKey<ConversationPageBodyState> _bodyKey =
       GlobalKey<ConversationPageBodyState>();
   late final SimulatedNotificationCubit _simulatedNotificationCubit;
+  late final ConversationNotificationActions _notificationActions;
 
   // Local mirrors so the AppBar can rebuild
   Set<String> _typingPersonIds = {};
@@ -57,249 +54,20 @@ class _ConversationPageState extends State<ConversationPage> {
     });
   }
 
-  Future<void> _onNotificationTapped(
-    SimulatedNotification notification,
-  ) async {
-    final projectCubit = context.read<ProjectCubit>();
-    final personCubit = context.read<PersonCubit>();
-
-    final projectState = projectCubit.state;
-
-    if (projectState is! ProjectLoaded) {
-      return;
-    }
-
-    final matches = projectState.projects.where(
-      (project) => project.id == notification.projectId,
-    );
-
-    if (matches.isEmpty) {
-      return;
-    }
-
-    final project = matches.first;
-
-    await projectCubit.clearUnreadCount(project.id);
-
-    if (!mounted) {
-      return;
-    }
-
-    if (project.id == widget.project.id) {
-      return;
-    }
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(
-              value: projectCubit,
-            ),
-            BlocProvider<MessageCubit>(
-              create: (_) {
-                final cubit = di.sl<MessageCubit>();
-                cubit.loadMessages(project.id);
-                return cubit;
-              },
-            ),
-            BlocProvider.value(
-              value: personCubit,
-            ),
-            BlocProvider(
-              create: (_) => di.sl<SimulatedNotificationCubit>(),
-            ),
-          ],
-          child: BlocProvider(
-            create: (_) => di.sl<SimulatedNotificationCubit>(),
-            child: ConversationPage(
-              project: project,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (mounted) {
-      await projectCubit.loadProjects();
-    }
-  }
-
-  Future<void> _triggerReplayNotification() async {
-    final notificationCubit = di.sl<NotificationCubit>();
-
-    await notificationCubit.loadNotifications();
-
-    if (!mounted) {
-      return;
-    }
-
-    final notifications = notificationCubit.state.notifications;
-
-    if (notifications.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No replay notifications have been created yet.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    final selectedNotification =
-        await showModalBottomSheet<notification_entity.Notification>(
-      context: context,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(
-                  'Trigger Replay Notification',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              ...notifications.map(
-                (notification) {
-                  return ListTile(
-                    leading: const Icon(
-                      Icons.notifications_outlined,
-                    ),
-                    title: Text(
-                      notification.senderName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      notification.messageText.isEmpty
-                          ? 'Photo'
-                          : notification.messageText,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop(notification);
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (!mounted || selectedNotification == null) {
-      return;
-    }
-
-    final project = await context
-        .read<ProjectCubit>()
-        .findProject(selectedNotification.projectId);
-
-    if (project == null) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'The conversation for this notification no longer exists.',
-          ),
-        ),
-      );
-
-      return;
-    }
-
-    // ------------------------------------------------------------
-    // DETERMINE WHERE THE NOTIFICATION SHOULD APPEAR IN REPLAY
-    // ------------------------------------------------------------
-
-    final messageState = context.read<MessageCubit>().state;
-
-    int triggerMessageIndex = 0;
-
-    if (messageState is MessageLoaded) {
-      triggerMessageIndex = messageState.messages.length;
-    }
-
-    final messageCubit = context.read<MessageCubit>();
-
-    final added = await messageCubit.addNotificationMessage(
-      projectId: selectedNotification.projectId,
-      messageId: selectedNotification.messageId,
-      senderId: selectedNotification.senderId,
-      senderName: selectedNotification.senderName,
-      text: selectedNotification.messageText,
-      imagePath: selectedNotification.imagePath,
-    );
-
-    if (!added) {
-      return;
-    }
-    final message = Message(
-      id: selectedNotification.messageId,
-      projectId: selectedNotification.projectId,
-      senderId: selectedNotification.senderId,
-      senderName: selectedNotification.senderName,
-      text: selectedNotification.messageText,
-      imagePath: selectedNotification.imagePath,
-      createdAt: DateTime.now(),
-      status: MessageStatus.delivered,
-      isUnread: true,
-    );
-
-    await context.read<ProjectCubit>().recordIncomingMessage(
-          projectId: selectedNotification.projectId,
-          message: message,
-        );
-
-    if (!mounted) {
-      return;
-    }
-    // ------------------------------------------------------------
-    // SHOW THE SIMULATED NOTIFICATION
-    // ------------------------------------------------------------
-
-    _simulatedNotificationCubit.triggerSavedNotification(
-      selectedNotification,
-      triggerMessageIndex: triggerMessageIndex,
-    );
-  }
-
   void _openCreateNotification() {
     final projectState = context.read<ProjectCubit>().state;
     final personState = context.read<PersonCubit>().state;
 
-    if (projectState is! ProjectLoaded) {
-      return;
-    }
-
-    if (personState is! PersonLoaded) {
-      return;
-    }
+    if (projectState is! ProjectLoaded) return;
+    if (personState is! PersonLoaded) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(
           providers: [
-            BlocProvider.value(
-              value: context.read<ProjectCubit>(),
-            ),
-            BlocProvider.value(
-              value: context.read<PersonCubit>(),
-            ),
-            BlocProvider.value(
-              value: context.read<MessageCubit>(),
-            ),
+            BlocProvider.value(value: context.read<ProjectCubit>()),
+            BlocProvider.value(value: context.read<PersonCubit>()),
+            BlocProvider.value(value: context.read<MessageCubit>()),
             BlocProvider(
               create: (_) => di.sl<NotificationCubit>()..loadNotifications(),
             ),
@@ -319,19 +87,20 @@ class _ConversationPageState extends State<ConversationPage> {
     super.initState();
 
     _simulatedNotificationCubit = di.sl<SimulatedNotificationCubit>();
+    _notificationActions = ConversationNotificationActions(
+      context: context,
+      currentProject: widget.project,
+      simulatedNotificationCubit: _simulatedNotificationCubit,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final body = _bodyKey.currentState;
 
       if (body != null) {
-        context.read<PersonCubit>().setPersonOnline(
-              body.selectedSenderId,
-            );
+        context.read<PersonCubit>().setPersonOnline(body.selectedSenderId);
       }
 
-      context.read<ProjectCubit>().clearUnreadCount(
-            widget.project.id,
-          );
+      context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
     });
   }
 
@@ -352,9 +121,9 @@ class _ConversationPageState extends State<ConversationPage> {
             final body = _bodyKey.currentState;
 
             if (body != null) {
-              context.read<PersonCubit>().setPersonOffline(
-                    body.selectedSenderId,
-                  );
+              context
+                  .read<PersonCubit>()
+                  .setPersonOffline(body.selectedSenderId);
             }
 
             await context.read<ProjectCubit>().loadProjects();
@@ -381,7 +150,8 @@ class _ConversationPageState extends State<ConversationPage> {
                 );
               },
               onCreateNotification: _openCreateNotification,
-              onTriggerNotification: _triggerReplayNotification,
+              onTriggerNotification:
+                  _notificationActions.triggerReplayNotification,
               selectedMessageIds: _selectedMessageIds,
               onReplySelected: (message) {
                 _bodyKey.currentState?.setReplyingTo(message);
@@ -409,7 +179,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   left: 0,
                   right: 0,
                   child: SimulatedNotificationBanner(
-                    onTap: _onNotificationTapped,
+                    onTap: _notificationActions.onNotificationTapped,
                   ),
                 ),
               ],
