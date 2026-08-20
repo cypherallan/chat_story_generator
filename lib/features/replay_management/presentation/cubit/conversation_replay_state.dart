@@ -43,23 +43,18 @@ class ConversationReplayState extends Equatable {
   final SimulatedNotification? replayNotification;
   final ReplayNotificationInteraction replayNotificationInteraction;
   final int? replayNotificationMessageCount;
-
   final DateTime? replayStartTime;
   final DateTime? replayEndTime;
   final DateTime? availableStartTime;
   final DateTime? availableEndTime;
   final ReplayStartMethod replayStartMethod;
   final String? replayStartMessageId;
-
-  // Swipe + reply preview
   final String? swipingMessageId;
   final double swipeOffset;
   final String? replyPreviewText;
   final String? replyPreviewSenderName;
-
-  // NEW – selection driven by cubit (for visual long-press + delete)
   final Set<String> selectedMessageIds;
-  final bool deleteIconPressed; // true while the delete icon is being “tapped”
+  final bool deleteIconPressed; 
   final bool showDeleteConfirmation;
   final bool deleteDialogVisible;
   final bool deleteCancelPressed;

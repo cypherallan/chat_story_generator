@@ -37,10 +37,6 @@ abstract class _ConversationReplayCubitBase
     _persons = List<Person>.from(persons);
   }
 
-  // ===========================================================================
-  // SHARED REPLAY DATA
-  // ===========================================================================
-
   final List<Message> _messages = [];
   int _replayStartIndex = 0;
 

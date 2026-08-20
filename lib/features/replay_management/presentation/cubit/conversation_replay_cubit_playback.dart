@@ -7,11 +7,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (state.playing || state.finished) {
       return;
     }
-
-    // ------------------------------------------------------------
-    // DETERMINE REPLAY START POSITION
-    // ------------------------------------------------------------
-
     if (state.replayStartMethod == ReplayStartMethod.time) {
       if (state.replayStartTime != null) {
         _replayStartIndex = _messages.indexWhere(
@@ -27,18 +22,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         _replayStartIndex = 0;
       }
     }
-
-    // ------------------------------------------------------------
-    // MESSAGE MODE
-    // ------------------------------------------------------------
-    //
-    // The start index was already calculated by
-    // setReplayStartMessage().
-    //
-    // The selected message is already visible, so replay starts
-    // with the message immediately after it.
-    // ------------------------------------------------------------
-
     _replayNotificationShown = false;
 
     emit(
@@ -108,10 +91,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       return;
     }
 
-    // ------------------------------------------------------------
-    // START FROM SELECTED REPLAY POSITION
-    // ------------------------------------------------------------
-
     if (state.currentIndex < _replayStartIndex) {
       emit(
         state.copyWith(
@@ -120,20 +99,12 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       );
     }
 
-    // ------------------------------------------------------------
-    // REPLAY NOTIFICATION EVENT
-    // ------------------------------------------------------------
-
     if (_replayNotificationMessageCount != null &&
         state.currentIndex == _replayNotificationMessageCount &&
         !_replayNotificationShown) {
       _replayNotification();
       return;
     }
-
-    // ------------------------------------------------------------
-    // REPLAY FINISHED
-    // ------------------------------------------------------------
 
     if (state.currentIndex >= _messages.length) {
       emit(
@@ -186,10 +157,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
   }
 
-  // ============================================================
-  // RECORDED TAP
-  // ============================================================
-
   Future<void> _handleReplayNotificationTap() async {
     _timer?.cancel();
 
@@ -214,10 +181,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
   }
 
-  // ============================================================
-  // RECORDED SWIPE
-  // ============================================================
-
   void _handleReplayNotificationSwipe() {
     _timer?.cancel();
 
@@ -227,9 +190,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         replayNotificationInteraction: ReplayNotificationInteraction.swiped,
       ),
     );
-
-    // The notification was already swiped in the normal
-    // conversation. Replay only reproduces that visual result.
     notificationCubit.hideNotificationPreserveInteraction();
 
     _timer = Timer(
@@ -237,10 +197,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       _playNext,
     );
   }
-
-  // ============================================================
-  // SHOW RECORDED NOTIFICATION
-  // ============================================================
 
   void _replayNotification() {
     _replayNotificationShown = true;
@@ -262,15 +218,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         replayNotificationInteraction: ReplayNotificationInteraction.none,
       ),
     );
-
-    // ------------------------------------------------------------
-    // REPRODUCE THE INTERACTION THAT WAS RECORDED IN THE
-    // ORIGINAL / NORMAL CONVERSATION.
-    //
-    // IMPORTANT:
-    // The replay viewer does NOT interact with the banner.
-    // ------------------------------------------------------------
-
     switch (notificationCubit.interaction) {
       case NotificationInteraction.tapped:
         _timer = Timer(
@@ -300,13 +247,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
       case NotificationInteraction.expired:
       case NotificationInteraction.none:
-        // ----------------------------------------------------------
-        // Notification was ignored.
-        //
-        // Let the viewer see it for a few seconds, then remove it
-        // and CONTINUE THE ORIGINAL REPLAY.
-        // ----------------------------------------------------------
-
         _timer = Timer(
           const Duration(seconds: 3),
           () {
@@ -331,10 +271,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         break;
     }
   }
-
-  // ============================================================
-  // OTHER PERSON MESSAGE
-  // ============================================================
 
   void _typeOtherPersonMessage(Message message) {
     final delay = _humanTypingDuration(

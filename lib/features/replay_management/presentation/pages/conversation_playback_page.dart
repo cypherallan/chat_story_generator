@@ -213,20 +213,12 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
               return;
             }
 
-            // ------------------------------------------------------------
-            // LOAD THE COMPLETE CONVERSATION FIRST
-            // ------------------------------------------------------------
-
             _replayCubit.load(
               messages,
               widget.ownerId,
               personState.persons,
               project.id,
             );
-
-            // ------------------------------------------------------------
-            // ASK HOW THE REPLAY SHOULD START
-            // ------------------------------------------------------------
 
             final selection = await showReplayStartSelection(
               context,
@@ -236,10 +228,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
             if (!mounted || selection == null) {
               return;
             }
-
-            // ------------------------------------------------------------
-            // APPLY THE SELECTED START METHOD
-            // ------------------------------------------------------------
 
             if (selection.choice == ReplayStartChoice.time) {
               final startTime = selection.startTime;
@@ -258,10 +246,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
 
               _replayCubit.setReplayStartMessage(messageId);
             }
-
-            // ------------------------------------------------------------
-            // OPEN THE CONVERSATION
-            // ------------------------------------------------------------
 
             _replayCubit.openConversation(
               project.id,

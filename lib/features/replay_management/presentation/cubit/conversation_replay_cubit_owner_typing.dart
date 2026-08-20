@@ -64,7 +64,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
         lastPressedEmoji: null,
         shiftEnabled: true,
         shiftPressed: true,
-        // keep the reply preview while typing
       ),
     );
 
@@ -99,12 +98,7 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
       return;
     }
 
-    // ---------------------------------------------------------------
-    // FINISHED TYPING
-    // ---------------------------------------------------------------
-
     if (characterIndex >= characters.length) {
-      // Always show the original text first (even if the message was later deleted)
       final messageToShow = message.isDeleted
           ? message.copyWith(
               text: message.originalText ?? message.text,
@@ -143,10 +137,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
     }
 
     final character = characters[characterIndex];
-
-    // ---------------------------------------------------------------
-    // EMOJI
-    // ---------------------------------------------------------------
 
     if (_isEmoji(character)) {
       emit(
@@ -188,9 +178,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
                   if (!state.playing) return;
 
                   typedText += character;
-
-                  // IMPORTANT:
-                  // The emoji is now visible in the composer.
                   emit(
                     state.copyWith(
                       composerText: typedText,
@@ -213,10 +200,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
       return;
     }
 
-    // ---------------------------------------------------------------
-    // NORMAL CHARACTER
-    // ---------------------------------------------------------------
-
     final previousCharacter =
         characterIndex > 0 ? characters[characterIndex - 1] : '';
 
@@ -231,14 +214,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
 
     final shouldShift = isUppercaseMessage || isSentenceStart;
 
-    // Add the character to the text being visibly typed.
     typedText += character;
 
     final keyToShow = character == ' ' ? 'space' : character;
-
-    // IMPORTANT:
-    // composerText is updated here, so the user sees the text
-    // appearing character-by-character.
     emit(
       state.copyWith(
         composerText: typedText,

@@ -117,10 +117,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     showHome();
   }
 
-  // ============================================================
-  // REPLAY START TIME
-  // ============================================================
-
   void setReplayStartTime(DateTime startTime) {
     final availableStart = state.availableStartTime;
     final availableEnd = state.availableEndTime;
@@ -129,7 +125,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
       return;
     }
 
-    // Keep the selected time inside the conversation's range.
     var selectedTime = startTime;
 
     if (selectedTime.isBefore(availableStart)) {
@@ -145,10 +140,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
           (message) => message.createdAt.isBefore(selectedTime),
         )
         .toList();
-
-    // ------------------------------------------------------------
-    // FIND THE FIRST MESSAGE THAT SHOULD ACTUALLY BE REPLAYED
-    // ------------------------------------------------------------
 
     var firstReplayIndex = _messages.indexWhere(
       (message) => !message.createdAt.isBefore(selectedTime),
@@ -185,9 +176,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     }
 
     final selectedMessage = _messages[index];
-
-    // The selected message is the last message already visible.
-    // Replay begins with the message immediately after it.
     _replayStartIndex = index + 1;
 
     final loadedMessages = _messages.take(index + 1).toList();
@@ -197,11 +185,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
         replayStartMethod: ReplayStartMethod.message,
         replayStartMessageId: selectedMessage.id,
         replayStartTime: selectedMessage.createdAt,
-
-        // Show all history through the selected message.
         visibleMessages: loadedMessages,
-
-        // First message to be replayed.
         currentIndex: _replayStartIndex,
 
         playing: false,
