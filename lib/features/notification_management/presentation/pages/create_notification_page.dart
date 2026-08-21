@@ -268,8 +268,14 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
                   labelText: 'Contact sending notification',
                   border: OutlineInputBorder(),
                 ),
-                items: widget.persons
-                    .where((person) => person.id != widget.currentPersonId)
+                items: (widget.persons
+                        .where((person) => person.id != widget.currentPersonId)
+                        .toList()
+                      ..sort(
+                        (a, b) => a.name.toLowerCase().compareTo(
+                              b.name.toLowerCase(),
+                            ),
+                      ))
                     .map(
                       (person) => DropdownMenuItem<String>(
                         value: person.id,

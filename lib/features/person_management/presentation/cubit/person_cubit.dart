@@ -59,6 +59,39 @@ class PersonCubit extends Cubit<PersonState> {
     );
   }
 
+  Future<void> togglePersonPin(String personId) async {
+    if (state is! PersonLoaded) return;
+
+    final persons = List<Person>.from((state as PersonLoaded).persons);
+
+    final index = persons.indexWhere(
+      (person) => person.id == personId,
+    );
+
+    if (index == -1) return;
+
+    final person = persons[index];
+
+    final updatedPerson = person.copyWith(
+      isPinned: !person.isPinned,
+    );
+
+    // Change the UI immediately.
+    persons[index] = updatedPerson;
+    emit(PersonLoaded(persons));
+
+    // Save the change to Firestore.
+    final result = await updatePerson(updatedPerson);
+
+    result.fold(
+      (failure) {
+        // Restore the real Firestore state if saving failed.
+        loadPersons();
+      },
+      (_) {},
+    );
+  }
+
   Future<void> loadPersons() async {
     if (isClosed) return;
 

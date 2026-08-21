@@ -40,17 +40,35 @@ class _HomePageState extends State<HomePage> {
   }
 
   Person? _getCurrentPerson(List<Person> persons) {
-    if (_currentPersonId == null) {
-      return persons.isEmpty ? null : persons.first;
+    if (persons.isEmpty) {
+      return null;
     }
 
-    for (final person in persons) {
-      if (person.id == _currentPersonId) {
-        return person;
+    // If the user has already selected an owner,
+    // keep that person as the current owner.
+    if (_currentPersonId != null) {
+      for (final person in persons) {
+        if (person.id == _currentPersonId) {
+          return person;
+        }
       }
     }
 
-    return persons.isEmpty ? null : persons.first;
+    // No owner selected yet:
+    // choose the alphabetically first pinned contact.
+    final pinnedPersons = persons.where((person) => person.isPinned).toList()
+      ..sort(
+        (a, b) => a.name.toLowerCase().compareTo(
+              b.name.toLowerCase(),
+            ),
+      );
+
+    if (pinnedPersons.isNotEmpty) {
+      return pinnedPersons.first;
+    }
+
+    // If nobody is pinned, keep the old fallback.
+    return persons.first;
   }
 
   void _selectCurrentPerson(
@@ -60,6 +78,19 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) {
+        final sortedPersons = List<Person>.from(persons)
+          ..sort((a, b) {
+            // Pinned contacts first.
+            if (a.isPinned != b.isPinned) {
+              return a.isPinned ? -1 : 1;
+            }
+
+            // Then alphabetical.
+            return a.name.toLowerCase().compareTo(
+                  b.name.toLowerCase(),
+                );
+          });
+
         return SafeArea(
           child: ListView(
             shrinkWrap: true,
@@ -74,7 +105,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              ...persons.map(
+              ...sortedPersons.map(
                 (person) {
                   final isSelected = person.id == _currentPersonId;
 
@@ -87,7 +118,47 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     title: Text(person.name),
-                    trailing: isSelected ? const Icon(Icons.check) : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip:
+                              person.isPinned ? 'Unpin contact' : 'Pin contact',
+                          icon: Icon(
+                            person.isPinned
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
+                            color: person.isPinned ? Colors.blue : null,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+
+                            context
+                                .read<PersonCubit>()
+                                .togglePersonPin(person.id);
+
+                            // Reopen the list so the new ordering is visible.
+                            Future.microtask(() {
+                              if (!mounted) return;
+
+                              final personState =
+                                  context.read<PersonCubit>().state;
+
+                              if (personState is PersonLoaded) {
+                                _selectCurrentPerson(
+                                  context,
+                                  personState.persons,
+                                );
+                              }
+                            });
+                          },
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check,
+                          ),
+                      ],
+                    ),
                     onTap: () {
                       setState(() {
                         _currentPersonId = person.id;

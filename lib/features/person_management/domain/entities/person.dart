@@ -7,9 +7,11 @@ class Person extends Equatable {
   final String? bio;
   final bool isVerified;
 
-  // NEW
   final bool isOnline;
   final DateTime? lastSeen;
+
+  // Pinned contacts appear first in owner selection.
+  final bool isPinned;
 
   const Person({
     required this.id,
@@ -17,10 +19,9 @@ class Person extends Equatable {
     this.avatarPath,
     this.bio,
     this.isVerified = false,
-
-    // NEW
     this.isOnline = false,
     this.lastSeen,
+    this.isPinned = false,
   });
 
   Person copyWith({
@@ -29,10 +30,9 @@ class Person extends Equatable {
     String? avatarPath,
     String? bio,
     bool? isVerified,
-
-    // NEW
     bool? isOnline,
     DateTime? lastSeen,
+    bool? isPinned,
   }) {
     return Person(
       id: id ?? this.id,
@@ -42,6 +42,7 @@ class Person extends Equatable {
       isVerified: isVerified ?? this.isVerified,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
+      isPinned: isPinned ?? this.isPinned,
     );
   }
 
@@ -54,5 +55,6 @@ class Person extends Equatable {
         isVerified,
         isOnline,
         lastSeen,
+        isPinned,
       ];
 }
