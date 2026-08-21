@@ -39,7 +39,6 @@ class FirebaseStorageService {
 
       return await ref.getDownloadURL();
     } catch (e) {
-      print("STORAGE ERROR: $e");
       return null;
     }
   }
@@ -76,7 +75,6 @@ class FirebaseStorageService {
 
       return await ref.getDownloadURL();
     } catch (e) {
-      print('MESSAGE IMAGE STORAGE ERROR: $e');
       return null;
     }
   }

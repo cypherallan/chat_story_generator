@@ -51,16 +51,6 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
           .toList()
         ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
 
-      print('=== RECORDED EVENTS FOR PROJECT $projectId ===');
-      print('Total relevant events: ${relevantEvents.length}');
-      for (final e in relevantEvents) {
-        print('  sourceIndex=${e.sourceTriggerIndex}, '
-            'target=${e.notification.projectId}, '
-            'interaction=${e.interaction}, '
-            'targetVisibleCount=${e.targetVisibleCount}');
-      }
-      print('==============================================');
-
       for (final e in relevantEvents) {
         _replayNotificationEvents.add(
           ReplayNotificationEvent(
@@ -75,13 +65,10 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
         _replayNotificationMessageCount =
             _replayNotificationEvents.first.triggerIndex;
       }
-    } catch (e, st) {
-      print('ERROR building replay notification events: $e');
-      print(st);
+    } catch (_) {
       _replayNotificationEvents = [];
     }
-// -----------------------------------------------------------------------
-    // ------------------------------------------------
+    // -----------------------------------------------------------------------
 
     final Set<String> emojiSet = {};
     for (final message in messages) {
@@ -91,15 +78,6 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
         }
       }
     }
-    print('=== REPLAY NOTIFICATIONS LOADED ===');
-    print('Project ID: $projectId');
-    print('Total events: ${_replayNotificationEvents.length}');
-    for (final e in _replayNotificationEvents) {
-      print('  → triggerIndex=${e.triggerIndex}, '
-          'messageId=${e.notification.messageId}, '
-          'interaction=${e.interaction}');
-    }
-    print('===================================');
 
     emit(
       ConversationReplayState(
@@ -110,7 +88,6 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
         replayStartTime: availableStartTime,
         replayEndTime: availableEndTime,
         visibleMessages: initialVisibleMessages,
-        // keep the old field for now (can be removed later)
         replayNotificationMessageCount: _replayNotificationMessageCount,
       ),
     );

@@ -225,9 +225,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   void _replayNotificationEvent(ReplayNotificationEvent event) {
-    print('>>> FIRING notification at index ${event.triggerIndex}, '
-        'interaction=${event.interaction}');
-
     _nextNotificationEventIndex++;
 
     // Show the banner with NO interaction yet
