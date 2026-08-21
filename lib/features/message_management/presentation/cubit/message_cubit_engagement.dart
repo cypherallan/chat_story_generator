@@ -51,6 +51,46 @@ mixin MessageCubitEngagementMixin on Cubit<MessageState> {
     emit(MessageLoaded(updatedMessages));
   }
 
+  /// Marks the current user's delivered messages as read when
+  /// the other person starts typing.
+  Future<void> markOutgoingMessagesAsRead({
+    required String projectId,
+    required String currentUserId,
+  }) async {
+    if (state is! MessageLoaded) return;
+
+    final currentMessages =
+        List<Message>.from((state as MessageLoaded).messages);
+
+    final updatedMessages = <Message>[];
+
+    for (final message in currentMessages) {
+      if (message.projectId != projectId ||
+          message.senderId != currentUserId ||
+          message.status != MessageStatus.delivered) {
+        updatedMessages.add(message);
+        continue;
+      }
+
+      final updatedMessage = message.copyWith(
+        status: MessageStatus.read,
+      );
+
+      final result = await updateMessage(updatedMessage);
+
+      result.fold(
+        (_) {
+          updatedMessages.add(message);
+        },
+        (_) {
+          updatedMessages.add(updatedMessage);
+        },
+      );
+    }
+
+    emit(MessageLoaded(updatedMessages));
+  }
+
   Future<void> editMessage(Message message) async {
     final result = await updateMessage(message);
     result.fold(

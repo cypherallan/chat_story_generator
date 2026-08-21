@@ -231,6 +231,11 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                       otherPersonTyping = true;
                     });
 
+                    context.read<MessageCubit>().markOutgoingMessagesAsRead(
+                          projectId: widget.project.id,
+                          currentUserId: widget.project.ownerId,
+                        );
+
                     _notifyParent();
                     return;
                   }
