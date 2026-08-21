@@ -229,12 +229,12 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         'interaction=${event.interaction}');
 
     _nextNotificationEventIndex++;
-    // ... rest of the method stays the same
 
+    // Show the banner with NO interaction yet
     emit(
       state.copyWith(
         replayNotification: event.notification,
-        replayNotificationInteraction: _mapInteraction(event.interaction),
+        replayNotificationInteraction: ReplayNotificationInteraction.none,
       ),
     );
 
@@ -242,7 +242,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       case NotificationInteraction.tapped:
         _timer = Timer(const Duration(seconds: 3), () {
           if (!state.playing) return;
-          _handleReplayNotificationTap(event); // ← pass the event
+          _handleReplayNotificationTap(event);
         });
         break;
 
@@ -269,19 +269,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           _timer = Timer(const Duration(milliseconds: 300), _playNext);
         });
         break;
-    }
-  }
-
-  ReplayNotificationInteraction _mapInteraction(NotificationInteraction i) {
-    switch (i) {
-      case NotificationInteraction.tapped:
-        return ReplayNotificationInteraction.tapped;
-      case NotificationInteraction.swiped:
-        return ReplayNotificationInteraction.swiped;
-      case NotificationInteraction.expired:
-        return ReplayNotificationInteraction.expired;
-      case NotificationInteraction.none:
-        return ReplayNotificationInteraction.none;
     }
   }
 
