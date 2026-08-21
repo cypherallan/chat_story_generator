@@ -2,30 +2,8 @@ import 'package:equatable/equatable.dart';
 
 class Notification extends Equatable {
   final String id;
-
-  /// The conversation from which the notification was created/triggered.
-  ///
-  /// Example:
-  /// Mbappe is currently inside Allan's conversation.
-  /// This will be Allan's project ID.
   final String projectId;
-
-  /// Kept for the notification itself.
-  ///
-  /// This does NOT need to exist in the replay conversation.
   final String messageId;
-
-  /// The position in the triggering conversation where this
-  /// notification should appear during replay.
-  ///
-  /// Example:
-  /// Allan conversation has:
-  ///   0 = Hi Allan
-  ///   1 = Hi Mbappe
-  ///   2 = How is the going man
-  ///
-  /// If the notification was triggered before message 2,
-  /// this value is 2.
   final int? triggerMessageIndex;
 
   final String senderId;

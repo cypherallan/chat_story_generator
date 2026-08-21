@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../../notification_management/domain/entities/simulated_notification.dart';
 import '../../../message_management/domain/entities/message.dart';
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart'; // ← add this
 
 enum ReplayScreen {
   home,
@@ -24,6 +25,18 @@ enum ReplayVisualInteraction {
   notificationTap,
   notificationSwipe,
   backTap,
+}
+
+class ReplayNotificationEvent {
+  final SimulatedNotification notification;
+  final int triggerIndex;
+  final NotificationInteraction interaction;
+
+  const ReplayNotificationEvent({
+    required this.notification,
+    required this.triggerIndex,
+    required this.interaction,
+  });
 }
 
 class ConversationReplayState extends Equatable {

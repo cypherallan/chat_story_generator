@@ -14,14 +14,53 @@ enum NotificationInteraction {
   expired,
 }
 
+class RecordedNotificationEvent {
+  final String sourceProjectId;
+  final int sourceTriggerIndex;
+  final SimulatedNotification notification;
+  final NotificationInteraction interaction;
+  final int
+      targetVisibleCount; // how many messages the target chat had when opened
+
+  const RecordedNotificationEvent({
+    required this.sourceProjectId,
+    required this.sourceTriggerIndex,
+    required this.notification,
+    required this.interaction,
+    required this.targetVisibleCount,
+  });
+
+  RecordedNotificationEvent copyWith({
+    String? sourceProjectId,
+    int? sourceTriggerIndex,
+    SimulatedNotification? notification,
+    NotificationInteraction? interaction,
+    int? targetVisibleCount,
+  }) {
+    return RecordedNotificationEvent(
+      sourceProjectId: sourceProjectId ?? this.sourceProjectId,
+      sourceTriggerIndex: sourceTriggerIndex ?? this.sourceTriggerIndex,
+      notification: notification ?? this.notification,
+      interaction: interaction ?? this.interaction,
+      targetVisibleCount: targetVisibleCount ?? this.targetVisibleCount,
+    );
+  }
+}
+
 class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   SimulatedNotificationCubit() : super(const SimulatedNotificationState());
 
   Timer? _hideTimer;
 
-  // Records what happened to the notification in the normal conversation.
+// Records what happened to the notification in the normal conversation.
   NotificationInteraction _interaction = NotificationInteraction.none;
   SimulatedNotification? _recordedNotification;
+
+// ---------- NEW: multi-event recording ----------
+  final List<RecordedNotificationEvent> _recordedEvents = [];
+  String? _pendingSourceProjectId;
+  int? _pendingSourceTriggerIndex;
+// -----------------------------------------------
 
   NotificationInteraction get interaction => _interaction;
   SimulatedNotification? get recordedNotification => _recordedNotification;
@@ -31,32 +70,65 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   bool get hasRecordedInteraction =>
       _interaction != NotificationInteraction.none;
 
+// ---------- NEW getters ----------
+  List<RecordedNotificationEvent> get recordedEvents =>
+      List.unmodifiable(_recordedEvents);
+
+  void clearRecordedEvents() {
+    _recordedEvents.clear();
+    _pendingSourceProjectId = null;
+    _pendingSourceTriggerIndex = null;
+  }
+// ---------------------------------;
+
   // ---------------------------------------------------------------------------
   // RECORDED NOTIFICATION ACTIONS
   // ---------------------------------------------------------------------------
 
-  void recordTap() {
+  void recordTap({int targetVisibleCount = 0}) {
     if (isClosed) return;
 
     _interaction = NotificationInteraction.tapped;
-
+    _completePendingEvent(targetVisibleCount);
     hideNotification();
   }
 
-  void recordSwipe() {
+  void recordSwipe({int targetVisibleCount = 0}) {
     if (isClosed) return;
 
     _interaction = NotificationInteraction.swiped;
-
+    _completePendingEvent(targetVisibleCount);
     hideNotification();
   }
 
-  void recordExpired() {
+  void recordExpired({int targetVisibleCount = 0}) {
     if (isClosed) return;
 
     _interaction = NotificationInteraction.expired;
-
+    _completePendingEvent(targetVisibleCount);
     hideNotification();
+  }
+
+  void _completePendingEvent(int targetVisibleCount) {
+    if (_pendingSourceProjectId == null ||
+        _pendingSourceTriggerIndex == null ||
+        _recordedNotification == null) {
+      return;
+    }
+
+    _recordedEvents.add(
+      RecordedNotificationEvent(
+        sourceProjectId: _pendingSourceProjectId!,
+        sourceTriggerIndex: _pendingSourceTriggerIndex!,
+        notification: _recordedNotification!,
+        interaction: _interaction,
+        targetVisibleCount: targetVisibleCount,
+      ),
+    );
+
+    // Clear pending so the next notification starts fresh
+    _pendingSourceProjectId = null;
+    _pendingSourceTriggerIndex = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -66,6 +138,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   void triggerSavedNotification(
     notification_entity.Notification notification, {
     int? triggerMessageIndex,
+    String? sourceProjectId, // NEW
+    int? sourceTriggerIndex, // NEW
   }) {
     if (isClosed) return;
 
@@ -81,6 +155,10 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       imagePath: notification.imagePath,
       createdAt: DateTime.now(),
     );
+
+    // Remember the source context for later completion of the event
+    _pendingSourceProjectId = sourceProjectId;
+    _pendingSourceTriggerIndex = sourceTriggerIndex;
 
     triggerNotification(simulatedNotification);
   }
@@ -192,9 +270,14 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     _hideTimer?.cancel();
     _hideTimer = null;
 
-    emit(
-      const SimulatedNotificationState(),
-    );
+    _interaction = NotificationInteraction.none;
+    _recordedNotification = null;
+    _pendingSourceProjectId = null;
+    _pendingSourceTriggerIndex = null;
+    // NOTE: we deliberately do NOT clear _recordedEvents here
+    // so that the playback page can still read them.
+
+    emit(const SimulatedNotificationState());
   }
 
   // ---------------------------------------------------------------------------

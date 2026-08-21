@@ -48,6 +48,11 @@ abstract class _ConversationReplayCubitBase
 
   int? _replayNotificationMessageCount;
 
+// ↓↓↓ PASTE HERE ↓↓↓
+  List<ReplayNotificationEvent> _replayNotificationEvents = [];
+  int _nextNotificationEventIndex = 0;
+// ↑↑↑ END ↑↑↑
+
   String _ownerId = '';
 
   String get ownerId => _ownerId;

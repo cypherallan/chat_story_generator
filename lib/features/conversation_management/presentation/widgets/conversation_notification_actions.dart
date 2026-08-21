@@ -31,6 +31,7 @@ class ConversationNotificationActions {
   ) async {
     final projectCubit = context.read<ProjectCubit>();
     final personCubit = context.read<PersonCubit>();
+    final messageCubit = context.read<MessageCubit>();
 
     final projectState = projectCubit.state;
 
@@ -55,8 +56,15 @@ class ConversationNotificationActions {
     }
 
     if (project.id == currentProject.id) {
+      // Same conversation – just record the tap with current message count
+      final currentCount = messageCubit.state is MessageLoaded
+          ? (messageCubit.state as MessageLoaded).messages.length
+          : 0;
+      simulatedNotificationCubit.recordTap(targetVisibleCount: currentCount);
       return;
     }
+    simulatedNotificationCubit.recordTap(targetVisibleCount: 0);
+    // -----------------------------------------------------------------
 
     await Navigator.push(
       context,
@@ -182,14 +190,27 @@ class ConversationNotificationActions {
     if (!context.mounted) {
       return;
     }
+// ------------------------------------------------------------
+// UPDATE THE PERSISTED NOTIFICATION WITH THE TRIGGER INDEX
+// ------------------------------------------------------------
 
-    // ------------------------------------------------------------
-    // SHOW THE SIMULATED NOTIFICATION
-    // ------------------------------------------------------------
+    final updatedNotification = selectedNotification.copyWith(
+      triggerMessageIndex: triggerMessageIndex,
+    );
+
+// Persist the trigger index so replay can use it later
+    await notificationCubit.updateNotification(updatedNotification);
+
+// ------------------------------------------------------------
+// SHOW THE SIMULATED NOTIFICATION
+// (now also records the SOURCE conversation context)
+// ------------------------------------------------------------
 
     simulatedNotificationCubit.triggerSavedNotification(
-      selectedNotification,
+      updatedNotification,
       triggerMessageIndex: triggerMessageIndex,
+      sourceProjectId: currentProject.id, // A/B
+      sourceTriggerIndex: triggerMessageIndex, // position in A/B
     );
   }
 }

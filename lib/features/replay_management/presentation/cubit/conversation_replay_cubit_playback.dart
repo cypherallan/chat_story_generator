@@ -1,8 +1,6 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
-  bool _replayNotificationShown = false;
-
   void play() {
     if (state.playing || state.finished) {
       return;
@@ -22,7 +20,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         _replayStartIndex = 0;
       }
     }
-    _replayNotificationShown = false;
+    _nextNotificationEventIndex = 0;
 
     emit(
       state.copyWith(
@@ -99,11 +97,14 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       );
     }
 
-    if (_replayNotificationMessageCount != null &&
-        state.currentIndex == _replayNotificationMessageCount &&
-        !_replayNotificationShown) {
-      _replayNotification();
-      return;
+    // Multi-notification support
+    if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
+      final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
+
+      if (state.currentIndex == nextEvent.triggerIndex) {
+        _replayNotificationEvent(nextEvent);
+        return;
+      }
     }
 
     if (state.currentIndex >= _messages.length) {
@@ -162,14 +163,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
   }
 
-  Future<void> _handleReplayNotificationTap() async {
+  Future<void> _handleReplayNotificationTap(
+      ReplayNotificationEvent event) async {
     _timer?.cancel();
-
-    final notification = notificationCubit.currentNotification;
-
-    if (notification == null) {
-      return;
-    }
 
     emit(
       state.copyWith(
@@ -181,18 +177,16 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       ),
     );
 
-    await Future.delayed(
-      const Duration(milliseconds: 350),
-    );
+    await Future.delayed(const Duration(milliseconds: 350));
 
-    if (isClosed) {
-      return;
-    }
+    if (isClosed) return;
 
     notificationCubit.hideNotificationPreserveInteraction();
 
+    // IMPORTANT: use the notification that belongs to THIS event
     await openConversationFromNotification(
-      projectId: notification.projectId,
+      projectId: event.notification.projectId,
+      notificationMessageId: event.notification.messageId, // ← new parameter
     );
   }
 
@@ -230,77 +224,64 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     );
   }
 
-  void _replayNotification() {
-    _replayNotificationShown = true;
+  void _replayNotificationEvent(ReplayNotificationEvent event) {
+    print('>>> FIRING notification at index ${event.triggerIndex}, '
+        'interaction=${event.interaction}');
 
-    final notification = notificationCubit.recordedNotification;
-
-    if (notification == null) {
-      _timer = Timer(
-        const Duration(milliseconds: 300),
-        _playNext,
-      );
-
-      return;
-    }
+    _nextNotificationEventIndex++;
+    // ... rest of the method stays the same
 
     emit(
       state.copyWith(
-        replayNotification: notification,
-        replayNotificationInteraction: ReplayNotificationInteraction.none,
+        replayNotification: event.notification,
+        replayNotificationInteraction: _mapInteraction(event.interaction),
       ),
     );
-    switch (notificationCubit.interaction) {
-      case NotificationInteraction.tapped:
-        _timer = Timer(
-          const Duration(seconds: 3),
-          () {
-            if (!state.playing) {
-              return;
-            }
 
-            _handleReplayNotificationTap();
-          },
-        );
+    switch (event.interaction) {
+      case NotificationInteraction.tapped:
+        _timer = Timer(const Duration(seconds: 3), () {
+          if (!state.playing) return;
+          _handleReplayNotificationTap(event); // ← pass the event
+        });
         break;
 
       case NotificationInteraction.swiped:
-        _timer = Timer(
-          const Duration(seconds: 3),
-          () {
-            if (!state.playing) {
-              return;
-            }
-
-            _handleReplayNotificationSwipe();
-          },
-        );
+        _timer = Timer(const Duration(seconds: 3), () {
+          if (!state.playing) return;
+          _handleReplayNotificationSwipe();
+        });
         break;
 
       case NotificationInteraction.expired:
       case NotificationInteraction.none:
-        _timer = Timer(
-          const Duration(seconds: 3),
-          () {
-            if (!state.playing) {
-              return;
-            }
+        _timer = Timer(const Duration(seconds: 3), () {
+          if (!state.playing) return;
 
-            emit(
-              state.copyWith(
-                replayNotification: null,
-                replayNotificationInteraction:
-                    ReplayNotificationInteraction.expired,
-              ),
-            );
+          emit(
+            state.copyWith(
+              replayNotification: null,
+              replayNotificationInteraction:
+                  ReplayNotificationInteraction.expired,
+            ),
+          );
 
-            _timer = Timer(
-              const Duration(milliseconds: 300),
-              _playNext,
-            );
-          },
-        );
+          _timer = Timer(const Duration(milliseconds: 300), _playNext);
+        });
         break;
+    }
+  }
+
+  ReplayNotificationInteraction _mapInteraction(NotificationInteraction i) {
+    switch (i) {
+      case NotificationInteraction.tapped:
+        return ReplayNotificationInteraction.tapped;
+      case NotificationInteraction.swiped:
+        return ReplayNotificationInteraction.swiped;
+      case NotificationInteraction.expired:
+        return ReplayNotificationInteraction.expired;
+      case NotificationInteraction.none:
+        return ReplayNotificationInteraction.none;
     }
   }
 

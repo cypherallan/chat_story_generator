@@ -85,6 +85,7 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
   Future<void> openConversationFromNotification({
     required String projectId,
+    String? notificationMessageId, // ← NEW optional parameter
   }) async {
     _pauseDeletionTimer();
     _timer?.cancel();
@@ -100,78 +101,92 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     final result = await getMessages(projectId).first;
 
-    result.fold(
-      (failure) {
-        emit(
-          state.copyWith(
-            screen: ReplayScreen.conversation,
-            currentProjectId: projectId,
-            visibleMessages: const [],
-            currentIndex: 0,
-            playing: false,
-            paused: true,
-            finished: true,
-          ),
+    result.fold((failure) {
+      emit(
+        state.copyWith(
+          screen: ReplayScreen.conversation,
+          currentProjectId: projectId,
+          visibleMessages: const [],
+          currentIndex: 0,
+          playing: false,
+          paused: true,
+          finished: true,
+        ),
+      );
+    }, (messages) {
+      _messages
+        ..clear()
+        ..addAll(messages);
+
+      // ---------- Determine start index from the specific notification ----------
+      var replyStartIndex = 0;
+
+      final messageIdToFind = notificationMessageId ??
+          notificationCubit.currentNotification?.messageId;
+
+      if (messageIdToFind != null) {
+        final notificationIndex = _messages.indexWhere(
+          (message) => message.id == messageIdToFind,
         );
-      },
-      (messages) {
-        _messages
-          ..clear()
-          ..addAll(messages);
 
-        final notification = notificationCubit.currentNotification;
-
-        var replyStartIndex = 0;
-
-        if (notification != null) {
-          final notificationIndex = _messages.indexWhere(
-            (message) => message.id == notification.messageId,
-          );
-
-          if (notificationIndex != -1) {
-            replyStartIndex = notificationIndex + 1;
-          }
+        if (notificationIndex != -1) {
+          replyStartIndex = notificationIndex + 1;
         }
+      }
+      // ------------------------------------------------------------------------
 
-        _replayStartIndex = replyStartIndex;
-        _replayNotificationMessageCount = null;
+      // ---------- NEW: also determine an END index (the reply) ----------
+      // We look for the first message sent by the owner AFTER the notification.
+      // That is the reply the user typed during this visit.
+      int endIndex = _messages.length; // fallback = play everything
 
-        // Only show C's conversation as it existed when the
-        // notification was opened.
-        final messagesBeforeReply = _messages.take(replyStartIndex).toList();
+      for (int i = replyStartIndex; i < _messages.length; i++) {
+        if (_messages[i].senderId == _ownerId) {
+          endIndex = i + 1; // include the reply, then stop
+          break;
+        }
+      }
+      // -----------------------------------------------------------------
 
-        emit(
-          state.copyWith(
-            screen: ReplayScreen.conversation,
-            currentProjectId: projectId,
-            clearReplayNotification: true,
+      _replayStartIndex = replyStartIndex;
+      _replayNotificationMessageCount = null;
 
-            // Notification and everything before it is already visible.
-            // The reply and everything after it will be replayed.
-            visibleMessages: messagesBeforeReply,
+      // Tell the playback engine to stop at endIndex and then return
+      // We reuse the existing return machinery by temporarily limiting the list
+      final messagesForThisVisit = _messages.take(endIndex).toList();
 
-            currentIndex: replyStartIndex,
+      // Keep the full list in _returnMessages so we can restore later if needed,
+      // but for this visit we only want up to the reply.
+      _messages
+        ..clear()
+        ..addAll(messagesForThisVisit);
 
-            playing: true,
-            paused: false,
-            finished: false,
+      final messagesBeforeReply = _messages.take(replyStartIndex).toList();
 
-            typing: false,
-            typingPersonId: null,
-            onlinePersonId: null,
+      emit(
+        state.copyWith(
+          screen: ReplayScreen.conversation,
+          currentProjectId: projectId,
+          clearReplayNotification: true,
+          visibleMessages: messagesBeforeReply,
+          currentIndex: replyStartIndex,
+          playing: true,
+          paused: false,
+          finished: false,
+          typing: false,
+          typingPersonId: null,
+          onlinePersonId: null,
+          keyboardVisible: true,
+          emojiKeyboardVisible: false,
+          composerText: '',
+          pressedKey: null,
+          pressedEmoji: null,
+          shiftPressed: false,
+        ),
+      );
 
-            keyboardVisible: true,
-            emojiKeyboardVisible: false,
-            composerText: '',
-            pressedKey: null,
-            pressedEmoji: null,
-            shiftPressed: false,
-          ),
-        );
-
-        _playNext();
-      },
-    );
+      _playNext();
+    });
   }
 
   void returnFromNotificationConversation() {
