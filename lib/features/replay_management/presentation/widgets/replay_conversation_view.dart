@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:widget_recorder_plus/widget_recorder_plus.dart';
+
 
 import '../../../person_management/domain/entities/person.dart';
 import '../../../project_management/domain/entities/project.dart';
@@ -37,15 +39,30 @@ class ReplayConversationView extends StatefulWidget {
 class _ReplayConversationViewState extends State<ReplayConversationView> {
   final ScrollController _scrollController = ScrollController();
 
+  late final WidgetRecorderController _recorderController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _recorderController = WidgetRecorderController(
+      recordAudio: false,
+      showTouches: false,
+      onComplete: (path) {
+        debugPrint('Replay video saved: $path');
+      },
+      onError: (error) {
+        debugPrint('Replay video export error: $error');
+      },
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _recorderController.dispose();
     super.dispose();
   }
-
-  // ===========================================================================
-  // SWIPE TO REPLY (still placeholder – visual is already handled)
-  // ===========================================================================
 
   void _onSwipeReply(Message message) {}
 
@@ -55,8 +72,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     BuildContext context,
     ConversationReplayState state,
   ) async {
-    // We expect exactly one message to be selected during
-    // the automated replay deletion sequence.
     if (state.selectedMessageIds.isEmpty) {
       return;
     }
@@ -77,10 +92,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     }
 
     final message = selectedMessage;
-
-    // ---------------------------------------------------------------------------
-    // SHOW DELETE CONFIRMATION
-    // ---------------------------------------------------------------------------
 
     final dialogFuture = showDialog<bool>(
       context: context,
@@ -109,14 +120,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
       },
     );
 
-    // ---------------------------------------------------------------------------
-    // LET THE DIALOG BE VISIBLE
-    // ---------------------------------------------------------------------------
-    //
-    // This represents the replay pausing long enough for the viewer to see
-    // the confirmation dialog before the automated tap occurs.
-    //
-
     await Future.delayed(
       const Duration(milliseconds: 900),
     );
@@ -128,6 +131,7 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     if (widget.replayCubit.state.screen != ReplayScreen.conversation) {
       return;
     }
+
     Navigator.of(context, rootNavigator: true).pop(true);
 
     await dialogFuture;
@@ -140,16 +144,8 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
       return;
     }
 
-    // ---------------------------------------------------------------------------
-    // APPLY DELETE
-    // ---------------------------------------------------------------------------
-
     widget.replayCubit.deleteMessageForMe(message);
   }
-
-  // ===========================================================================
-  // BUILD
-  // ===========================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -163,70 +159,71 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
         final selectedIds = state.selectedMessageIds;
         final isSelectionMode = selectedIds.isNotEmpty;
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFECE5DD),
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: playback_header.PlaybackHeader(
-              project: widget.project,
-              onBack: widget.replayCubit.goBackToHome,
-              isSelectionMode: isSelectionMode,
-              selectedCount: selectedIds.length,
-              onClearSelection: () {
-                // Automated replay controls selection.
-                // Manual clearing will be handled later.
-              },
-              deleteIconPressed: state.deleteIconPressed,
-              backTapPressed:
-                  state.visualInteraction == ReplayVisualInteraction.backTap,
+        return WidgetRecorder(
+          controller: _recorderController,
+          child: Scaffold(
+            backgroundColor: const Color(0xFFECE5DD),
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: playback_header.PlaybackHeader(
+                project: widget.project,
+                onBack: widget.replayCubit.goBackToHome,
+                isSelectionMode: isSelectionMode,
+                selectedCount: selectedIds.length,
+                onClearSelection: () {},
+                deleteIconPressed: state.deleteIconPressed,
+                backTapPressed:
+                    state.visualInteraction == ReplayVisualInteraction.backTap,
+              ),
             ),
-          ),
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/chat_wallpaper.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              SafeArea(
-                top: false,
-                bottom: false,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: playback_chat_list.PlaybackChatList(
-                        project: widget.project,
-                        scrollController: _scrollController,
-                        selectedMessageIds: selectedIds,
-                        onToggleSelection: (_) {},
-                        onSwipeReply: _onSwipeReply,
-                        onReplyTap: _onReplyTap,
-                      ),
-                    ),
-                    if (state.typing)
-                      const TypingIndicator(
-                        visible: true,
-                      ),
-                    const PlaybackBottomPanel(),
-                    ReplayPlaybackControls(
-                      state: state,
-                      replayCubit: widget.replayCubit,
-                    ),
-                  ],
-                ),
-              ),
-              if (state.replayNotification != null)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: ReplayNotificationBanner(
-                    notification: state.replayNotification!,
-                    interaction: state.replayNotificationInteraction,
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/chat_wallpaper.png',
+                    fit: BoxFit.cover,
                   ),
                 ),
-            ],
+                SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: playback_chat_list.PlaybackChatList(
+                          project: widget.project,
+                          scrollController: _scrollController,
+                          selectedMessageIds: selectedIds,
+                          onToggleSelection: (_) {},
+                          onSwipeReply: _onSwipeReply,
+                          onReplyTap: _onReplyTap,
+                        ),
+                      ),
+                      if (state.typing)
+                        const TypingIndicator(
+                          visible: true,
+                        ),
+                      const PlaybackBottomPanel(),
+                      ReplayPlaybackControls(
+                        state: state,
+                        replayCubit: widget.replayCubit,
+                        recorderController: _recorderController,
+                      ),
+                    ],
+                  ),
+                ),
+                if (state.replayNotification != null)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: ReplayNotificationBanner(
+                      notification: state.replayNotification!,
+                      interaction: state.replayNotificationInteraction,
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },

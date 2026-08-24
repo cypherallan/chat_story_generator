@@ -26,6 +26,7 @@ dependencies:
   characters: ^1.4.1
   photo_manager: ^3.11.0
   file_picker: ^11.0.3
+  widget_recorder_plus: ^1.0.5
 
 dev_dependencies:
   flutter_test:
