@@ -2,9 +2,67 @@ part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   void play() {
-    if (state.playing || state.finished) {
+    if (state.playing) {
       return;
     }
+
+    // If the previous replay finished, reset the replay runtime state
+    // so the exact same recorded sequence can be played again.
+    if (state.finished) {
+      _timer?.cancel();
+
+      _nextNotificationEventIndex = 0;
+
+      if (state.replayStartMethod == ReplayStartMethod.time) {
+        if (state.replayStartTime != null) {
+          _replayStartIndex = _messages.indexWhere(
+            (message) => !message.createdAt.isBefore(
+              state.replayStartTime!,
+            ),
+          );
+
+          if (_replayStartIndex == -1) {
+            _replayStartIndex = _messages.length;
+          }
+        } else {
+          _replayStartIndex = 0;
+        }
+      }
+
+      final replayStartIndex = _replayStartIndex.clamp(
+        0,
+        _messages.length,
+      );
+
+      final initialVisibleMessages = _messages.take(replayStartIndex).toList();
+
+      emit(
+        state.copyWith(
+          visibleMessages: initialVisibleMessages,
+          currentIndex: replayStartIndex,
+          playing: true,
+          paused: false,
+          finished: false,
+          typing: false,
+          typingPersonId: null,
+          onlinePersonId: null,
+          keyboardVisible: true,
+          emojiKeyboardVisible: false,
+          composerText: '',
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+          shiftPressed: false,
+          clearReplayNotification: true,
+        ),
+      );
+
+      _playNext();
+      return;
+    }
+
+    _nextNotificationEventIndex = 0;
+
     if (state.replayStartMethod == ReplayStartMethod.time) {
       if (state.replayStartTime != null) {
         _replayStartIndex = _messages.indexWhere(
@@ -20,7 +78,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         _replayStartIndex = 0;
       }
     }
-    _nextNotificationEventIndex = 0;
 
     emit(
       state.copyWith(
