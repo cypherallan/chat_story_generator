@@ -17,6 +17,19 @@ abstract class NotificationFirestoreDataSource {
   Future<void> deleteNotification(
     String notificationId,
   );
+
+  // ---------------------------------------------------------------------------
+  // RECORDED REPLAY NOTIFICATION EVENTS
+  // ---------------------------------------------------------------------------
+
+  Future<List<Map<String, dynamic>>> getRecordedNotificationEvents(
+    String projectId,
+  );
+
+  Future<void> saveRecordedNotificationEvents(
+    String projectId,
+    List<Map<String, dynamic>> events,
+  );
 }
 
 class NotificationFirestoreDataSourceImpl
@@ -37,6 +50,20 @@ class NotificationFirestoreDataSourceImpl
     }
 
     return firestore.collection('users').doc(uid).collection('notifications');
+  }
+
+  CollectionReference<Map<String, dynamic>>
+      _recordedNotificationEventsCollection() {
+    final uid = auth.currentUser?.uid;
+
+    if (uid == null) {
+      throw Exception('User is not signed in');
+    }
+
+    return firestore
+        .collection('users')
+        .doc(uid)
+        .collection('replay_notification_events');
   }
 
   @override
@@ -78,5 +105,52 @@ class NotificationFirestoreDataSourceImpl
     String notificationId,
   ) async {
     await _notificationsCollection().doc(notificationId).delete();
+  }
+
+  // ---------------------------------------------------------------------------
+  // RECORDED REPLAY NOTIFICATION EVENTS
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecordedNotificationEvents(
+    String projectId,
+  ) async {
+    final doc =
+        await _recordedNotificationEventsCollection().doc(projectId).get();
+
+    if (!doc.exists) {
+      return [];
+    }
+
+    final data = doc.data();
+
+    if (data == null) {
+      return [];
+    }
+
+    final events = data['events'];
+
+    if (events is! List) {
+      return [];
+    }
+
+    return events
+        .whereType<Map>()
+        .map(
+          (event) => Map<String, dynamic>.from(event),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> saveRecordedNotificationEvents(
+    String projectId,
+    List<Map<String, dynamic>> events,
+  ) async {
+    await _recordedNotificationEventsCollection().doc(projectId).set({
+      'projectId': projectId,
+      'events': events,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

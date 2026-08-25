@@ -18,9 +18,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
       return Right(notifications);
     } catch (e) {
-      return Left(FirebaseFailure(
-        e.toString(),
-      ));
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
     }
   }
 
@@ -35,9 +37,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
       return Right(saved);
     } catch (e) {
-      return Left(FirebaseFailure(
-        e.toString(),
-      ));
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
     }
   }
 
@@ -52,9 +56,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
       return Right(model);
     } catch (e) {
-      return Left(FirebaseFailure(
-        e.toString(),
-      ));
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
     }
   }
 
@@ -67,9 +73,56 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
       return const Right(null);
     } catch (e) {
-      return Left(FirebaseFailure(
-        e.toString(),
-      ));
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // RECORDED REPLAY NOTIFICATION EVENTS
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<Either<Failure, List<Map<String, dynamic>>>>
+      getRecordedNotificationEvents(
+    String projectId,
+  ) async {
+    try {
+      final events = await dataSource.getRecordedNotificationEvents(
+        projectId,
+      );
+
+      return Right(events);
+    } catch (e) {
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> saveRecordedNotificationEvents(
+    String projectId,
+    List<Map<String, dynamic>> events,
+  ) async {
+    try {
+      await dataSource.saveRecordedNotificationEvents(
+        projectId,
+        events,
+      );
+
+      return const Right(null);
+    } catch (e) {
+      return Left(
+        FirebaseFailure(
+          e.toString(),
+        ),
+      );
     }
   }
 }

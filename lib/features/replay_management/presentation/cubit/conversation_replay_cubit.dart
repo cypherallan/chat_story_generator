@@ -7,6 +7,8 @@ import '../../../person_management/domain/entities/person.dart';
 import '../../../message_management/domain/entities/message.dart';
 import 'conversation_replay_state.dart';
 import '../../../notification_management/domain/usecases/get_notifications.dart';
+import '../../../notification_management/domain/usecases/get_recorded_notification_events.dart';
+import '../../../notification_management/domain/usecases/save_recorded_notification_events.dart';
 import '../../../message_management/domain/usecases/get_messages.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
 
@@ -26,12 +28,16 @@ abstract class _ConversationReplayCubitBase
     required this.getMessages,
     required this.getProjects,
     required this.getNotifications,
+    required this.getRecordedNotificationEvents,
+    required this.saveRecordedNotificationEvents,
   }) : super(const ConversationReplayState());
 
   final SimulatedNotificationCubit notificationCubit;
   final GetMessages getMessages;
   final GetProjects getProjects;
   final GetNotifications getNotifications;
+  final GetRecordedNotificationEvents getRecordedNotificationEvents;
+  final SaveRecordedNotificationEvents saveRecordedNotificationEvents;
   List<Person> _persons = [];
   void setPersons(List<Person> persons) {
     _persons = List<Person>.from(persons);
@@ -117,11 +123,15 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
     required GetMessages getMessages,
     required GetProjects getProjects,
     required GetNotifications getNotifications,
+    required GetRecordedNotificationEvents getRecordedNotificationEvents,
+    required SaveRecordedNotificationEvents saveRecordedNotificationEvents,
   }) : super(
           notificationCubit: notificationCubit,
           getMessages: getMessages,
           getProjects: getProjects,
           getNotifications: getNotifications,
+          getRecordedNotificationEvents: getRecordedNotificationEvents,
+          saveRecordedNotificationEvents: saveRecordedNotificationEvents,
         );
 
   @override

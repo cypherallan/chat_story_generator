@@ -50,6 +50,8 @@ import 'features/notification_management/domain/usecases/add_notification.dart';
 import 'features/notification_management/domain/usecases/delete_notification.dart';
 import 'features/notification_management/domain/usecases/get_notifications.dart';
 import 'features/notification_management/domain/usecases/update_notification.dart';
+import 'features/notification_management/domain/usecases/get_recorded_notification_events.dart';
+import 'features/notification_management/domain/usecases/save_recorded_notification_events.dart';
 
 import 'features/notification_management/presentation/cubit/notification_cubit.dart';
 
@@ -76,6 +78,7 @@ Future<void> init() async {
       sl(),
     ),
   );
+
   sl.registerLazySingleton<MessageFirestoreDataSource>(
     () => MessageFirestoreDataSourceImpl(
       sl(),
@@ -97,14 +100,17 @@ Future<void> init() async {
   sl.registerLazySingleton<PersonRepository>(
     () => PersonRepositoryImpl(sl()),
   );
+
   sl.registerLazySingleton<ProjectRepository>(
     () => ProjectRepositoryImpl(sl()),
   );
+
   sl.registerLazySingleton<MessageRepository>(
     () => MessageRepositoryImpl(
       sl(),
     ),
   );
+
   sl.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(
       sl(),
@@ -115,11 +121,13 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPersons(sl()));
   sl.registerLazySingleton(() => AddPerson(sl()));
   sl.registerLazySingleton(() => DeletePerson(sl()));
+
   sl.registerLazySingleton(() => GetProjects(sl()));
   sl.registerLazySingleton(() => AddProject(sl()));
   sl.registerLazySingleton(() => UpdateProject(sl()));
   sl.registerLazySingleton(() => DeleteProject(sl()));
   sl.registerLazySingleton(() => DeleteProjects(sl()));
+
   sl.registerLazySingleton(() => GetMessages(sl()));
   sl.registerLazySingleton(() => AddMessage(sl()));
   sl.registerLazySingleton(() => UpdateMessage(sl()));
@@ -127,6 +135,18 @@ Future<void> init() async {
 
   sl.registerLazySingleton(
     () => GetNotifications(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => GetRecordedNotificationEvents(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => SaveRecordedNotificationEvents(
       sl(),
     ),
   );
@@ -172,7 +192,7 @@ Future<void> init() async {
     ),
   );
 
-  //Message Cubit
+  // Message Cubit
   sl.registerFactory(
     () => MessageCubit(
       getMessages: sl(),
@@ -184,6 +204,7 @@ Future<void> init() async {
       storageService: sl(),
     ),
   );
+
   // Conversation Replay Cubit
   sl.registerFactory(
     () => ConversationReplayCubit(
@@ -191,12 +212,18 @@ Future<void> init() async {
       getMessages: sl<GetMessages>(),
       getProjects: sl<GetProjects>(),
       getNotifications: sl<GetNotifications>(),
+      getRecordedNotificationEvents: sl<GetRecordedNotificationEvents>(),
+      saveRecordedNotificationEvents: sl<SaveRecordedNotificationEvents>(),
     ),
   );
 
   sl.registerLazySingleton(
-    () => SimulatedNotificationCubit(),
+    () => SimulatedNotificationCubit(
+      saveRecordedNotificationEvents: sl<SaveRecordedNotificationEvents>(),
+      getRecordedNotificationEvents: sl<GetRecordedNotificationEvents>(),
+    ),
   );
+
   sl.registerFactory(
     () => NotificationCubit(
       getNotifications: sl(),

@@ -7,6 +7,8 @@ import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../project_management/domain/entities/project.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
+import '../../../notification_management/domain/usecases/get_recorded_notification_events.dart';
+import '../../../notification_management/domain/usecases/save_recorded_notification_events.dart';
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import '../widgets/replay_conversation_view.dart';
@@ -42,6 +44,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       getMessages: di.sl<GetMessages>(),
       getProjects: di.sl<GetProjects>(),
       getNotifications: di.sl<GetNotifications>(),
+      getRecordedNotificationEvents: di.sl<GetRecordedNotificationEvents>(),
+      saveRecordedNotificationEvents: di.sl<SaveRecordedNotificationEvents>(),
     );
 
     _replayCubit.showHome();

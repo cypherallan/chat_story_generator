@@ -17,4 +17,18 @@ abstract class NotificationRepository {
   Future<Either<Failure, void>> deleteNotification(
     String notificationId,
   );
+
+  // ---------------------------------------------------------------------------
+  // RECORDED REPLAY NOTIFICATION EVENTS
+  // ---------------------------------------------------------------------------
+
+  Future<Either<Failure, List<Map<String, dynamic>>>>
+      getRecordedNotificationEvents(
+    String projectId,
+  );
+
+  Future<Either<Failure, void>> saveRecordedNotificationEvents(
+    String projectId,
+    List<Map<String, dynamic>> events,
+  );
 }

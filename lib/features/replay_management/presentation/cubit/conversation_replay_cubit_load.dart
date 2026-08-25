@@ -39,17 +39,22 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
                 (message) => message.createdAt.isBefore(initialReplayStartTime))
             .toList();
 
-    // ---------- MULTI-NOTIFICATION SUPPORT (from recorded events) ----------
+    // ---------- MULTI-NOTIFICATION SUPPORT ----------
     _replayNotificationEvents = [];
     _nextNotificationEventIndex = 0;
     _replayNotificationMessageCount = null;
 
     try {
-      // Only events that were triggered while inside THIS conversation
+      // Load persisted notification events for this project.
+      await notificationCubit.loadRecordedEvents(projectId);
+
+      // Only events that belong to THIS conversation.
       final relevantEvents = notificationCubit.recordedEvents
           .where((e) => e.sourceProjectId == projectId)
           .toList()
-        ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
+        ..sort(
+          (a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex),
+        );
 
       for (final e in relevantEvents) {
         _replayNotificationEvents.add(
@@ -68,7 +73,7 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     } catch (_) {
       _replayNotificationEvents = [];
     }
-    // -----------------------------------------------------------------------
+// --------------------------------------------------
 
     final Set<String> emojiSet = {};
     for (final message in messages) {

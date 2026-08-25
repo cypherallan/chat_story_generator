@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/notification.dart' as notification_entity;
 import '../../domain/entities/simulated_notification.dart';
 import 'simulated_notification_state.dart';
+import '../../domain/usecases/save_recorded_notification_events.dart';
+import '../../domain/usecases/get_recorded_notification_events.dart';
 
 enum NotificationInteraction {
   none,
@@ -48,7 +50,62 @@ class RecordedNotificationEvent {
 }
 
 class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
-  SimulatedNotificationCubit() : super(const SimulatedNotificationState());
+  SimulatedNotificationCubit({
+    required this.saveRecordedNotificationEvents,
+    required this.getRecordedNotificationEvents,
+  }) : super(const SimulatedNotificationState());
+
+  final SaveRecordedNotificationEvents saveRecordedNotificationEvents;
+  final GetRecordedNotificationEvents getRecordedNotificationEvents;
+
+  Future<void> loadRecordedEvents(String projectId) async {
+    if (isClosed) return;
+
+    try {
+      final savedEvents = await getRecordedNotificationEvents(projectId);
+
+      if (isClosed) return;
+
+      _recordedEvents.removeWhere(
+        (event) => event.sourceProjectId == projectId,
+      );
+
+      for (final data in savedEvents) {
+        final notificationData =
+            Map<String, dynamic>.from(data['notification'] as Map);
+
+        final notification = SimulatedNotification(
+          id: notificationData['id'] ?? '',
+          projectId: notificationData['projectId'] ?? '',
+          messageId: notificationData['messageId'] ?? '',
+          triggerMessageIndex: notificationData['triggerMessageIndex'],
+          senderId: notificationData['senderId'] ?? '',
+          senderName: notificationData['senderName'] ?? '',
+          senderAvatarPath: notificationData['senderAvatarPath'],
+          messageText: notificationData['messageText'] ?? '',
+          imagePath: notificationData['imagePath'],
+          createdAt: DateTime.parse(
+            notificationData['createdAt'],
+          ),
+        );
+
+        _recordedEvents.add(
+          RecordedNotificationEvent(
+            sourceProjectId: data['sourceProjectId'] ?? projectId,
+            sourceTriggerIndex: data['sourceTriggerIndex'] ?? 0,
+            notification: notification,
+            interaction: NotificationInteraction.values.firstWhere(
+              (value) => value.name == data['interaction'],
+              orElse: () => NotificationInteraction.none,
+            ),
+            targetVisibleCount: data['targetVisibleCount'] ?? 0,
+          ),
+        );
+      }
+    } catch (_) {
+      // Keep existing in-memory events if loading fails.
+    }
+  }
 
   Timer? _hideTimer;
 
@@ -109,22 +166,57 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     hideNotification();
   }
 
-  void _completePendingEvent(int targetVisibleCount) {
+  Future<void> _completePendingEvent(int targetVisibleCount) async {
     if (_pendingSourceProjectId == null ||
         _pendingSourceTriggerIndex == null ||
         _recordedNotification == null) {
       return;
     }
 
-    _recordedEvents.add(
-      RecordedNotificationEvent(
-        sourceProjectId: _pendingSourceProjectId!,
-        sourceTriggerIndex: _pendingSourceTriggerIndex!,
-        notification: _recordedNotification!,
-        interaction: _interaction,
-        targetVisibleCount: targetVisibleCount,
-      ),
+    final event = RecordedNotificationEvent(
+      sourceProjectId: _pendingSourceProjectId!,
+      sourceTriggerIndex: _pendingSourceTriggerIndex!,
+      notification: _recordedNotification!,
+      interaction: _interaction,
+      targetVisibleCount: targetVisibleCount,
     );
+
+    _recordedEvents.add(event);
+
+    final projectId = event.sourceProjectId;
+
+    final events = _recordedEvents
+        .where((e) => e.sourceProjectId == projectId)
+        .map(
+          (e) => {
+            'sourceProjectId': e.sourceProjectId,
+            'sourceTriggerIndex': e.sourceTriggerIndex,
+            'notification': {
+              'id': e.notification.id,
+              'projectId': e.notification.projectId,
+              'messageId': e.notification.messageId,
+              'triggerMessageIndex': e.notification.triggerMessageIndex,
+              'senderId': e.notification.senderId,
+              'senderName': e.notification.senderName,
+              'senderAvatarPath': e.notification.senderAvatarPath,
+              'messageText': e.notification.messageText,
+              'imagePath': e.notification.imagePath,
+              'createdAt': e.notification.createdAt.toIso8601String(),
+            },
+            'interaction': e.interaction.name,
+            'targetVisibleCount': e.targetVisibleCount,
+          },
+        )
+        .toList();
+
+    try {
+      await saveRecordedNotificationEvents(
+        projectId,
+        events,
+      );
+    } catch (_) {
+      // Keep the in-memory event even if persistence fails.
+    }
 
     // Clear pending so the next notification starts fresh
     _pendingSourceProjectId = null;
