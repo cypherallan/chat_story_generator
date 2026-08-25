@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../../notification_management/domain/entities/simulated_notification.dart';
 import '../../../message_management/domain/entities/message.dart';
-import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart'; // ← add this
+import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
 enum ReplayScreen {
   home,
@@ -25,6 +25,21 @@ enum ReplayVisualInteraction {
   notificationTap,
   notificationSwipe,
   backTap,
+}
+
+enum ReplayRecordingStatus {
+  idle,
+  recording,
+  recorded,
+  exporting,
+  exported,
+  failed,
+}
+
+enum ReplayExportQuality {
+  low,    // 480p / smaller file
+  medium, // 720p
+  high,   // 1080p
 }
 
 class ReplayNotificationEvent {
@@ -82,6 +97,13 @@ class ConversationReplayState extends Equatable {
   final String? deletingMessageId;
   final ReplayVisualInteraction visualInteraction;
 
+  // --- NEW: Recording fields ---
+  final ReplayRecordingStatus recordingStatus;
+  final String? recordedTempPath;
+  final String? exportedPath;
+  final String? recordingError;
+  final ReplayExportQuality selectedQuality;
+
   const ConversationReplayState({
     this.visibleMessages = const [],
     this.playing = false,
@@ -124,7 +146,16 @@ class ConversationReplayState extends Equatable {
     this.deleteForMePressed = false,
     this.deletingMessageId,
     this.visualInteraction = ReplayVisualInteraction.none,
+    // recording defaults
+    this.recordingStatus = ReplayRecordingStatus.idle,
+    this.recordedTempPath,
+    this.exportedPath,
+    this.recordingError,
+    this.selectedQuality = ReplayExportQuality.high,
   });
+
+  bool get isRecording => recordingStatus == ReplayRecordingStatus.recording;
+  bool get hasRecordedVideo => recordedTempPath != null;
 
   ConversationReplayState copyWith({
     List<Message>? visibleMessages,
@@ -172,6 +203,15 @@ class ConversationReplayState extends Equatable {
     bool? deleteForMePressed,
     String? deletingMessageId,
     ReplayVisualInteraction? visualInteraction,
+    // recording
+    ReplayRecordingStatus? recordingStatus,
+    String? recordedTempPath,
+    String? exportedPath,
+    String? recordingError,
+    ReplayExportQuality? selectedQuality,
+    bool clearRecordedTempPath = false,
+    bool clearExportedPath = false,
+    bool clearRecordingError = false,
   }) {
     return ConversationReplayState(
       visibleMessages: visibleMessages ?? this.visibleMessages,
@@ -226,6 +266,17 @@ class ConversationReplayState extends Equatable {
       showDeleteConfirmation:
           showDeleteConfirmation ?? this.showDeleteConfirmation,
       visualInteraction: visualInteraction ?? this.visualInteraction,
+      // recording
+      recordingStatus: recordingStatus ?? this.recordingStatus,
+      recordedTempPath: clearRecordedTempPath
+          ? null
+          : (recordedTempPath ?? this.recordedTempPath),
+      exportedPath:
+          clearExportedPath ? null : (exportedPath ?? this.exportedPath),
+      recordingError: clearRecordingError
+          ? null
+          : (recordingError ?? this.recordingError),
+      selectedQuality: selectedQuality ?? this.selectedQuality,
     );
   }
 
@@ -272,5 +323,11 @@ class ConversationReplayState extends Equatable {
         deleteForMePressed,
         deletingMessageId,
         visualInteraction,
+        // recording props
+        recordingStatus,
+        recordedTempPath,
+        exportedPath,
+        recordingError,
+        selectedQuality,
       ];
 }

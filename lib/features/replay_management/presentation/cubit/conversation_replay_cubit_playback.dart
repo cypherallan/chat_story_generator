@@ -165,25 +165,40 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     if (state.currentIndex >= _messages.length) {
-      if (_returnMessages.isNotEmpty && _returnProjectId != null) {
-        returnFromNotificationConversation();
+      if (state.currentIndex >= _messages.length) {
+        if (_returnMessages.isNotEmpty && _returnProjectId != null) {
+          returnFromNotificationConversation();
+          return;
+        }
+
+        final wasRecording =
+            state.recordingStatus == ReplayRecordingStatus.recording;
+
+        emit(
+          state.copyWith(
+            playing: false,
+            finished: true,
+            typing: false,
+            keyboardVisible: false,
+            emojiKeyboardVisible: false,
+            composerText: '',
+            pressedKey: null,
+            pressedEmoji: null,
+            lastPressedEmoji: null,
+            shiftPressed: false,
+            // keep recordingStatus as recording until UI stops controller
+            // so UI listener can call stopRecording()
+          ),
+        );
+
+        if (wasRecording) {
+          // Trigger auto-stop via mixin helper - UI will listen and stop recorder
+          // We emit a side effect by keeping recording status, UI BlocListener will stop
+          // The actual file path will arrive via onRecordingCompleted
+        }
+
         return;
       }
-
-      emit(
-        state.copyWith(
-          playing: false,
-          finished: true,
-          typing: false,
-          keyboardVisible: false,
-          emojiKeyboardVisible: false,
-          composerText: '',
-          pressedKey: null,
-          pressedEmoji: null,
-          lastPressedEmoji: null,
-          shiftPressed: false,
-        ),
-      );
 
       return;
     }

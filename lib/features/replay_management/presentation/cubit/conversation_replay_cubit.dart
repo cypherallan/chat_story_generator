@@ -11,6 +11,7 @@ import '../../../notification_management/domain/usecases/get_recorded_notificati
 import '../../../notification_management/domain/usecases/save_recorded_notification_events.dart';
 import '../../../message_management/domain/usecases/get_messages.dart';
 import '../../../project_management/domain/usecases/get_projects.dart';
+import '../../data/services/replay_export_service.dart';
 
 part 'conversation_replay_cubit_navigation.dart';
 part 'conversation_replay_cubit_load.dart';
@@ -20,6 +21,7 @@ part 'conversation_replay_cubit_swipe_reply.dart';
 part 'conversation_replay_cubit_deletion.dart';
 part 'conversation_replay_cubit_timing.dart';
 part 'conversation_replay_cubit_utils.dart';
+part 'conversation_replay_cubit_recording.dart';
 
 abstract class _ConversationReplayCubitBase
     extends Cubit<ConversationReplayState> {
@@ -30,6 +32,7 @@ abstract class _ConversationReplayCubitBase
     required this.getNotifications,
     required this.getRecordedNotificationEvents,
     required this.saveRecordedNotificationEvents,
+    required this.exportService,
   }) : super(const ConversationReplayState());
 
   final SimulatedNotificationCubit notificationCubit;
@@ -38,6 +41,7 @@ abstract class _ConversationReplayCubitBase
   final GetNotifications getNotifications;
   final GetRecordedNotificationEvents getRecordedNotificationEvents;
   final SaveRecordedNotificationEvents saveRecordedNotificationEvents;
+  final ReplayExportService exportService;
   List<Person> _persons = [];
   void setPersons(List<Person> persons) {
     _persons = List<Person>.from(persons);
@@ -54,10 +58,8 @@ abstract class _ConversationReplayCubitBase
 
   int? _replayNotificationMessageCount;
 
-// ↓↓↓ PASTE HERE ↓↓↓
   List<ReplayNotificationEvent> _replayNotificationEvents = [];
   int _nextNotificationEventIndex = 0;
-// ↑↑↑ END ↑↑↑
 
   String _ownerId = '';
 
@@ -68,6 +70,7 @@ abstract class _ConversationReplayCubitBase
   DateTime? _deletionStartedAt;
   String? _activeDeletionMessageId;
 
+  // Playback abstract
   void _playNext();
   void _pauseDeletionTimer() {
     _deletionTimer?.cancel();
@@ -75,19 +78,15 @@ abstract class _ConversationReplayCubitBase
 
     if (_activeDeletionMessageId != null && _deletionStartedAt != null) {
       final elapsed = DateTime.now().difference(_deletionStartedAt!);
-
       final id = _activeDeletionMessageId!;
-
       _deletionElapsed[id] = (_deletionElapsed[id] ?? Duration.zero) + elapsed;
     }
-
     _deletionStartedAt = null;
   }
 
   void _disposeDeletionTimer() {
     _deletionTimer?.cancel();
     _deletionTimer = null;
-
     _deletionStartedAt = null;
     _activeDeletionMessageId = null;
   }
@@ -106,6 +105,14 @@ abstract class _ConversationReplayCubitBase
   Duration _humanTypingDuration(String text);
 
   bool _isEmoji(String character);
+
+  // --- Recording helpers (implemented in _RecordingMixin) ---
+  void onRecordingCompleted(String tempPath);
+  void onRecordingFailed(String error);
+  void setSelectedQuality(ReplayExportQuality quality);
+  Future<void> startRecordReplay();
+  Future<void> exportRecordedVideo();
+  void resetRecording();
 }
 
 class ConversationReplayCubit extends _ConversationReplayCubitBase
@@ -117,7 +124,8 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
         _SwipeReplyMixin,
         _DeletionMixin,
         _TimingMixin,
-        _UtilsMixin {
+        _UtilsMixin,
+        _RecordingMixin {
   ConversationReplayCubit({
     required SimulatedNotificationCubit notificationCubit,
     required GetMessages getMessages,
@@ -125,6 +133,7 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
     required GetNotifications getNotifications,
     required GetRecordedNotificationEvents getRecordedNotificationEvents,
     required SaveRecordedNotificationEvents saveRecordedNotificationEvents,
+    required ReplayExportService exportService,
   }) : super(
           notificationCubit: notificationCubit,
           getMessages: getMessages,
@@ -132,6 +141,7 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
           getNotifications: getNotifications,
           getRecordedNotificationEvents: getRecordedNotificationEvents,
           saveRecordedNotificationEvents: saveRecordedNotificationEvents,
+          exportService: exportService,
         );
 
   @override

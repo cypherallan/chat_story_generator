@@ -52,7 +52,7 @@ import 'features/notification_management/domain/usecases/get_notifications.dart'
 import 'features/notification_management/domain/usecases/update_notification.dart';
 import 'features/notification_management/domain/usecases/get_recorded_notification_events.dart';
 import 'features/notification_management/domain/usecases/save_recorded_notification_events.dart';
-
+import 'features/replay_management/data/services/replay_export_service.dart';
 import 'features/notification_management/presentation/cubit/notification_cubit.dart';
 
 final sl = GetIt.instance;
@@ -66,6 +66,7 @@ Future<void> init() async {
   // Services
   sl.registerLazySingleton(() => AuthService(sl()));
   sl.registerLazySingleton(() => FirebaseStorageService(sl()));
+  sl.registerLazySingleton(() => ReplayExportService());
 
   // Data Source
   sl.registerLazySingleton<PersonFirestoreDataSource>(
@@ -206,6 +207,7 @@ Future<void> init() async {
   );
 
   // Conversation Replay Cubit
+   // Conversation Replay Cubit
   sl.registerFactory(
     () => ConversationReplayCubit(
       notificationCubit: sl<SimulatedNotificationCubit>(),
@@ -214,6 +216,7 @@ Future<void> init() async {
       getNotifications: sl<GetNotifications>(),
       getRecordedNotificationEvents: sl<GetRecordedNotificationEvents>(),
       saveRecordedNotificationEvents: sl<SaveRecordedNotificationEvents>(),
+      exportService: sl<ReplayExportService>(),
     ),
   );
 

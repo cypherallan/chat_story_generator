@@ -16,6 +16,7 @@ import '../widgets/replay_home_view.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import '../../../notification_management/domain/usecases/get_notifications.dart';
 import '../widgets/replay_start_selection.dart';
+import '../../data/services/replay_export_service.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final String ownerId;
@@ -46,6 +47,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       getNotifications: di.sl<GetNotifications>(),
       getRecordedNotificationEvents: di.sl<GetRecordedNotificationEvents>(),
       saveRecordedNotificationEvents: di.sl<SaveRecordedNotificationEvents>(),
+      exportService: di.sl<ReplayExportService>(),
     );
 
     _replayCubit.showHome();
