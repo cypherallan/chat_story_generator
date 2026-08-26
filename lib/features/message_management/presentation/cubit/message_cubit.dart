@@ -55,42 +55,23 @@ class MessageCubit extends Cubit<MessageState>
 
   void loadMessages(String projectId) {
     emit(MessageLoading());
-
     _messagesSubscription?.cancel();
-
     _messagesSubscription = getMessages(projectId).listen(
       (result) {
         result.fold(
-          (failure) {
-            emit(MessageError(failure.message));
-          },
+          (failure) => emit(MessageError(failure.message)),
           (messages) {
             final mergedMessages = <String, Message>{};
-
-            // Firestore messages first.
             for (final message in messages) {
               mergedMessages[message.id] = message;
             }
-
-            // Add pending messages only if Firestore does not already
-            // contain the same message.
-            for (final pending in _pendingMessages.where(
-              (pending) => pending.projectId == projectId,
-            )) {
-              mergedMessages.putIfAbsent(
-                pending.id,
-                () => pending,
-              );
+            for (final pending
+                in _pendingMessages.where((p) => p.projectId == projectId)) {
+              mergedMessages.putIfAbsent(pending.id, () => pending);
             }
-
-            final combinedMessages = mergedMessages.values.toList()
-              ..sort(
-                (a, b) => a.createdAt.compareTo(b.createdAt),
-              );
-
-            emit(
-              MessageLoaded(combinedMessages),
-            );
+            final combined = mergedMessages.values.toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            emit(MessageLoaded(combined));
           },
         );
       },

@@ -167,7 +167,6 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                     onTap: () async {
                       if (widget.selectedChatIds.isNotEmpty) {
                         widget.onChatSelected(project.id);
-
                         return;
                       }
 
@@ -181,25 +180,20 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                           builder: (_) => MultiBlocProvider(
                             providers: [
                               BlocProvider.value(
-                                value: context.read<ProjectCubit>(),
-                              ),
+                                  value: context.read<ProjectCubit>()),
                               BlocProvider(
-                                create: (_) => di.sl<MessageCubit>()
-                                  ..loadMessages(project.id),
-                              ),
+                                  create: (_) => di.sl<MessageCubit>()
+                                    ..loadMessages(project.id)),
                               BlocProvider.value(
-                                value: context.read<PersonCubit>(),
-                              ),
+                                  value: context.read<PersonCubit>()),
                             ],
-                            child: ConversationPage(
-                              project: project,
-                            ),
+                            child: ConversationPage(project: project),
                           ),
                         ),
                       );
 
                       if (context.mounted) {
-                        context.read<ProjectCubit>().loadProjects();
+                        await context.read<ProjectCubit>().loadProjects();
                       }
                     },
                   );

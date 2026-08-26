@@ -84,26 +84,27 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   /// Called by UI after WidgetRecorder gives temp path, to export to user storage with quality
-  Future<void> exportRecordedVideo() async {
+  Future<void> exportRecordedVideo({String? customFileName}) async {
     final tempPath = state.recordedTempPath;
     if (tempPath == null) return;
-
+    print('[Cubit] Export starting: $tempPath name=$customFileName');
     emit(state.copyWith(recordingStatus: ReplayRecordingStatus.exporting));
-
     try {
       final exportedPath = await exportService.exportVideo(
         tempPath: tempPath,
         quality: state.selectedQuality,
+        customFileName: customFileName,
       );
+      print('[Cubit] Export SUCCESS: $exportedPath');
       emit(state.copyWith(
-        recordingStatus: ReplayRecordingStatus.exported,
-        exportedPath: exportedPath,
-      ));
-    } catch (e) {
+          recordingStatus: ReplayRecordingStatus.exported,
+          exportedPath: exportedPath));
+    } catch (e, st) {
+      print('[Cubit] Export FAILED: $e');
+      print(st);
       emit(state.copyWith(
-        recordingStatus: ReplayRecordingStatus.failed,
-        recordingError: e.toString(),
-      ));
+          recordingStatus: ReplayRecordingStatus.failed,
+          recordingError: e.toString()));
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import 'playback_keyboard.dart';
@@ -22,60 +21,57 @@ class PlaybackBottomPanel extends StatelessWidget {
       builder: (context, state) {
         final keyboardVisible =
             state.keyboardVisible || state.emojiKeyboardVisible;
-
         final keyboardHeight =
             state.emojiKeyboardVisible ? _emojiKeyboardHeight : _keyboardHeight;
-
         final hasReplyPreview = state.replyPreviewText != null;
-
         final composerHeight =
             _baseComposerHeight + (hasReplyPreview ? _replyPreviewHeight : 0);
 
-        return SizedBox(
-          height: composerHeight +
-              _navigationBarHeight +
-              (keyboardVisible ? keyboardHeight : 0),
-          child: Stack(
-            children: [
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                left: 0,
-                right: 0,
-                bottom: _navigationBarHeight +
-                    (keyboardVisible ? keyboardHeight : 0),
-                child: PlaybackMessageComposer(
-                  text: state.composerText,
-                  keyboardVisible: keyboardVisible,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Composer - always visible above keyboard
+            SizedBox(
+              height: composerHeight,
+              child: PlaybackMessageComposer(
+                text: state.composerText,
+                keyboardVisible: keyboardVisible,
+              ),
+            ),
+
+            // Keyboard - slides in/out but keeps space reserved
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              height: keyboardVisible ? keyboardHeight : 0,
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: keyboardHeight,
+                  child: PlaybackKeyboard(
+                    visible: keyboardVisible,
+                    pressedKey: state.pressedKey,
+                    shiftEnabled: state.shiftEnabled,
+                    shiftPressed: state.shiftPressed,
+                    emojiKeyboardVisible: state.emojiKeyboardVisible,
+                    pressedEmoji: state.lastPressedEmoji,
+                    availableEmojis: state.availableEmojis,
+                    emojiPressCount: state.emojiPressCount,
+                  ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: _navigationBarHeight,
-                child: PlaybackKeyboard(
-                  visible: keyboardVisible,
-                  pressedKey: state.pressedKey,
-                  shiftEnabled: state.shiftEnabled,
-                  shiftPressed: state.shiftPressed,
-                  emojiKeyboardVisible: state.emojiKeyboardVisible,
-                  pressedEmoji: state.lastPressedEmoji,
-                  availableEmojis: state.availableEmojis,
-                  emojiPressCount: state.emojiPressCount,
-                ),
+            ),
+
+            // Navigation bar - ALWAYS at very bottom, fixed 48px
+            SizedBox(
+              height: _navigationBarHeight,
+              child: PlaybackNavigationBar(
+                onBackPressed: () {
+                  context.read<ConversationReplayCubit>().hideKeyboard();
+                },
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: PlaybackNavigationBar(
-                  onBackPressed: () {
-                    context.read<ConversationReplayCubit>().hideKeyboard();
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );

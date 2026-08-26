@@ -489,21 +489,24 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  body: Stack(
-                    children: [
-                      TabBarView(
-                        children: [
-                          ProjectsListWidget(
-                            selectedChatIds: selectedChatIds,
-                            onChatSelected: toggleChatSelection,
-                            currentPersonId: _currentPersonId,
-                          ),
-                          const Center(child: Text("Updates")),
-                          const Center(child: Text("Communities")),
-                          const Center(child: Text("Calls")),
-                        ],
-                      ),
-                    ],
+                  body: BlocListener<MessageCubit, MessageState>(
+                    listener: (context, messageState) {
+                      if (messageState is MessageLoaded) {
+                        context.read<ProjectCubit>().loadProjects();
+                      }
+                    },
+                    child: TabBarView(
+                      children: [
+                        ProjectsListWidget(
+                          selectedChatIds: selectedChatIds,
+                          onChatSelected: toggleChatSelection,
+                          currentPersonId: _currentPersonId,
+                        ),
+                        const Center(child: Text("Updates")),
+                        const Center(child: Text("Communities")),
+                        const Center(child: Text("Calls")),
+                      ],
+                    ),
                   ),
                   floatingActionButton: FloatingActionButton(
                     child: const Icon(Icons.chat),

@@ -9,6 +9,7 @@ import '../../domain/usecases/delete_projects.dart';
 import '../../domain/usecases/get_projects.dart';
 import '../../domain/usecases/update_project.dart';
 import '../../../message_management/domain/entities/message.dart';
+import '../../../message_management/domain/entities/message_status.dart';
 part 'project_state.dart';
 
 class ProjectCubit extends Cubit<ProjectState> {
@@ -256,24 +257,41 @@ class ProjectCubit extends Cubit<ProjectState> {
     result.fold(
       (failure) => emit(ProjectError(failure.message)),
       (projects) async {
-        final project = projects.firstWhere(
-          (p) => p.id == projectId,
-        );
+        try {
+          final project = projects.firstWhere(
+            (p) => p.id == projectId,
+          );
 
-        if (project.unreadCount == 0) return;
+          if (project.unreadCount == 0) return;
 
-        final updated = project.copyWith(
-          unreadCount: 0,
-        );
+          final updated = project.copyWith(
+            unreadCount: 0,
+          );
 
-        final updateResult = await updateProject(updated);
+          final updateResult = await updateProject(updated);
 
-        updateResult.fold(
-          (failure) => emit(ProjectError(failure.message)),
-          (_) async {
-            await loadProjects();
-          },
-        );
+          updateResult.fold(
+            (failure) => emit(ProjectError(failure.message)),
+            (_) async {
+              await loadProjects();
+            },
+          );
+        } catch (_) {}
+      },
+    );
+  }
+
+  Future<void> updateProjectStatus(
+      String projectId, MessageStatus status) async {
+    final result = await getProjects();
+    await result.fold(
+      (l) async {},
+      (projects) async {
+        final idx = projects.indexWhere((p) => p.id == projectId);
+        if (idx == -1) return;
+        final updated = projects[idx].copyWith(lastMessageStatus: status);
+        final res = await updateProject(updated);
+        res.fold((_) {}, (_) async => await loadProjects());
       },
     );
   }

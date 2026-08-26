@@ -100,6 +100,7 @@ class _ConversationPageState extends State<ConversationPage> {
         context.read<PersonCubit>().setPersonOnline(body.selectedSenderId);
       }
 
+      // Existing: clear unread badge
       context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
     });
   }

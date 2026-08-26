@@ -6,28 +6,40 @@ class ReplayExportService {
   Future<String> exportVideo({
     required String tempPath,
     required ReplayExportQuality quality,
+    String? customFileName,
   }) async {
     final tempFile = File(tempPath);
     if (!await tempFile.exists()) {
       throw Exception('Temp video not found: $tempPath');
     }
 
-    // Ensure extension is .mp4 (widget_recorder_plus sometimes saves .mp4 anyway)
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'chat_story_${timestamp}_${quality.name}.mp4';
+    // Custom name handling
+    String fileName = customFileName?.trim() ?? '';
+    if (fileName.isEmpty) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      fileName = 'chat_story_${timestamp}_${quality.name}.mp4';
+    }
+    if (!fileName.toLowerCase().endsWith('.mp4')) {
+      fileName = '$fileName.mp4';
+    }
 
-    // 1. Request gallery permission (required for Android 13+)
-    final PermissionState ps = await PhotoManager.requestPermissionExtend();
+    // Request VIDEO permission explicitly (fixes your "Images only" bug)
+    final PermissionState ps = await PhotoManager.requestPermissionExtend(
+      requestOption: const PermissionRequestOption(
+        androidPermission: AndroidPermission(
+          type: RequestType.video,
+          mediaLocation: true,
+        ),
+      ),
+    );
+
     final isAuth = ps.isAuth || ps.hasAccess;
     if (!isAuth) {
       throw Exception(
-          'Gallery permission denied. Please allow Photos/Videos permission.');
+          'Gallery permission denied. Please allow Videos permission in Settings > Apps > Chat Story Generator > Permissions');
     }
 
-    // 2. Save to Movies/ChatStoryGenerator via MediaStore - THIS APPEARS IN FILE MANAGER
-    // On Android, relativePath = Movies/ChatStoryGenerator will create:
-    // /storage/emulated/0/Movies/ChatStoryGenerator/chat_story_xxx.mp4
-    // This IS visible in Files app > Movies
+    // Save to Movies/ChatStoryGenerator — visible in Files app
     final AssetEntity? entity = await PhotoManager.editor.saveVideo(
       tempFile,
       title: fileName,
@@ -42,7 +54,6 @@ class ReplayExportService {
     final String finalPath =
         savedFile?.path ?? 'Gallery: Movies/ChatStoryGenerator/$fileName';
 
-    // Verify it's playable mp4
     if (savedFile != null && await savedFile.exists()) {
       final length = await savedFile.length();
       if (length < 1000) {
