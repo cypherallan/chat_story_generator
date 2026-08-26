@@ -179,7 +179,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
             playing: false,
             finished: true,
             typing: false,
-            keyboardVisible: false,
+            keyboardVisible: true,
             emojiKeyboardVisible: false,
             composerText: '',
             pressedKey: null,
@@ -351,7 +351,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         typing: true,
         typingPersonId: message.senderId,
         onlinePersonId: message.senderId,
-        keyboardVisible: false,
+        keyboardVisible:
+            true, // FIX Task 1: keep keyboard on screen even when other is typing
         emojiKeyboardVisible: false,
         composerText: '',
         pressedKey: null,
@@ -385,6 +386,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
             typingPersonId: null,
             visibleMessages: updatedMessages,
             currentIndex: state.currentIndex + 1,
+            keyboardVisible: true, // FIX Task 1: stay visible after message
           ),
         );
 
