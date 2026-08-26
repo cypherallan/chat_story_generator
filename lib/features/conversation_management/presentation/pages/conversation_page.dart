@@ -15,7 +15,6 @@ import '../../../notification_management/presentation/pages/create_notification_
 import '../../../notification_management/presentation/widgets/simulated_notification_banner.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
-import '../../../../core/presentation/widgets/phone_frame.dart';
 import '../widgets/conversation_notification_actions.dart';
 
 class ConversationPage extends StatefulWidget {
@@ -114,77 +113,73 @@ class _ConversationPageState extends State<ConversationPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _simulatedNotificationCubit,
-      child: PhoneFrame(
-        child: PopScope(
-          onPopInvokedWithResult: (didPop, result) async {
-            if (!didPop) return;
+      child: PopScope(
+        onPopInvokedWithResult: (didPop, result) async {
+          if (!didPop) return;
 
-            final body = _bodyKey.currentState;
+          final body = _bodyKey.currentState;
 
-            if (body != null) {
-              context
-                  .read<PersonCubit>()
-                  .setPersonOffline(body.selectedSenderId);
-            }
+          if (body != null) {
+            context.read<PersonCubit>().setPersonOffline(body.selectedSenderId);
+          }
 
-            await context.read<ProjectCubit>().loadProjects();
-          },
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: ConversationAppBar(
-              project: widget.project,
-              isSelectionMode: _isSelectionMode,
-              selectedCount: _selectedMessageIds.length,
-              typingPersonIds: _typingPersonIds,
-              otherPersonTyping: _otherPersonTyping,
-              onClearSelection: () =>
-                  _bodyKey.currentState?.clearMessageSelection(),
-              onPreviewPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ConversationPlaybackPage(
-                      ownerId: widget.project.ownerId,
-                      notificationCubit: _simulatedNotificationCubit,
-                    ),
-                  ),
-                );
-              },
-              onCreateNotification: _openCreateNotification,
-              onTriggerNotification:
-                  _notificationActions.triggerReplayNotification,
-              selectedMessageIds: _selectedMessageIds,
-              onReplySelected: (message) {
-                _bodyKey.currentState?.setReplyingTo(message);
-              },
-              onReactionSelected: (messageId, emoji) {
-                context.read<MessageCubit>().toggleReaction(
-                      messageId: messageId,
-                      userId: widget.project.ownerId,
-                      emoji: emoji,
-                    );
-              },
-              onDeleteSelected: () async {
-                await _bodyKey.currentState?.deleteSelectedMessages();
-              },
-            ),
-            body: Stack(
-              children: [
-                ConversationPageBody(
-                  key: _bodyKey,
-                  project: widget.project,
-                  onChanged: _onBodyChanged,
-                ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SimulatedNotificationBanner(
-                    onTap: _notificationActions.onNotificationTapped,
+          await context.read<ProjectCubit>().loadProjects();
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: ConversationAppBar(
+            project: widget.project,
+            isSelectionMode: _isSelectionMode,
+            selectedCount: _selectedMessageIds.length,
+            typingPersonIds: _typingPersonIds,
+            otherPersonTyping: _otherPersonTyping,
+            onClearSelection: () =>
+                _bodyKey.currentState?.clearMessageSelection(),
+            onPreviewPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ConversationPlaybackPage(
+                    ownerId: widget.project.ownerId,
+                    notificationCubit: _simulatedNotificationCubit,
                   ),
                 ),
-              ],
-            ),
+              );
+            },
+            onCreateNotification: _openCreateNotification,
+            onTriggerNotification:
+                _notificationActions.triggerReplayNotification,
+            selectedMessageIds: _selectedMessageIds,
+            onReplySelected: (message) {
+              _bodyKey.currentState?.setReplyingTo(message);
+            },
+            onReactionSelected: (messageId, emoji) {
+              context.read<MessageCubit>().toggleReaction(
+                    messageId: messageId,
+                    userId: widget.project.ownerId,
+                    emoji: emoji,
+                  );
+            },
+            onDeleteSelected: () async {
+              await _bodyKey.currentState?.deleteSelectedMessages();
+            },
+          ),
+          body: Stack(
+            children: [
+              ConversationPageBody(
+                key: _bodyKey,
+                project: widget.project,
+                onChanged: _onBodyChanged,
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SimulatedNotificationBanner(
+                  onTap: _notificationActions.onNotificationTapped,
+                ),
+              ),
+            ],
           ),
         ),
       ),

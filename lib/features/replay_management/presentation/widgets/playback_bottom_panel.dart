@@ -4,7 +4,6 @@ import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';
 import 'playback_keyboard.dart';
 import 'playback_message_composer.dart';
-import 'playback_navigation_bar.dart';
 
 class PlaybackBottomPanel extends StatelessWidget {
   const PlaybackBottomPanel({super.key});
@@ -13,7 +12,6 @@ class PlaybackBottomPanel extends StatelessWidget {
   static const double _replyPreviewHeight = 72;
   static const double _keyboardHeight = 228;
   static const double _emojiKeyboardHeight = 280;
-  static const double _navigationBarHeight = 48;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +28,6 @@ class PlaybackBottomPanel extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Composer - always visible above keyboard
             SizedBox(
               height: composerHeight,
               child: PlaybackMessageComposer(
@@ -38,8 +35,6 @@ class PlaybackBottomPanel extends StatelessWidget {
                 keyboardVisible: keyboardVisible,
               ),
             ),
-
-            // Keyboard - slides in/out but keeps space reserved
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
@@ -61,16 +56,7 @@ class PlaybackBottomPanel extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Navigation bar - ALWAYS at very bottom, fixed 48px
-            SizedBox(
-              height: _navigationBarHeight,
-              child: PlaybackNavigationBar(
-                onBackPressed: () {
-                  context.read<ConversationReplayCubit>().hideKeyboard();
-                },
-              ),
-            ),
+            // Real system navigation now - no fake bar
           ],
         );
       },

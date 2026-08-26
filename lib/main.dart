@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/app/app_initializer.dart';
 import 'core/auth/auth_service.dart';
@@ -11,6 +12,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await AppInitializer.initialize();
+
+  // REAL system bars - no fake
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark, // dark icons for light status
+    statusBarBrightness: Brightness.light, // iOS
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarDividerColor: Colors.transparent,
+  ));
 
   runApp(const MyApp());
 }
