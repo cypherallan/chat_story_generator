@@ -21,8 +21,8 @@ class RecordedNotificationEvent {
   final int sourceTriggerIndex;
   final SimulatedNotification notification;
   final NotificationInteraction interaction;
-  final int
-      targetVisibleCount; // how many messages the target chat had when opened
+  final int targetVisibleCount;
+  final int? returnDelayMs; // NEW: real time you took to press back in A/C
 
   const RecordedNotificationEvent({
     required this.sourceProjectId,
@@ -30,6 +30,7 @@ class RecordedNotificationEvent {
     required this.notification,
     required this.interaction,
     required this.targetVisibleCount,
+    this.returnDelayMs, // NEW
   });
 
   RecordedNotificationEvent copyWith({
@@ -38,6 +39,7 @@ class RecordedNotificationEvent {
     SimulatedNotification? notification,
     NotificationInteraction? interaction,
     int? targetVisibleCount,
+    int? returnDelayMs,
   }) {
     return RecordedNotificationEvent(
       sourceProjectId: sourceProjectId ?? this.sourceProjectId,
@@ -45,6 +47,7 @@ class RecordedNotificationEvent {
       notification: notification ?? this.notification,
       interaction: interaction ?? this.interaction,
       targetVisibleCount: targetVisibleCount ?? this.targetVisibleCount,
+      returnDelayMs: returnDelayMs ?? this.returnDelayMs,
     );
   }
 }
@@ -99,6 +102,7 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
               orElse: () => NotificationInteraction.none,
             ),
             targetVisibleCount: data['targetVisibleCount'] ?? 0,
+            returnDelayMs: data['returnDelayMs'] as int?, // NEW
           ),
         );
       }
@@ -117,6 +121,7 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   final List<RecordedNotificationEvent> _recordedEvents = [];
   String? _pendingSourceProjectId;
   int? _pendingSourceTriggerIndex;
+  DateTime? _notificationOpenedAt;
 // -----------------------------------------------
 
   NotificationInteraction get interaction => _interaction;
@@ -230,8 +235,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   void triggerSavedNotification(
     notification_entity.Notification notification, {
     int? triggerMessageIndex,
-    String? sourceProjectId, // NEW
-    int? sourceTriggerIndex, // NEW
+    String? sourceProjectId,
+    int? sourceTriggerIndex,
   }) {
     if (isClosed) return;
 
@@ -248,9 +253,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       createdAt: DateTime.now(),
     );
 
-    // Remember the source context for later completion of the event
     _pendingSourceProjectId = sourceProjectId;
     _pendingSourceTriggerIndex = sourceTriggerIndex;
+    _notificationOpenedAt = DateTime.now(); // NEW
 
     triggerNotification(simulatedNotification);
   }
@@ -288,6 +293,52 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
         recordExpired();
       },
     );
+  }
+
+  // NEW: Track real back tap duration
+  Future<void> recordBackNavigation() async {
+    if (isClosed) return;
+    if (_notificationOpenedAt == null) return;
+    if (_recordedEvents.isEmpty) return;
+
+    final delay = DateTime.now().difference(_notificationOpenedAt!);
+    final delayMs = delay.inMilliseconds;
+
+    // Update last event with return delay
+    final lastIndex = _recordedEvents.length - 1;
+    final lastEvent = _recordedEvents[lastIndex];
+    _recordedEvents[lastIndex] = lastEvent.copyWith(returnDelayMs: delayMs);
+
+    // Persist
+    final projectId = lastEvent.sourceProjectId;
+    final events = _recordedEvents
+        .where((e) => e.sourceProjectId == projectId)
+        .map((e) => {
+              'sourceProjectId': e.sourceProjectId,
+              'sourceTriggerIndex': e.sourceTriggerIndex,
+              'notification': {
+                'id': e.notification.id,
+                'projectId': e.notification.projectId,
+                'messageId': e.notification.messageId,
+                'triggerMessageIndex': e.notification.triggerMessageIndex,
+                'senderId': e.notification.senderId,
+                'senderName': e.notification.senderName,
+                'senderAvatarPath': e.notification.senderAvatarPath,
+                'messageText': e.notification.messageText,
+                'imagePath': e.notification.imagePath,
+                'createdAt': e.notification.createdAt.toIso8601String(),
+              },
+              'interaction': e.interaction.name,
+              'targetVisibleCount': e.targetVisibleCount,
+              'returnDelayMs': e.returnDelayMs, // NEW
+            })
+        .toList();
+
+    try {
+      await saveRecordedNotificationEvents(projectId, events);
+    } catch (_) {}
+
+    _notificationOpenedAt = null;
   }
 
   // ---------------------------------------------------------------------------

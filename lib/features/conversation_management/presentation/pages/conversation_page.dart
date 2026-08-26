@@ -117,6 +117,10 @@ class _ConversationPageState extends State<ConversationPage> {
         onPopInvokedWithResult: (didPop, result) async {
           if (!didPop) return;
 
+          // NEW: Track real back arrow tap A/C -> A/B
+          // If you take 5 hours here, we save 5h and compress to ~5s in replay
+          _simulatedNotificationCubit.recordBackNavigation();
+
           final body = _bodyKey.currentState;
 
           if (body != null) {
