@@ -220,34 +220,50 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                 },
                 onSenderChanged: (senderId) {
                   final previous = selectedSenderId;
-                  setState(() => selectedSenderId = senderId);
+                  setState(() {
+                    selectedSenderId = senderId;
+                    if (senderId != widget.project.ownerId) {
+                      typingPersonIds
+                        ..clear()
+                        ..add(senderId);
+                      otherPersonTyping = true;
+                    } else {
+                      typingPersonIds.clear();
+                      otherPersonTyping = false;
+                    }
+                  });
                   context.read<PersonCubit>().setPersonOffline(previous);
                   context.read<PersonCubit>().setPersonOnline(senderId);
+                  _notifyParent();
                 },
                 onTypingStarted: () {
                   if (selectedSenderId != widget.project.ownerId) {
                     setState(() {
-                      typingPersonIds.add(selectedSenderId);
+                      typingPersonIds
+                        ..clear()
+                        ..add(selectedSenderId);
                       otherPersonTyping = true;
                     });
-
                     context.read<MessageCubit>().markOutgoingMessagesAsRead(
                           projectId: widget.project.id,
                           currentUserId: widget.project.ownerId,
                         );
-
                     _notifyParent();
                     return;
                   }
-
+                  // owner typing -> hide typing
+                  setState(() {
+                    typingPersonIds.clear();
+                    otherPersonTyping = false;
+                  });
                   context.read<MessageCubit>().markMessagesAsRead(
                         projectId: widget.project.id,
                         currentUserId: widget.project.ownerId,
                       );
-
-                  context.read<ProjectCubit>().clearUnreadCount(
-                        widget.project.id,
-                      );
+                  context
+                      .read<ProjectCubit>()
+                      .clearUnreadCount(widget.project.id);
+                  _notifyParent();
                 },
                 onTypingStopped: () {
                   if (mounted) {
@@ -304,15 +320,14 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                           (p) => widget.project.participantIds.contains(p.id))
                       .toList();
 
-                  // OWNER replied -> clear unread divider immediately
                   if (senderId == widget.project.ownerId) {
                     context.read<MessageCubit>().markMessagesAsRead(
                           projectId: widget.project.id,
                           currentUserId: widget.project.ownerId,
                         );
-                    context.read<ProjectCubit>().clearUnreadCount(
-                          widget.project.id,
-                        );
+                    context
+                        .read<ProjectCubit>()
+                        .clearUnreadCount(widget.project.id);
                   }
 
                   context.read<MessageCubit>().createMessage(
@@ -332,7 +347,12 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         .incrementUnreadCount(widget.project.id);
                   }
 
-                  setState(() => replyingTo = null);
+                  // FIX Task 1: clear typing when message sent
+                  setState(() {
+                    replyingTo = null;
+                    typingPersonIds.clear();
+                    otherPersonTyping = false;
+                  });
                   _notifyParent();
 
                   if (participants.length == 2) {
@@ -340,12 +360,13 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                     final nextSender = senderId == participants[0].id
                         ? participants[1].id
                         : participants[0].id;
-
                     setState(() => selectedSenderId = nextSender);
                     context
                         .read<PersonCubit>()
                         .setPersonOffline(previousSender);
                     context.read<PersonCubit>().setPersonOnline(nextSender);
+                    _notifyParent();
+                    // DO NOT set typing here - typing only when other taps composer
                   }
                 },
               ),
