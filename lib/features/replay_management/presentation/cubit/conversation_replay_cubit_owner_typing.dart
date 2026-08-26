@@ -109,6 +109,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
       final updatedMessages = List<Message>.from(state.visibleMessages)
         ..add(messageToShow);
 
+      _visiblePerProject[message.projectId] =
+          List<Message>.from(updatedMessages);
+
       emit(
         state.copyWith(
           composerText: '',

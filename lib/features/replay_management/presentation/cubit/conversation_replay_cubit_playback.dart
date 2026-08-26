@@ -206,6 +206,63 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     final messageIndex = state.currentIndex;
     final message = _messages[messageIndex];
 
+// --- NEW: if next message belongs to different chat, go via Home ---
+    if (state.currentProjectId != null &&
+        message.projectId != state.currentProjectId) {
+      _timer?.cancel();
+      emit(state.copyWith(
+        visualInteraction: ReplayVisualInteraction.backTap,
+        playing: false,
+        paused: true,
+      ));
+      final prev = _messages[messageIndex - 1];
+      final realGap = message.createdAt.difference(prev.createdAt);
+      final gap = _compressRealGap(realGap);
+      final filteredVisible = _visiblePerProject[message.projectId] ??
+          _messages
+              .take(messageIndex)
+              .where((m) => m.projectId == message.projectId)
+              .toList();
+
+      _timer = Timer(const Duration(milliseconds: 380), () {
+        if (isClosed) return;
+        emit(state.copyWith(
+          visualInteraction: ReplayVisualInteraction.none,
+          screen: ReplayScreen.home,
+          highlightedChatProjectId: message.projectId,
+          currentProjectId: null,
+          visibleMessages: const [],
+        ));
+        _timer = Timer(const Duration(milliseconds: 350), () {
+          if (isClosed) return;
+          emit(state.copyWith(
+              visualInteraction: ReplayVisualInteraction.chatTap));
+          _timer = Timer(const Duration(milliseconds: 380), () {
+            if (isClosed) return;
+            emit(state.copyWith(
+              screen: ReplayScreen.conversation,
+              currentProjectId: message.projectId,
+              visualInteraction: ReplayVisualInteraction.none,
+              clearHighlightedChat: true,
+              visibleMessages: filteredVisible,
+              typing: false,
+              typingPersonId: null,
+            ));
+            _timer = Timer(gap, () {
+              if (isClosed) return;
+              emit(state.copyWith(playing: true, paused: false));
+              if (message.senderId == _ownerId) {
+                _typeOwnerMessage(message);
+              } else {
+                _typeOtherPersonMessage(message);
+              }
+            });
+          });
+        });
+      });
+      return;
+    }
+
     Duration gap;
 
     if (messageIndex == 0) {
@@ -379,6 +436,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         final updatedMessages = List<Message>.from(
           state.visibleMessages,
         )..add(messageToShow);
+
+        _visiblePerProject[message.projectId] =
+            List<Message>.from(updatedMessages);
 
         emit(
           state.copyWith(

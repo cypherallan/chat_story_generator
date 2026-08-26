@@ -9,6 +9,8 @@ class ReplayHomeChatList extends StatelessWidget {
   final List<Person> persons;
   final void Function(Project project) onChatTap;
   final String ownerId;
+  final String? highlightedProjectId;
+  final bool isChatTapPressed;
 
   const ReplayHomeChatList({
     super.key,
@@ -16,6 +18,8 @@ class ReplayHomeChatList extends StatelessWidget {
     required this.persons,
     required this.onChatTap,
     required this.ownerId,
+    this.highlightedProjectId,
+    this.isChatTapPressed = false,
   });
 
   @override
@@ -111,32 +115,38 @@ class ReplayHomeChatList extends StatelessWidget {
           isLastMessageMine: project.lastSenderId == project.ownerId,
           unreadCount: project.unreadCount,
         );
+        final isHighlighted = highlightedProjectId == project.id;
+        final tileColor =
+            isHighlighted && isChatTapPressed ? Colors.grey.shade300 : null;
 
-        return ListTile(
-          leading: _buildAvatar(chat),
-          title: Text(
-            chat.chatName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+        return Container(
+          color: tileColor,
+          child: ListTile(
+            leading: _buildAvatar(chat),
+            title: Text(
+              chat.chatName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          subtitle: Text(
-            chat.lastMessage,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: chat.lastMessageTime == null
-              ? null
-              : Text(
-                  _formatTime(
-                    chat.lastMessageTime!,
+            subtitle: Text(
+              chat.lastMessage,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: chat.lastMessageTime == null
+                ? null
+                : Text(
+                    _formatTime(
+                      chat.lastMessageTime!,
+                    ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-          onTap: () => onChatTap(project),
+            onTap: () => onChatTap(project),
+          ),
         );
       },
     );

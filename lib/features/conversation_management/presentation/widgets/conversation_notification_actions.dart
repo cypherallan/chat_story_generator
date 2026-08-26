@@ -64,9 +64,10 @@ class ConversationNotificationActions {
       return;
     }
     simulatedNotificationCubit.recordTap(targetVisibleCount: 0);
-    // -----------------------------------------------------------------
 
-    await Navigator.push(
+    // NEW: Replace A/B with A/C so back goes to Home, not back to A/B
+    // Stack becomes Home -> A/C instead of Home -> A/B -> A/C
+    await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(

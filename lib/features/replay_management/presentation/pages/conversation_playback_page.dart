@@ -17,6 +17,7 @@ import '../../../notification_management/presentation/cubit/simulated_notificati
 import '../../../notification_management/domain/usecases/get_notifications.dart';
 import '../widgets/replay_start_selection.dart';
 import '../../data/services/replay_export_service.dart';
+import '../../../message_management/domain/entities/message.dart';
 
 class ConversationPlaybackPage extends StatefulWidget {
   final String ownerId;
@@ -87,14 +88,14 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
               );
             }
 
-            return _buildHome(context);
+            return _buildHome(context, replayState);
           },
         ),
       ),
     );
   }
 
-  Widget _buildHome(BuildContext context) {
+  Widget _buildHome(BuildContext context, ConversationReplayState replayState) {
     final personState = context.watch<PersonCubit>().state;
     final projectState = context.watch<ProjectCubit>().state;
 
@@ -109,6 +110,9 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     return ReplayHomeView(
       projects: projectState.projects,
       ownerId: widget.ownerId,
+      highlightedProjectId: replayState.highlightedChatProjectId,
+      isChatTapPressed:
+          replayState.visualInteraction == ReplayVisualInteraction.chatTap,
       onChatTap: (project) {
         _openReplayConversation(
           context,
@@ -177,87 +181,55 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     Project project,
   ) async {
     final personState = context.read<PersonCubit>().state;
-
-    if (personState is! PersonLoaded) {
-      return;
-    }
+    if (personState is! PersonLoaded) return;
 
     final projectsResult = await di.sl<GetProjects>()();
-
-    if (!mounted) return;
-
-    final messagesResult = await di.sl<GetMessages>()(project.id).first;
-
     if (!mounted) return;
 
     projectsResult.fold(
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-          ),
+          SnackBar(content: Text(failure.message)),
         );
       },
-      (projects) {
-        messagesResult.fold(
-          (failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(failure.message),
-              ),
-            );
-          },
-          (messages) async {
-            if (messages.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'This conversation has no messages to replay.',
-                  ),
-                ),
-              );
-              return;
-            }
+      (allProjects) async {
+        final List<Message> allMessages = [];
+        for (final p in allProjects.where((p) => p.ownerId == widget.ownerId)) {
+          final res = await di.sl<GetMessages>()(p.id).first;
+          res.fold((_) {}, (msgs) => allMessages.addAll(msgs));
+        }
+        allMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-            _replayCubit.load(
-              messages,
-              widget.ownerId,
-              personState.persons,
-              project.id,
-            );
+        final clickedMessages =
+            allMessages.where((m) => m.projectId == project.id).toList();
+        if (clickedMessages.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('This conversation has no messages to replay.')),
+          );
+          return;
+        }
 
-            final selection = await showReplayStartSelection(
-              context,
-              messages,
-            );
-
-            if (!mounted || selection == null) {
-              return;
-            }
-
-            if (selection.choice == ReplayStartChoice.time) {
-              final startTime = selection.startTime;
-
-              if (startTime == null) {
-                return;
-              }
-
-              _replayCubit.setReplayStartTime(startTime);
-            } else {
-              final messageId = selection.messageId;
-
-              if (messageId == null) {
-                return;
-              }
-
-              _replayCubit.setReplayStartMessage(messageId);
-            }
-
-            _replayCubit.openConversation(
-              project.id,
-            );
-          },
+        _replayCubit.load(
+          allMessages,
+          widget.ownerId,
+          personState.persons,
+          project.id,
         );
+
+        final selection = await showReplayStartSelection(context, allMessages);
+        if (!mounted || selection == null) return;
+
+        if (selection.choice == ReplayStartChoice.time) {
+          final t = selection.startTime;
+          if (t != null) _replayCubit.setReplayStartTime(t);
+        } else {
+          final mid = selection.messageId;
+          if (mid != null) _replayCubit.setReplayStartMessage(mid);
+        }
+
+        _replayCubit.openConversationViaHome(project.id);
       },
     );
   }

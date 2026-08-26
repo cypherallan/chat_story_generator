@@ -9,12 +9,16 @@ class ReplayHomeView extends StatelessWidget {
   final List<Project> projects;
   final String ownerId;
   final void Function(Project project) onChatTap;
+  final String? highlightedProjectId;
+  final bool isChatTapPressed;
 
   const ReplayHomeView({
     super.key,
     required this.projects,
     required this.ownerId,
     required this.onChatTap,
+    this.highlightedProjectId,
+    this.isChatTapPressed = false,
   });
 
   @override
@@ -75,6 +79,8 @@ class ReplayHomeView extends StatelessWidget {
                 persons: personState.persons,
                 ownerId: ownerId,
                 onChatTap: onChatTap,
+                highlightedProjectId: highlightedProjectId,
+                isChatTapPressed: isChatTapPressed,
               ),
               const Center(
                 child: Text('Updates'),

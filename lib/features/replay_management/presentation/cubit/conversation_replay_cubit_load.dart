@@ -13,6 +13,8 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
       ..clear()
       ..addAll(messages);
 
+    _visiblePerProject.clear();
+
     _ownerId = ownerId;
 
     _persons

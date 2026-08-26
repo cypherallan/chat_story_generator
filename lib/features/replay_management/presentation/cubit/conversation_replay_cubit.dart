@@ -49,6 +49,7 @@ abstract class _ConversationReplayCubitBase
 
   final List<Message> _messages = [];
   final List<Message> _returnMessages = [];
+  final Map<String, List<Message>> _visiblePerProject = {};
   String? _returnProjectId;
   int _returnMessageIndex = 0;
   int? _returnNotificationMessageCount;

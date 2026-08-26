@@ -25,6 +25,7 @@ enum ReplayVisualInteraction {
   notificationTap,
   notificationSwipe,
   backTap,
+  chatTap,
 }
 
 enum ReplayRecordingStatus {
@@ -37,9 +38,9 @@ enum ReplayRecordingStatus {
 }
 
 enum ReplayExportQuality {
-  low,    // 480p / smaller file
+  low, // 480p / smaller file
   medium, // 720p
-  high,   // 1080p
+  high, // 1080p
 }
 
 class ReplayNotificationEvent {
@@ -96,6 +97,7 @@ class ConversationReplayState extends Equatable {
   final bool deleteForMePressed;
   final String? deletingMessageId;
   final ReplayVisualInteraction visualInteraction;
+  final String? highlightedChatProjectId; // NEW
 
   // --- NEW: Recording fields ---
   final ReplayRecordingStatus recordingStatus;
@@ -146,6 +148,7 @@ class ConversationReplayState extends Equatable {
     this.deleteForMePressed = false,
     this.deletingMessageId,
     this.visualInteraction = ReplayVisualInteraction.none,
+    this.highlightedChatProjectId,
     // recording defaults
     this.recordingStatus = ReplayRecordingStatus.idle,
     this.recordedTempPath,
@@ -203,6 +206,8 @@ class ConversationReplayState extends Equatable {
     bool? deleteForMePressed,
     String? deletingMessageId,
     ReplayVisualInteraction? visualInteraction,
+    String? highlightedChatProjectId,
+    bool clearHighlightedChat = false,
     // recording
     ReplayRecordingStatus? recordingStatus,
     String? recordedTempPath,
@@ -266,6 +271,9 @@ class ConversationReplayState extends Equatable {
       showDeleteConfirmation:
           showDeleteConfirmation ?? this.showDeleteConfirmation,
       visualInteraction: visualInteraction ?? this.visualInteraction,
+      highlightedChatProjectId: clearHighlightedChat
+          ? null
+          : (highlightedChatProjectId ?? this.highlightedChatProjectId),
       // recording
       recordingStatus: recordingStatus ?? this.recordingStatus,
       recordedTempPath: clearRecordedTempPath
@@ -273,9 +281,8 @@ class ConversationReplayState extends Equatable {
           : (recordedTempPath ?? this.recordedTempPath),
       exportedPath:
           clearExportedPath ? null : (exportedPath ?? this.exportedPath),
-      recordingError: clearRecordingError
-          ? null
-          : (recordingError ?? this.recordingError),
+      recordingError:
+          clearRecordingError ? null : (recordingError ?? this.recordingError),
       selectedQuality: selectedQuality ?? this.selectedQuality,
     );
   }
@@ -323,6 +330,7 @@ class ConversationReplayState extends Equatable {
         deleteForMePressed,
         deletingMessageId,
         visualInteraction,
+        highlightedChatProjectId,
         // recording props
         recordingStatus,
         recordedTempPath,
