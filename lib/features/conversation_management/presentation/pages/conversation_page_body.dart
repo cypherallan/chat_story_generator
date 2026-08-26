@@ -240,13 +240,11 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                     return;
                   }
 
-                  // Only the owner can clear unread messages.
                   context.read<MessageCubit>().markMessagesAsRead(
                         projectId: widget.project.id,
                         currentUserId: widget.project.ownerId,
                       );
 
-                  // Also clear the unread counter shown on the Home chat list.
                   context.read<ProjectCubit>().clearUnreadCount(
                         widget.project.id,
                       );
@@ -275,6 +273,16 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
 
                   if (sender.isEmpty) return;
 
+                  if (selectedSenderId == widget.project.ownerId) {
+                    context.read<MessageCubit>().markMessagesAsRead(
+                          projectId: widget.project.id,
+                          currentUserId: widget.project.ownerId,
+                        );
+                    context
+                        .read<ProjectCubit>()
+                        .clearUnreadCount(widget.project.id);
+                  }
+
                   context.read<MessageCubit>().createMessage(
                         projectId: widget.project.id,
                         senderId: selectedSenderId,
@@ -295,6 +303,17 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                       .where(
                           (p) => widget.project.participantIds.contains(p.id))
                       .toList();
+
+                  // OWNER replied -> clear unread divider immediately
+                  if (senderId == widget.project.ownerId) {
+                    context.read<MessageCubit>().markMessagesAsRead(
+                          projectId: widget.project.id,
+                          currentUserId: widget.project.ownerId,
+                        );
+                    context.read<ProjectCubit>().clearUnreadCount(
+                          widget.project.id,
+                        );
+                  }
 
                   context.read<MessageCubit>().createMessage(
                         projectId: widget.project.id,
