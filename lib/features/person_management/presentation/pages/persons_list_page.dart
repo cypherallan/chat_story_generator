@@ -30,12 +30,8 @@ class PersonsListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(
-          value: context.read<PersonCubit>(),
-        ),
-        BlocProvider.value(
-          value: context.read<GroupCubit>(),
-        ),
+        BlocProvider.value(value: context.read<PersonCubit>()),
+        BlocProvider.value(value: context.read<GroupCubit>()),
       ],
       child: _PersonsListView(
         selectionMode: selectionMode,
@@ -67,13 +63,24 @@ class _PersonsListView extends StatefulWidget {
 class _PersonsListViewState extends State<_PersonsListView> {
   final TextEditingController _searchController = TextEditingController();
   final List<String> _selectedIds = [];
-
   String _searchQuery = '';
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _openAddContact() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<PersonCubit>(),
+          child: const AddParticipantPage(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -91,101 +98,105 @@ class _PersonsListViewState extends State<_PersonsListView> {
                   return Text(
                     "${state.persons.length} contacts",
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.normal,
-                    ),
+                        fontSize: 12, fontWeight: FontWeight.normal),
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),
           ],
         ),
         actions: const [
-          Icon(Icons.search),
-          SizedBox(width: 18),
           Icon(Icons.more_vert),
           SizedBox(width: 12),
         ],
       ),
       body: Column(
         children: [
+          // HEADER: Add Contact button + Search bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Row(
+              children: [
+                if (!widget.selectionMode && !widget.addToGroupMode)
+                  FilledButton.icon(
+                    onPressed: _openAddContact,
+                    icon: const Icon(Icons.person_add, size: 18),
+                    label: const Text("Add contact"),
+                  ),
+                if (!widget.selectionMode && !widget.addToGroupMode)
+                  const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() => _searchQuery = value);
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Search contacts",
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
           // CONTACTS LIST
           Expanded(
             child: BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
                 if (state is PersonLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
-
                 if (state is PersonError) {
-                  return Center(
-                    child: Text(state.message),
-                  );
+                  return Center(child: Text(state.message));
                 }
-
                 if (state is PersonLoaded) {
                   final filteredPersons = state.persons.where((person) {
-                    if (person.id == widget.currentPersonId) {
-                      return false;
-                    }
-
-                    if (widget.excludedIds.contains(person.id)) {
-                      return false;
-                    }
-
+                    if (person.id == widget.currentPersonId) return false;
+                    if (widget.excludedIds.contains(person.id)) return false;
                     return person.name
                         .toLowerCase()
                         .contains(_searchQuery.toLowerCase());
                   }).toList();
 
-                  filteredPersons.sort(
-                    (a, b) => a.name.toLowerCase().compareTo(
-                          b.name.toLowerCase(),
-                        ),
-                  );
+                  filteredPersons.sort((a, b) =>
+                      a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
                   if (filteredPersons.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No Contacts found.',
-                      ),
-                    );
+                    return const Center(child: Text('No Contacts found.'));
                   }
 
                   return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 16),
                     itemCount: filteredPersons.length,
                     itemBuilder: (context, index) {
                       final person = filteredPersons[index];
                       if (widget.addToGroupMode) {
                         return ListTile(
-                          leading: PersonAvatar(
-                            person: person,
-                            radius: 22,
-                          ),
+                          leading: PersonAvatar(person: person, radius: 22),
                           title: Text(person.name),
                           subtitle:
                               person.bio == null ? null : Text(person.bio!),
                           trailing: FilledButton(
                             child: const Text("Add"),
-                            onPressed: () {
-                              Navigator.pop(context, person.id);
-                            },
+                            onPressed: () => Navigator.pop(context, person.id),
                           ),
                         );
                       }
                       if (widget.selectionMode) {
                         final selected = _selectedIds.contains(person.id);
-
                         return CheckboxListTile(
                           value: selected,
-                          secondary: PersonAvatar(
-                            person: person,
-                            radius: 20,
-                          ),
+                          secondary: PersonAvatar(person: person, radius: 20),
                           title: Text(person.name),
                           subtitle:
                               person.bio == null ? null : Text(person.bio!),
@@ -211,30 +222,23 @@ class _PersonsListViewState extends State<_PersonsListView> {
                                 contactId: person.id,
                                 contactName: person.name,
                               );
-
                           if (!mounted) return;
-
                           await context.read<GroupCubit>().loadProjects();
-
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => MultiBlocProvider(
                                 providers: [
                                   BlocProvider.value(
-                                    value: context.read<GroupCubit>(),
-                                  ),
+                                      value: context.read<GroupCubit>()),
                                   BlocProvider(
                                     create: (_) => di.sl<MessageCubit>()
                                       ..loadMessages(project.id),
                                   ),
                                   BlocProvider.value(
-                                    value: context.read<PersonCubit>(),
-                                  ),
+                                      value: context.read<PersonCubit>()),
                                 ],
-                                child: ConversationPage(
-                                  project: project,
-                                ),
+                                child: ConversationPage(project: project),
                               ),
                             ),
                           );
@@ -245,9 +249,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
                             MaterialPageRoute(
                               builder: (_) => BlocProvider.value(
                                 value: context.read<PersonCubit>(),
-                                child: EditParticipantPage(
-                                  person: person,
-                                ),
+                                child: EditParticipantPage(person: person),
                               ),
                             ),
                           );
@@ -259,27 +261,23 @@ class _PersonsListViewState extends State<_PersonsListView> {
                               return AlertDialog(
                                 title: const Text('Delete Contact'),
                                 content: Text(
-                                  'Are you sure you want to delete ${person.name}?',
-                                ),
+                                    'Are you sure you want to delete ${person.name}?'),
                                 actions: [
                                   TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel')),
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.pop(context, true),
                                     style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red,
-                                    ),
+                                        foregroundColor: Colors.red),
                                     child: const Text('Delete'),
                                   ),
                                 ],
                               );
                             },
                           );
-
                           if (confirm == true && context.mounted) {
                             context.read<PersonCubit>().removePerson(person.id);
                           }
@@ -288,7 +286,6 @@ class _PersonsListViewState extends State<_PersonsListView> {
                     },
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),
@@ -297,25 +294,10 @@ class _PersonsListViewState extends State<_PersonsListView> {
       ),
       floatingActionButton: widget.selectionMode
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pop(context, _selectedIds);
-              },
+              onPressed: () => Navigator.pop(context, _selectedIds),
               child: const Icon(Icons.check),
             )
-          : FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<PersonCubit>(),
-                      child: const AddParticipantPage(),
-                    ),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            ),
+          : null, // no FAB, button is in header now
     );
   }
 }
