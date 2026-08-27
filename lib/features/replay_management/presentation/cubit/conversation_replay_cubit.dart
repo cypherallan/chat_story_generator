@@ -52,7 +52,6 @@ abstract class _ConversationReplayCubitBase
   final Map<String, List<Message>> _visiblePerProject = {};
   String? _returnProjectId;
   int _returnMessageIndex = 0;
-  int? _returnNotificationMessageCount;
   int _replayStartIndex = 0;
 
   final Random _random = Random();

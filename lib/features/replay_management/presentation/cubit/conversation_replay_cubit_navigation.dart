@@ -167,7 +167,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     _returnProjectId = state.currentProjectId;
     _returnMessageIndex = state.currentIndex;
-    _returnNotificationMessageCount = _replayNotificationMessageCount;
 
     final result = await getMessages(projectId).first;
 
