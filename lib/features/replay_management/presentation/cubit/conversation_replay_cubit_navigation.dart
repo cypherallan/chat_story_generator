@@ -140,6 +140,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     required String projectId,
     String? notificationMessageId, // ← NEW optional parameter
   }) async {
+    print(
+        '[Nav] OPEN from notif proj=$projectId notifMsgId=$notificationMessageId currProj=${state.currentProjectId} hasReturn=${_returnMessages.isNotEmpty} currIdx=${state.currentIndex}');
     _pauseDeletionTimer();
     _timer?.cancel();
 
@@ -203,6 +205,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
       _replayStartIndex = replyStartIndex;
       _replayNotificationMessageCount = null;
+      print(
+          '[Nav] OPEN parsed replyStart=$replyStartIndex end=$endIndex findId=$messageIdToFind total=${_messages.length}');
 
       // Tell the playback engine to stop at endIndex and then return
       // We reuse the existing return machinery by temporarily limiting the list
@@ -237,14 +241,20 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
           shiftPressed: false,
         ),
       );
-
+      print(
+          '[Nav] OPEN done -> _playNext proj=$projectId start=$replyStartIndex');
       _playNext();
     });
   }
 
   void returnFromNotificationConversation() {
+    print(
+        '[Nav] RETURN start returnProj=$_returnProjectId returnIdx=$_returnMessageIndex returnLen=${_returnMessages.length} currProj=${state.currentProjectId} lastMsg=${_messages.isNotEmpty ? _messages.last.id : "empty"}');
     _timer?.cancel();
-    if (_returnMessages.isEmpty || _returnProjectId == null) return;
+    if (_returnMessages.isEmpty || _returnProjectId == null) {
+      print('[Nav] RETURN abort - empty');
+      return;
+    }
 
     final projectId = _returnProjectId!;
     final returnIndex = _returnMessageIndex;
@@ -260,15 +270,22 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
           orElse: () => _returnMessages[returnIndex],
         );
         realGap = nextAb.createdAt.difference(lastAcMessage.createdAt);
+        print(
+            '[Nav] RETURN realGap from nextAb=${realGap.inMilliseconds}ms id=${nextAb.id}');
       }
       final match = notificationCubit.recordedEvents.lastWhere(
         (e) => e.notification.projectId == state.currentProjectId,
       );
-      if (match.returnDelayMs != null)
+      print(
+          '[Nav] RETURN matched event delayMs=${match.returnDelayMs} for proj=${match.notification.projectId}');
+      if (match.returnDelayMs != null) {
         realGap = Duration(milliseconds: match.returnDelayMs!);
-    } catch (_) {}
-
-    final compressed = _compressRealGap(realGap);
+        print(
+            '[Nav] RETURN override gap to ${realGap.inMilliseconds}ms from returnDelayMs');
+      }
+    } catch (e) {
+      print('[Nav] RETURN gap calc error $e');
+    }
 
     // Find next AB index in the combined list after the AC block
     int nextIndex = returnIndex;
@@ -280,6 +297,10 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
       );
       if (idx != -1) nextIndex = idx;
     }
+
+    final compressed = _compressRealGap(realGap);
+    print(
+        '[Nav] RETURN compressed=${compressed.inMilliseconds}ms from real=${realGap.inMilliseconds}ms nextIdx=$nextIndex returnIdx=$returnIndex');
 
     _messages
       ..clear()
@@ -337,6 +358,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             replayNotification: null,
           ));
           _timer = Timer(compressed, () {
+            print(
+                '[Nav] RETURN timer fired -> _playNext proj=$projectId idx=$nextIndex');
             if (isClosed) return;
             emit(state.copyWith(playing: true, paused: false));
             _playNext();

@@ -148,6 +148,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   // ---------------------------------------------------------------------------
 
   void recordTap({int targetVisibleCount = 0}) {
+    print(
+        '[SimNotif] recordTap targetCount=$targetVisibleCount pendingSrc=$_pendingSourceProjectId pendingIdx=$_pendingSourceTriggerIndex notif=${_recordedNotification?.messageId}');
     if (isClosed) return;
 
     _interaction = NotificationInteraction.tapped;
@@ -156,6 +158,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void recordSwipe({int targetVisibleCount = 0}) {
+    print(
+        '[SimNotif] recordSwipe targetCount=$targetVisibleCount pendingSrc=$_pendingSourceProjectId pendingIdx=$_pendingSourceTriggerIndex notif=${_recordedNotification?.messageId}');
     if (isClosed) return;
 
     _interaction = NotificationInteraction.swiped;
@@ -164,6 +168,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void recordExpired({int targetVisibleCount = 0}) {
+    print(
+        '[SimNotif] recordExpired targetCount=$targetVisibleCount pendingSrc=$_pendingSourceProjectId pendingIdx=$_pendingSourceTriggerIndex notif=${_recordedNotification?.messageId}');
     if (isClosed) return;
 
     _interaction = NotificationInteraction.expired;
@@ -172,9 +178,21 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   Future<void> _completePendingEvent(int targetVisibleCount) async {
+    print(
+        '[SimNotif] _completePendingEvent try src=$_pendingSourceProjectId srcIdx=$_pendingSourceTriggerIndex notifId=${_recordedNotification?.messageId} interaction=$_interaction target=$targetVisibleCount totalBefore=${_recordedEvents.length}');
     if (_pendingSourceProjectId == null ||
         _pendingSourceTriggerIndex == null ||
         _recordedNotification == null) {
+      return;
+    }
+
+    // prevent double tap race - same msgId already saved
+    if (_recordedEvents.any(
+        (e) => e.notification.messageId == _recordedNotification!.messageId)) {
+      print(
+          '[SimNotif] _completePendingEvent SKIP duplicate msgId=${_recordedNotification!.messageId}');
+      _pendingSourceProjectId = null;
+      _pendingSourceTriggerIndex = null;
       return;
     }
 
@@ -187,8 +205,14 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     );
 
     _recordedEvents.add(event);
+    print(
+        '[SimNotif] _completePendingEvent ADD src=${event.sourceProjectId} msgId=${event.notification.messageId} totalAfter=${_recordedEvents.length}');
 
     final projectId = event.sourceProjectId;
+
+    // Clear pending immediately so 2nd tap can't create duplicate with src=null
+    _pendingSourceProjectId = null;
+    _pendingSourceTriggerIndex = null;
 
     final events = _recordedEvents
         .where((e) => e.sourceProjectId == projectId)
@@ -222,10 +246,6 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     } catch (_) {
       // Keep the in-memory event even if persistence fails.
     }
-
-    // Clear pending so the next notification starts fresh
-    _pendingSourceProjectId = null;
-    _pendingSourceTriggerIndex = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -238,6 +258,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     String? sourceProjectId,
     int? sourceTriggerIndex,
   }) {
+    print(
+        '[SimNotif] triggerSavedNotification proj=${notification.projectId} msgId=${notification.messageId} sourceProj=$sourceProjectId sourceIdx=$sourceTriggerIndex');
     if (isClosed) return;
 
     final simulatedNotification = SimulatedNotification(
@@ -267,6 +289,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   void triggerNotification(
     SimulatedNotification notification,
   ) {
+    print(
+        '[SimNotif] triggerNotification id=${notification.id} proj=${notification.projectId} msgId=${notification.messageId} triggerIdx=${notification.triggerMessageIndex}');
     if (isClosed) return;
 
     _hideTimer?.cancel();
@@ -295,7 +319,6 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     );
   }
 
-  // NEW: Track real back tap duration
   Future<void> recordBackNavigation() async {
     if (isClosed) return;
     if (_notificationOpenedAt == null) return;
@@ -303,6 +326,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
 
     final delay = DateTime.now().difference(_notificationOpenedAt!);
     final delayMs = delay.inMilliseconds;
+    print(
+        '[SimNotif] recordBackNavigation delayMs=$delayMs lastNotif=${_recordedEvents.last.notification.messageId} proj=${_recordedEvents.last.sourceProjectId}');
 
     // Update last event with return delay
     final lastIndex = _recordedEvents.length - 1;
@@ -391,6 +416,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   }
 
   void hideNotificationPreserveInteraction() {
+    print(
+        '[SimNotif] hideNotificationPreserveInteraction visible=${state.visible} interaction=$_interaction');
     if (isClosed) return;
 
     _hideTimer?.cancel();
