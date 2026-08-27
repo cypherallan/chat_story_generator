@@ -86,6 +86,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   ) async {
     if (isClosed) return;
 
+    // 1. Create the actual chat message (replay that stays forever)
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
       messageId: notification.messageId,
@@ -96,6 +97,9 @@ class NotificationCubit extends Cubit<NotificationState> {
       messageText: notification.messageText,
       imagePath: notification.imagePath,
     );
+
+    // 2. Delete from saved list - use the cubit method, not the usecase
+    await removeNotification(notification.id);
   }
 
   Future<void> updateNotification(

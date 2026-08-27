@@ -95,72 +95,55 @@ class ConversationNotificationActions {
   }
 
   Future<void> triggerReplayNotification() async {
+    // Use get_it instance so it works even if Provider is missing
     final notificationCubit = di.sl<NotificationCubit>();
-
     await notificationCubit.loadNotifications();
 
-    if (!context.mounted) {
-      return;
-    }
+    if (!context.mounted) return;
 
     final notifications = notificationCubit.state.notifications;
 
     if (notifications.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No replay notifications have been created yet.'),
-        ),
+            content: Text('No replay notifications have been created yet.')),
       );
       return;
     }
 
-    // GET PROJECTS FOR GROUP NAME DISPLAY
     final groupCubit = context.read<GroupCubit>();
     final groupState = groupCubit.state;
-
-    if (groupState is! ProjectLoaded) {
-      return;
-    }
+    if (groupState is! ProjectLoaded) return;
 
     final projects = groupState.projects;
 
     final selectedNotification = await showTriggerReplayNotificationSheet(
       context,
       notifications,
-      projects, // <-- FIX
+      projects,
     );
 
-    if (!context.mounted || selectedNotification == null) {
-      return;
-    }
+    if (!context.mounted || selectedNotification == null) return;
 
-    final project = await context
-        .read<GroupCubit>()
-        .findProject(selectedNotification.projectId);
-
+    final project =
+        await groupCubit.findProject(selectedNotification.projectId);
     if (project == null) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'The conversation for this notification no longer exists.',
-          ),
-        ),
+            content: Text(
+                'The conversation for this notification no longer exists.')),
       );
       return;
     }
 
     final messageState = context.read<MessageCubit>().state;
-
     int triggerMessageIndex = 0;
-
     if (messageState is MessageLoaded) {
       triggerMessageIndex = messageState.messages.length;
     }
 
     final messageCubit = context.read<MessageCubit>();
-
     final added = await messageCubit.addNotificationMessage(
       projectId: selectedNotification.projectId,
       messageId: selectedNotification.messageId,
@@ -170,9 +153,7 @@ class ConversationNotificationActions {
       imagePath: selectedNotification.imagePath,
     );
 
-    if (!added) {
-      return;
-    }
+    if (!added) return;
 
     final message = Message(
       id: selectedNotification.messageId,
@@ -191,9 +172,7 @@ class ConversationNotificationActions {
           message: message,
         );
 
-    if (!context.mounted) {
-      return;
-    }
+    if (!context.mounted) return;
 
     final updatedNotification = selectedNotification.copyWith(
       triggerMessageIndex: triggerMessageIndex,
@@ -206,5 +185,17 @@ class ConversationNotificationActions {
       sourceProjectId: currentProject.id,
       sourceTriggerIndex: triggerMessageIndex,
     );
+
+    // DELETE AFTER TRIGGER - replay stays in chat
+    await notificationCubit.removeNotification(selectedNotification.id);
+
+    // Try to sync CreateNotificationPage cubit if it exists in tree
+    try {
+      if (context.mounted) {
+        await context.read<NotificationCubit>().loadNotifications();
+      }
+    } catch (_) {
+      // No Provider above ConversationPage - that's ok, storage is already deleted
+    }
   }
 }
