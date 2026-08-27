@@ -42,8 +42,6 @@ class _HomePageState extends State<HomePage> {
       return null;
     }
 
-    // If the user has already selected an owner,
-    // keep that person as the current owner.
     if (_currentPersonId != null) {
       for (final person in persons) {
         if (person.id == _currentPersonId) {
@@ -52,8 +50,6 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // No owner selected yet:
-    // choose the alphabetically first pinned contact.
     final pinnedPersons = persons.where((person) => person.isPinned).toList()
       ..sort(
         (a, b) => a.name.toLowerCase().compareTo(
@@ -65,7 +61,6 @@ class _HomePageState extends State<HomePage> {
       return pinnedPersons.first;
     }
 
-    // If nobody is pinned, keep the old fallback.
     return persons.first;
   }
 
@@ -78,12 +73,10 @@ class _HomePageState extends State<HomePage> {
       builder: (sheetContext) {
         final sortedPersons = List<Person>.from(persons)
           ..sort((a, b) {
-            // Pinned contacts first.
             if (a.isPinned != b.isPinned) {
               return a.isPinned ? -1 : 1;
             }
 
-            // Then alphabetical.
             return a.name.toLowerCase().compareTo(
                   b.name.toLowerCase(),
                 );
@@ -135,7 +128,6 @@ class _HomePageState extends State<HomePage> {
                                 .read<PersonCubit>()
                                 .togglePersonPin(person.id);
 
-                            // Reopen the list so the new ordering is visible.
                             Future.microtask(() {
                               if (!mounted) return;
 
@@ -205,8 +197,6 @@ class _HomePageState extends State<HomePage> {
               if (!state.visible || state.notification == null) {
                 return;
               }
-
-              // The actual notification UI will go here.
             },
             child: DefaultTabController(
               length: 4,
@@ -246,7 +236,6 @@ class _HomePageState extends State<HomePage> {
                               );
                             }
 
-                            // Establish the first person as the initial identity.
                             if (_currentPersonId == null) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (!mounted) return;
@@ -306,9 +295,7 @@ class _HomePageState extends State<HomePage> {
                       ? [
                           IconButton(
                             icon: const Icon(Icons.push_pin_outlined),
-                            onPressed: () {
-                              // TODO: pin selected chats
-                            },
+                            onPressed: () {},
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline),
@@ -350,15 +337,11 @@ class _HomePageState extends State<HomePage> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.notifications_off_outlined),
-                            onPressed: () {
-                              // TODO: mute selected chats
-                            },
+                            onPressed: () {},
                           ),
                           IconButton(
                             icon: const Icon(Icons.archive_outlined),
-                            onPressed: () {
-                              // TODO: archive selected chats
-                            },
+                            onPressed: () {},
                           ),
                           PopupMenuButton<String>(
                             itemBuilder: (context) => const [

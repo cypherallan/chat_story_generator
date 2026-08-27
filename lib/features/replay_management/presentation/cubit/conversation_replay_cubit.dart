@@ -71,8 +71,6 @@ abstract class _ConversationReplayCubitBase
   final Map<String, Duration> _deletionElapsed = {};
   DateTime? _deletionStartedAt;
   String? _activeDeletionMessageId;
-
-  // Playback abstract
   void _playNext();
   void _pauseDeletionTimer() {
     _deletionTimer?.cancel();
@@ -107,8 +105,6 @@ abstract class _ConversationReplayCubitBase
   Duration _humanTypingDuration(String text);
 
   bool _isEmoji(String character);
-
-  // --- Recording helpers (implemented in _RecordingMixin) ---
   void onRecordingCompleted(String tempPath);
   void onRecordingFailed(String error);
   void setSelectedQuality(ReplayExportQuality quality);
@@ -129,22 +125,14 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
         _UtilsMixin,
         _RecordingMixin {
   ConversationReplayCubit({
-    required SimulatedNotificationCubit notificationCubit,
-    required GetMessages getMessages,
-    required GetProjects getProjects,
-    required GetNotifications getNotifications,
-    required GetRecordedNotificationEvents getRecordedNotificationEvents,
-    required SaveRecordedNotificationEvents saveRecordedNotificationEvents,
-    required ReplayExportService exportService,
-  }) : super(
-          notificationCubit: notificationCubit,
-          getMessages: getMessages,
-          getProjects: getProjects,
-          getNotifications: getNotifications,
-          getRecordedNotificationEvents: getRecordedNotificationEvents,
-          saveRecordedNotificationEvents: saveRecordedNotificationEvents,
-          exportService: exportService,
-        );
+    required super.notificationCubit,
+    required super.getMessages,
+    required super.getProjects,
+    required super.getNotifications,
+    required super.getRecordedNotificationEvents,
+    required super.saveRecordedNotificationEvents,
+    required super.exportService,
+  });
 
   @override
   Future<void> close() {

@@ -62,15 +62,13 @@ class ConversationMessageList extends StatelessWidget {
               );
             }
 
-            // 1. Stable sort oldest -> newest
             final chronological = List<Message>.from(messageState.messages)
               ..sort((a, b) {
                 final c = a.createdAt.compareTo(b.createdAt);
                 if (c != 0) return c;
-                return a.id.compareTo(b.id); // stable tie-breaker
+                return a.id.compareTo(b.id);
               });
 
-            // 2. Find first unread incoming (oldest unread)
             final unread = chronological
                 .where((m) => m.isUnread && m.senderId != project.ownerId)
                 .toList();
@@ -79,9 +77,6 @@ class ConversationMessageList extends StatelessWidget {
             final firstUnreadIndex = hasUnread
                 ? chronological.indexWhere((m) => m.id == unread.first.id)
                 : -1;
-
-            // 3. Build combined list in chronological order WITH divider
-            // [read...] [divider] [unread...]
             final List<Object> chronologicalWithDivider = [];
             if (hasUnread && firstUnreadIndex != -1) {
               chronologicalWithDivider
@@ -94,7 +89,6 @@ class ConversationMessageList extends StatelessWidget {
               chronologicalWithDivider.addAll(chronological);
             }
 
-            // 4. Reverse for ListView reverse:true (newest at bottom = index 0)
             final displayList = chronologicalWithDivider.reversed.toList();
 
             return ListView.builder(

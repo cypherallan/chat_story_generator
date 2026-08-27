@@ -13,12 +13,11 @@ void main() async {
 
   await AppInitializer.initialize();
 
-  // REAL system bars - no fake
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark, // dark icons for light status
-    statusBarBrightness: Brightness.light, // iOS
+    statusBarIconBrightness: Brightness.dark, 
+    statusBarBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.dark,
     systemNavigationBarDividerColor: Colors.transparent,

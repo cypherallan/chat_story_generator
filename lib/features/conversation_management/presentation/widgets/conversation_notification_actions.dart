@@ -14,7 +14,6 @@ import '../../../project_management/presentation/cubit/project_cubit.dart';
 import '../pages/conversation_page.dart';
 import 'trigger_replay_notification_sheet.dart';
 
-/// All notification-related actions that previously lived inside ConversationPage.
 class ConversationNotificationActions {
   ConversationNotificationActions({
     required this.context,
@@ -56,7 +55,6 @@ class ConversationNotificationActions {
     }
 
     if (project.id == currentProject.id) {
-      // Same conversation – just record the tap with current message count
       final currentCount = messageCubit.state is MessageLoaded
           ? (messageCubit.state as MessageLoaded).messages.length
           : 0;
@@ -65,8 +63,6 @@ class ConversationNotificationActions {
     }
     simulatedNotificationCubit.recordTap(targetVisibleCount: 0);
 
-    // NEW: Replace A/B with A/C so back goes to Home, not back to A/B
-    // Stack becomes Home -> A/C instead of Home -> A/B -> A/C
     await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -144,10 +140,6 @@ class ConversationNotificationActions {
       return;
     }
 
-    // ------------------------------------------------------------
-    // DETERMINE WHERE THE NOTIFICATION SHOULD APPEAR IN REPLAY
-    // ------------------------------------------------------------
-
     final messageState = context.read<MessageCubit>().state;
 
     int triggerMessageIndex = 0;
@@ -191,27 +183,17 @@ class ConversationNotificationActions {
     if (!context.mounted) {
       return;
     }
-// ------------------------------------------------------------
-// UPDATE THE PERSISTED NOTIFICATION WITH THE TRIGGER INDEX
-// ------------------------------------------------------------
 
     final updatedNotification = selectedNotification.copyWith(
       triggerMessageIndex: triggerMessageIndex,
     );
-
-// Persist the trigger index so replay can use it later
     await notificationCubit.updateNotification(updatedNotification);
-
-// ------------------------------------------------------------
-// SHOW THE SIMULATED NOTIFICATION
-// (now also records the SOURCE conversation context)
-// ------------------------------------------------------------
 
     simulatedNotificationCubit.triggerSavedNotification(
       updatedNotification,
       triggerMessageIndex: triggerMessageIndex,
-      sourceProjectId: currentProject.id, // A/B
-      sourceTriggerIndex: triggerMessageIndex, // position in A/B
+      sourceProjectId: currentProject.id,
+      sourceTriggerIndex: triggerMessageIndex,
     );
   }
 }

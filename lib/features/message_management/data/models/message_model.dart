@@ -55,29 +55,20 @@ class MessageModel extends Message {
       text: json['text'] as String,
       imagePath: json['imagePath'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
-
       status: MessageStatus.values.byName(
         (json['status'] as String?) ?? 'sent',
       ),
-
-      // IMPORTANT:
-      // This was previously missing.
       isUnread: (json['isUnread'] as bool?) ?? false,
-
       isEdited: (json['isEdited'] as bool?) ?? false,
       isDeleted: (json['isDeleted'] as bool?) ?? false,
-
       replyToMessageId: json['replyToMessageId'] as String?,
       replyToSenderId: json['replyToSenderId'] as String?,
       replyToSenderName: json['replyToSenderName'] as String?,
       replyToText: json['replyToText'] as String?,
-
       reactions: Map<String, String>.from(
         json['reactions'] ?? {},
       ),
-
       originalText: json['originalText'] as String?,
-
       deletedAt: json['deletedAt'] != null
           ? DateTime.parse(json['deletedAt'] as String)
           : null,
@@ -94,11 +85,7 @@ class MessageModel extends Message {
       'imagePath': imagePath,
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,
-
-      // IMPORTANT:
-      // This must be persisted.
       'isUnread': isUnread,
-
       'isEdited': isEdited,
       'isDeleted': isDeleted,
       'replyToMessageId': replyToMessageId,

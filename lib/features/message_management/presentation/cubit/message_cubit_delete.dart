@@ -7,7 +7,6 @@ import '../../../project_management/domain/usecases/get_projects.dart';
 import '../../../project_management/domain/usecases/update_project.dart';
 import 'message_cubit.dart';
 
-/// Handles soft-deleting (tombstoning) and permanently deleting messages.
 mixin MessageCubitDeleteMixin on Cubit<MessageState> {
   UpdateMessage get updateMessage;
   DeleteMessage get deleteMessage;
@@ -29,7 +28,6 @@ mixin MessageCubitDeleteMixin on Cubit<MessageState> {
     );
 
     final deletedMessage = message.copyWith(
-      // Keep the original text so replay can type it first
       originalText: message.originalText ?? message.text,
       text: 'This message was deleted',
       isDeleted: true,
@@ -99,7 +97,6 @@ mixin MessageCubitDeleteMixin on Cubit<MessageState> {
 
         final project = projects[index];
 
-        // No messages remain in the conversation.
         if (messages.isEmpty) {
           final updated = project.copyWith(
             lastMessage: '',
@@ -113,7 +110,6 @@ mixin MessageCubitDeleteMixin on Cubit<MessageState> {
           return;
         }
 
-        // There are still messages, so use the newest one.
         final latestMessage = messages.last;
 
         final updated = project.copyWith(

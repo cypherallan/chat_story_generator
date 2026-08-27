@@ -58,17 +58,14 @@ import 'features/notification_management/presentation/cubit/notification_cubit.d
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // Firebase
   sl.registerLazySingleton(() => FirebaseAuth.instance);
   sl.registerLazySingleton(() => FirebaseFirestore.instance);
   sl.registerLazySingleton(() => FirebaseStorage.instance);
 
-  // Services
   sl.registerLazySingleton(() => AuthService(sl()));
   sl.registerLazySingleton(() => FirebaseStorageService(sl()));
   sl.registerLazySingleton(() => ReplayExportService());
 
-  // Data Source
   sl.registerLazySingleton<PersonFirestoreDataSource>(
     () => PersonFirestoreDataSourceImpl(sl()),
   );
@@ -94,10 +91,8 @@ Future<void> init() async {
     ),
   );
 
-  // register person
   sl.registerLazySingleton(() => UpdatePerson(sl()));
 
-  // Repository
   sl.registerLazySingleton<PersonRepository>(
     () => PersonRepositoryImpl(sl()),
   );
@@ -118,7 +113,6 @@ Future<void> init() async {
     ),
   );
 
-  // Use Cases
   sl.registerLazySingleton(() => GetPersons(sl()));
   sl.registerLazySingleton(() => AddPerson(sl()));
   sl.registerLazySingleton(() => DeletePerson(sl()));
@@ -169,9 +163,6 @@ Future<void> init() async {
       sl(),
     ),
   );
-
-  // Cubit
-  // Person Cubit
   sl.registerFactory(
     () => PersonCubit(
       getPersons: sl(),
@@ -182,7 +173,6 @@ Future<void> init() async {
     ),
   );
 
-  // Project Cubit
   sl.registerFactory(
     () => ProjectCubit(
       getProjects: sl(),
@@ -192,8 +182,6 @@ Future<void> init() async {
       deleteProjects: sl(),
     ),
   );
-
-  // Message Cubit
   sl.registerFactory(
     () => MessageCubit(
       getMessages: sl(),
@@ -205,9 +193,6 @@ Future<void> init() async {
       storageService: sl(),
     ),
   );
-
-  // Conversation Replay Cubit
-   // Conversation Replay Cubit
   sl.registerFactory(
     () => ConversationReplayCubit(
       notificationCubit: sl<SimulatedNotificationCubit>(),

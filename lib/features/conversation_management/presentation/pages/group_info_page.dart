@@ -231,8 +231,6 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                 );
 
                 if (personId == null) return;
-
-                // We'll connect this to ProjectCubit next.
               },
             ),
           ),

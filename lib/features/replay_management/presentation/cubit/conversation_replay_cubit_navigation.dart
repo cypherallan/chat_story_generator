@@ -8,18 +8,10 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     }
   }
 
-  Message? _lastMessageAt(int index, String projectId) {
-    final list =
-        _messages.take(index).where((m) => m.projectId == projectId).toList();
-    return list.isEmpty ? null : list.last;
-  }
-
   void showHome() {
     _pauseDeletionTimer();
     _timer?.cancel();
     _rebuildVisiblePerProjectUpTo(state.currentIndex);
-    print(
-        '[Nav] HOME preview at idx=${state.currentIndex} Wife last=${_lastMessageAt(state.currentIndex, state.currentProjectId ?? "")?.text}');
 
     emit(
       state.copyWith(
@@ -44,7 +36,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _pauseDeletionTimer();
     _timer?.cancel();
 
-    // only messages of THIS project before start index
     final filtered = _visiblePerProject[projectId] ??
         _messages
             .take(_replayStartIndex)
@@ -153,14 +144,11 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
   Future<void> openConversationFromNotification({
     required String projectId,
-    String? notificationMessageId, // ← NEW optional parameter
+    String? notificationMessageId,
   }) async {
-    print(
-        '[Nav] OPEN from notif proj=$projectId notifMsgId=$notificationMessageId currProj=${state.currentProjectId} hasReturn=${_returnMessages.isNotEmpty} currIdx=${state.currentIndex}');
     _pauseDeletionTimer();
     _timer?.cancel();
 
-    // Save the A/B replay state.
     _returnMessages
       ..clear()
       ..addAll(_messages);
@@ -187,7 +175,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
         ..clear()
         ..addAll(messages);
 
-      // ---------- Determine start index from the specific notification ----------
       var replyStartIndex = 0;
 
       final messageIdToFind = notificationMessageId ??
@@ -202,32 +189,19 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
           replyStartIndex = notificationIndex + 1;
         }
       }
-      // ------------------------------------------------------------------------
-
-      // ---------- NEW: also determine an END index (the reply) ----------
-      // We look for the first message sent by the owner AFTER the notification.
-      // That is the reply the user typed during this visit.
-      int endIndex = _messages.length; // fallback = play everything
+      int endIndex = _messages.length;
 
       for (int i = replyStartIndex; i < _messages.length; i++) {
         if (_messages[i].senderId == _ownerId) {
-          endIndex = i + 1; // include the reply, then stop
+          endIndex = i + 1;
           break;
         }
       }
-      // -----------------------------------------------------------------
 
       _replayStartIndex = replyStartIndex;
       _replayNotificationMessageCount = null;
-      print(
-          '[Nav] OPEN parsed replyStart=$replyStartIndex end=$endIndex findId=$messageIdToFind total=${_messages.length}');
 
-      // Tell the playback engine to stop at endIndex and then return
-      // We reuse the existing return machinery by temporarily limiting the list
       final messagesForThisVisit = _messages.take(endIndex).toList();
-
-      // Keep the full list in _returnMessages so we can restore later if needed,
-      // but for this visit we only want up to the reply.
       _messages
         ..clear()
         ..addAll(messagesForThisVisit);
@@ -255,8 +229,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
           shiftPressed: false,
         ),
       );
-      print(
-          '[Nav] OPEN done -> _playNext proj=$projectId start=$replyStartIndex');
       _playNext();
     });
   }
@@ -294,7 +266,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     }
     final compressed = _compressRealGap(realGap);
 
-    // restore full history, but KEEP visible map (A=Hello A, B=Hi B, C=reply)
     _messages
       ..clear()
       ..addAll(_returnMessages);
@@ -308,7 +279,6 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
     _timer = Timer(const Duration(milliseconds: 380), () {
       if (isClosed) return;
-      // home preview now reads from _visiblePerProject which has C=reply, not final
       emit(state.copyWith(
           visualInteraction: ReplayVisualInteraction.none,
           screen: ReplayScreen.home,

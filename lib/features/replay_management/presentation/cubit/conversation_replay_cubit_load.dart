@@ -32,7 +32,6 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
             .where((m) => m.createdAt.isBefore(initialReplayStartTime))
             .toList();
 
-    // rebuild _visiblePerProject up to initial messages for correct home preview
     for (final m in initialVisibleMessages) {
       _visiblePerProject.putIfAbsent(m.projectId, () => []).add(m);
     }

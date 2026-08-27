@@ -45,11 +45,9 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
     _recorderController = WidgetRecorderController(
       recordAudio: false,
       onComplete: (path) {
-        debugPrint('Replay video saved to temp: $path');
         widget.replayCubit.onRecordingCompleted(path);
       },
       onError: (error) {
-        debugPrint('Replay video export error: $error');
         widget.replayCubit.onRecordingFailed(error);
       },
     );
@@ -59,7 +57,6 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
 
     Future.delayed(const Duration(seconds: 90), () {
       if (mounted && _recorderController.isRecording) {
-        debugPrint('90s limit — auto stopping');
         _recorderController.stop();
       }
     });

@@ -6,8 +6,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       return;
     }
 
-    // If the previous replay finished, reset the replay runtime state
-    // so the exact same recorded sequence can be played again.
     if (state.finished) {
       _timer?.cancel();
 
@@ -145,9 +143,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (!state.playing) {
       return;
     }
-    print(
-        '[Playback] _playNext idx=${state.currentIndex} currProj=${state.currentProjectId} replayStartIdx=$_replayStartIndex nextNotifIdx=$_nextNotificationEventIndex totalNotifs=${_replayNotificationEvents.length}');
-
     if (state.currentIndex < _replayStartIndex) {
       emit(
         state.copyWith(
@@ -156,7 +151,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       );
     }
 
-    // ---------- FIXED MULTI-NOTIFICATION - only trigger when source matches ----------
     if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
       final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
 
@@ -171,8 +165,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           sourceProjectId = state.currentProjectId!;
         }
 
-        // Only evaluate notification if we are in its SOURCE chat.
-        // If we are in its TARGET chat (after opening 1st notif), do NOT consume it.
         if (sourceProjectId == state.currentProjectId) {
           final playedOfSource = _messages
               .take(state.currentIndex)
@@ -180,20 +172,15 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
               .length;
 
           if (playedOfSource == nextEvent.triggerIndex) {
-            print(
-                '[Playback] TRIGGER notif id=${nextEvent.notification.messageId} proj=${nextEvent.notification.projectId} source=$sourceProjectId playedOfSource=$playedOfSource triggerIdx=${nextEvent.triggerIndex}');
             _replayNotificationEvent(nextEvent);
             return;
           }
         }
       }
     }
-    // ---------------------------------------------------------------------------
 
     if (state.currentIndex >= _messages.length) {
       if (state.currentIndex >= _messages.length) {
-        print(
-            '[Playback] FINISH reached end, hasReturn=${_returnMessages.isNotEmpty} returnProj=$_returnProjectId');
         if (_returnMessages.isNotEmpty && _returnProjectId != null) {
           returnFromNotificationConversation();
           return;
@@ -222,7 +209,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     final messageIndex = state.currentIndex;
     final message = _messages[messageIndex];
 
-    // --- if next message belongs to different chat, go via Home ---
     if (state.currentProjectId != null &&
         message.projectId != state.currentProjectId) {
       _timer?.cancel();
@@ -239,8 +225,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
               .take(messageIndex)
               .where((m) => m.projectId == message.projectId)
               .toList();
-      print(
-          '[Nav] HOME SWITCH preview leaving ${state.currentProjectId} last=${_lastMessageAt(messageIndex, state.currentProjectId ?? "")?.text} entering ${message.projectId} last=${_lastMessageAt(messageIndex, message.projectId)?.text}');
 
       _timer = Timer(const Duration(milliseconds: 380), () {
         if (isClosed) return;
@@ -310,8 +294,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   Future<void> _handleReplayNotificationTap(
       ReplayNotificationEvent event) async {
-    print(
-        '[Playback] HANDLE TAP start id=${event.notification.messageId} proj=${event.notification.projectId}');
     _timer?.cancel();
 
     emit(
@@ -330,17 +312,13 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     notificationCubit.hideNotificationPreserveInteraction();
 
-    // IMPORTANT: use the notification that belongs to THIS event
-    print(
-        '[Playback] HANDLE TAP -> openConversationFromNotification proj=${event.notification.projectId} msgId=${event.notification.messageId}');
     await openConversationFromNotification(
       projectId: event.notification.projectId,
-      notificationMessageId: event.notification.messageId, // ← new parameter
+      notificationMessageId: event.notification.messageId,
     );
   }
 
   void _handleReplayNotificationSwipe() {
-    print('[Playback] HANDLE SWIPE start');
     _timer?.cancel();
 
     emit(
@@ -365,7 +343,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
             visualInteraction: ReplayVisualInteraction.none,
           ),
         );
-        print('[Playback] HANDLE SWIPE hide done -> _playNext');
 
         _timer = Timer(
           const Duration(milliseconds: 300),
@@ -376,11 +353,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   void _replayNotificationEvent(ReplayNotificationEvent event) {
-    print(
-        '[Playback] NOTIF APPEAR id=${event.notification.messageId} proj=${event.notification.projectId} interaction=${event.interaction} triggerIdx=${event.triggerIndex} idx=$_nextNotificationEventIndex');
     _nextNotificationEventIndex++;
 
-    // Show the banner with NO interaction yet
     emit(
       state.copyWith(
         replayNotification: event.notification,
@@ -391,8 +365,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     switch (event.interaction) {
       case NotificationInteraction.tapped:
         _timer = Timer(const Duration(seconds: 3), () {
-          print(
-              '[Playback] NOTIF TIMER TAP id=${event.notification.messageId} playing=${state.playing}');
           if (!state.playing) return;
           _handleReplayNotificationTap(event);
         });
@@ -400,8 +372,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
       case NotificationInteraction.swiped:
         _timer = Timer(const Duration(seconds: 3), () {
-          print(
-              '[Playback] NOTIF TIMER SWIPE id=${event.notification.messageId} playing=${state.playing}');
           if (!state.playing) return;
           _handleReplayNotificationSwipe();
         });
@@ -410,8 +380,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       case NotificationInteraction.expired:
       case NotificationInteraction.none:
         _timer = Timer(const Duration(seconds: 3), () {
-          print(
-              '[Playback] NOTIF TIMER EXPIRE id=${event.notification.messageId} playing=${state.playing}');
           if (!state.playing) return;
 
           emit(
@@ -438,8 +406,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         typing: true,
         typingPersonId: message.senderId,
         onlinePersonId: message.senderId,
-        keyboardVisible:
-            true, // FIX Task 1: keep keyboard on screen even when other is typing
+        keyboardVisible: true,
         emojiKeyboardVisible: false,
         composerText: '',
         pressedKey: null,
@@ -476,7 +443,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
             typingPersonId: null,
             visibleMessages: updatedMessages,
             currentIndex: state.currentIndex + 1,
-            keyboardVisible: true, // FIX Task 1: stay visible after message
+            keyboardVisible: true,
           ),
         );
 

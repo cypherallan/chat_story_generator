@@ -251,7 +251,6 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                     _notifyParent();
                     return;
                   }
-                  // owner typing -> hide typing
                   setState(() {
                     typingPersonIds.clear();
                     otherPersonTyping = false;
@@ -347,7 +346,6 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         .incrementUnreadCount(widget.project.id);
                   }
 
-                  // FIX Task 1: clear typing when message sent
                   setState(() {
                     replyingTo = null;
                     typingPersonIds.clear();
@@ -366,7 +364,6 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         .setPersonOffline(previousSender);
                     context.read<PersonCubit>().setPersonOnline(nextSender);
                     _notifyParent();
-                    // DO NOT set typing here - typing only when other taps composer
                   }
                 },
               ),

@@ -5,9 +5,6 @@ class AuthService {
 
   AuthService(this._auth);
 
-  // -------------------------
-  // Current user
-  // -------------------------
 
   User? get currentUser => _auth.currentUser;
 
@@ -18,9 +15,6 @@ class AuthService {
 
   bool get isAnonymous => _auth.currentUser?.isAnonymous ?? false;
 
-  // -------------------------
-  // Anonymous sign in
-  // -------------------------
 
   Future<User> signInAnonymously() async {
     final credential = await _auth.signInAnonymously();
@@ -38,9 +32,6 @@ class AuthService {
 
     await user.reload();
   }
-  // -------------------------
-  // Email/password signup
-  // -------------------------
 
   Future<User> signUp({
     required String name,
@@ -60,9 +51,6 @@ class AuthService {
     return _auth.currentUser!;
   }
 
-  // -------------------------
-  // Email/password login
-  // -------------------------
 
   Future<User> signIn({
     required String email,
@@ -78,9 +66,6 @@ class AuthService {
     return user;
   }
 
-  // -------------------------
-  // Sign out
-  // -------------------------
 
   Future<void> signOut() async {
     await _auth.signOut();

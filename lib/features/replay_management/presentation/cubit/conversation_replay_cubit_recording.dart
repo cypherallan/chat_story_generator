@@ -1,6 +1,7 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
+  @override
   void onRecordingCompleted(String tempPath) {
     if (isClosed) return;
     emit(state.copyWith(
@@ -10,6 +11,7 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
     ));
   }
 
+  @override
   void onRecordingFailed(String error) {
     if (isClosed) return;
     emit(state.copyWith(
@@ -18,10 +20,12 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
     ));
   }
 
+  @override
   void setSelectedQuality(ReplayExportQuality quality) {
     emit(state.copyWith(selectedQuality: quality));
   }
 
+  @override
   void resetRecording() {
     emit(state.copyWith(
       recordingStatus: ReplayRecordingStatus.idle,
@@ -30,15 +34,11 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
       clearRecordingError: true,
     ));
   }
-
-  /// Called when user presses "Record Replay"
-  /// This resets replay to beginning and sets recording status to recording.
-  /// The UI (WidgetRecorderController) should start actual capture right after calling this.
+  @override
   Future<void> startRecordReplay() async {
     _timer?.cancel();
     _nextNotificationEventIndex = 0;
 
-    // Same reset logic as play() when finished
     if (state.replayStartMethod == ReplayStartMethod.time) {
       if (state.replayStartTime != null) {
         _replayStartIndex = _messages.indexWhere(
@@ -55,7 +55,6 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
     final replayStartIndex = _replayStartIndex.clamp(0, _messages.length);
     final initialVisibleMessages = _messages.take(replayStartIndex).toList();
 
-    // Reset recording state + restart replay
     emit(state.copyWith(
       visibleMessages: initialVisibleMessages,
       currentIndex: replayStartIndex,
@@ -73,7 +72,6 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
       lastPressedEmoji: null,
       shiftPressed: false,
       clearReplayNotification: true,
-      // recording
       recordingStatus: ReplayRecordingStatus.recording,
       clearRecordedTempPath: true,
       clearExportedPath: true,
@@ -83,11 +81,10 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
     _playNext();
   }
 
-  /// Called by UI after WidgetRecorder gives temp path, to export to user storage with quality
+  @override
   Future<void> exportRecordedVideo({String? customFileName}) async {
     final tempPath = state.recordedTempPath;
     if (tempPath == null) return;
-    print('[Cubit] Export starting: $tempPath name=$customFileName');
     emit(state.copyWith(recordingStatus: ReplayRecordingStatus.exporting));
     try {
       final exportedPath = await exportService.exportVideo(
@@ -95,13 +92,10 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
         quality: state.selectedQuality,
         customFileName: customFileName,
       );
-      print('[Cubit] Export SUCCESS: $exportedPath');
       emit(state.copyWith(
           recordingStatus: ReplayRecordingStatus.exported,
           exportedPath: exportedPath));
-    } catch (e, st) {
-      print('[Cubit] Export FAILED: $e');
-      print(st);
+    } catch (e) {
       emit(state.copyWith(
           recordingStatus: ReplayRecordingStatus.failed,
           recordingError: e.toString()));

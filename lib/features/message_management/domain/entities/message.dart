@@ -19,7 +19,6 @@ class Message extends Equatable {
   final String? replyToText;
   final Map<String, String> reactions;
 
-  // NEW – needed for realistic deletion during replay
   final String? originalText;
   final DateTime? deletedAt;
 

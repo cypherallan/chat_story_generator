@@ -35,7 +35,6 @@ class _ConversationPageState extends State<ConversationPage> {
   late final SimulatedNotificationCubit _simulatedNotificationCubit;
   late final ConversationNotificationActions _notificationActions;
 
-  // Local mirrors so the AppBar can rebuild
   Set<String> _typingPersonIds = {};
   bool _otherPersonTyping = false;
   Set<String> _selectedMessageIds = {};
@@ -99,7 +98,6 @@ class _ConversationPageState extends State<ConversationPage> {
         context.read<PersonCubit>().setPersonOnline(body.selectedSenderId);
       }
 
-      // Existing: clear unread badge
       context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
     });
   }
@@ -117,8 +115,6 @@ class _ConversationPageState extends State<ConversationPage> {
         onPopInvokedWithResult: (didPop, result) async {
           if (!didPop) return;
 
-          // NEW: Track real back arrow tap A/C -> A/B
-          // If you take 5 hours here, we save 5h and compress to ~5s in replay
           _simulatedNotificationCubit.recordBackNavigation();
 
           final body = _bodyKey.currentState;
