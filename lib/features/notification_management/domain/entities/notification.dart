@@ -12,6 +12,7 @@ class Notification extends Equatable {
 
   final String messageText;
   final String? imagePath;
+  final DateTime createdAt; // <-- NEW
 
   const Notification({
     required this.id,
@@ -23,6 +24,7 @@ class Notification extends Equatable {
     this.senderAvatarPath,
     required this.messageText,
     this.imagePath,
+    required this.createdAt,
   });
 
   Notification copyWith({
@@ -35,6 +37,7 @@ class Notification extends Equatable {
     String? senderAvatarPath,
     String? messageText,
     String? imagePath,
+    DateTime? createdAt,
   }) {
     return Notification(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class Notification extends Equatable {
       senderAvatarPath: senderAvatarPath ?? this.senderAvatarPath,
       messageText: messageText ?? this.messageText,
       imagePath: imagePath ?? this.imagePath,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -60,5 +64,6 @@ class Notification extends Equatable {
         senderAvatarPath,
         messageText,
         imagePath,
+        createdAt,
       ];
 }

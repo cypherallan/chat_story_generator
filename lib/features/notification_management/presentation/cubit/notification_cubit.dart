@@ -26,34 +26,16 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   Future<void> loadNotifications() async {
     if (isClosed) return;
-
-    emit(
-      state.copyWith(
-        loading: true,
-        clearError: true,
-      ),
-    );
-
+    emit(state.copyWith(loading: true, clearError: true));
     try {
       final notifications = await getNotifications();
-
       if (isClosed) return;
-
-      emit(
-        state.copyWith(
-          notifications: notifications,
-          loading: false,
-        ),
-      );
+      // NEWEST FIRST
+      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      emit(state.copyWith(notifications: notifications, loading: false));
     } catch (e) {
       if (isClosed) return;
-
-      emit(
-        state.copyWith(
-          loading: false,
-          error: e.toString(),
-        ),
-      );
+      emit(state.copyWith(loading: false, error: e.toString()));
     }
   }
 
@@ -77,23 +59,14 @@ class NotificationCubit extends Cubit<NotificationState> {
       senderAvatarPath: senderAvatarPath,
       messageText: messageText,
       imagePath: imagePath,
+      createdAt: DateTime.now(), // <-- NEW
     );
-
     try {
       final saved = await addNotification(notification);
-
       if (isClosed) return false;
-
-      emit(
-        state.copyWith(
-          notifications: [
-            ...state.notifications,
-            saved,
-          ],
-          clearError: true,
-        ),
-      );
-
+      final updated = [...state.notifications, saved]
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      emit(state.copyWith(notifications: updated, clearError: true));
       return true;
     } catch (e) {
       if (isClosed) return false;

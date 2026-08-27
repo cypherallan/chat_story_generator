@@ -347,6 +347,8 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
       appBar: AppBar(title: const Text('Replay Notifications')),
       body: BlocBuilder<NotificationCubit, NotificationState>(
         builder: (context, state) {
+          final sortedNotifications = List.of(state.notifications)
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -467,7 +469,7 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
                     child: Text('No replay notifications created yet.',
                         style: TextStyle(color: Colors.grey)))
               else
-                ...state.notifications
+                ...sortedNotifications
                     .map((notification_entity.Notification notification) {
                   final project = widget.projects
                           .where((p) => p.id == notification.projectId)

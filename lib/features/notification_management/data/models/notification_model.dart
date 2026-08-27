@@ -11,11 +11,10 @@ class NotificationModel extends Notification {
     super.senderAvatarPath,
     required super.messageText,
     super.imagePath,
+    required super.createdAt,
   });
 
-  factory NotificationModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id'] ?? '',
       projectId: json['projectId'] ?? '',
@@ -26,6 +25,9 @@ class NotificationModel extends Notification {
       senderAvatarPath: json['senderAvatarPath'],
       messageText: json['messageText'] ?? '',
       imagePath: json['imagePath'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(), // fallback for old data without date
     );
   }
 
@@ -40,12 +42,11 @@ class NotificationModel extends Notification {
       'senderAvatarPath': senderAvatarPath,
       'messageText': messageText,
       'imagePath': imagePath,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  factory NotificationModel.fromEntity(
-    Notification notification,
-  ) {
+  factory NotificationModel.fromEntity(Notification notification) {
     return NotificationModel(
       id: notification.id,
       projectId: notification.projectId,
@@ -56,6 +57,7 @@ class NotificationModel extends Notification {
       senderAvatarPath: notification.senderAvatarPath,
       messageText: notification.messageText,
       imagePath: notification.imagePath,
+      createdAt: notification.createdAt,
     );
   }
 }
