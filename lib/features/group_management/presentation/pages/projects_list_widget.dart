@@ -12,13 +12,15 @@ import '../../../../injection_container.dart' as di;
 class ProjectsListWidget extends StatelessWidget {
   final Set<String> selectedChatIds;
   final String? currentPersonId;
-
   final Function(String) onChatSelected;
+  final String searchQuery; // NEW
+
   const ProjectsListWidget({
     super.key,
     required this.selectedChatIds,
     required this.onChatSelected,
     required this.currentPersonId,
+    this.searchQuery = '',
   });
 
   @override
@@ -27,6 +29,7 @@ class ProjectsListWidget extends StatelessWidget {
       selectedChatIds: selectedChatIds,
       onChatSelected: onChatSelected,
       currentPersonId: currentPersonId,
+      searchQuery: searchQuery,
     );
   }
 }
@@ -34,12 +37,14 @@ class ProjectsListWidget extends StatelessWidget {
 class _ProjectsListBody extends StatefulWidget {
   final Set<String> selectedChatIds;
   final String? currentPersonId;
-
   final Function(String) onChatSelected;
+  final String searchQuery;
+
   const _ProjectsListBody({
     required this.selectedChatIds,
     required this.onChatSelected,
     required this.currentPersonId,
+    required this.searchQuery,
   });
 
   @override
@@ -52,45 +57,57 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
     return BlocBuilder<PersonCubit, PersonState>(
       builder: (context, personState) {
         if (personState is! PersonLoaded) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
         return BlocBuilder<GroupCubit, ProjectState>(
           builder: (context, state) {
             if (state is ProjectLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
-
             if (state is ProjectError) {
-              return Center(
-                child: Text(state.message),
-              );
+              return Center(child: Text(state.message));
             }
-
             if (state is ProjectLoaded) {
-              final projects = state.projects
-                  .where(
-                    (project) =>
-                        widget.currentPersonId == null ||
-                        project.ownerId == widget.currentPersonId,
-                  )
+              var projects = state.projects
+                  .where((project) =>
+                      widget.currentPersonId == null ||
+                      project.ownerId == widget.currentPersonId)
                   .toList();
+
+              // SEARCH FILTER
+              if (widget.searchQuery.isNotEmpty) {
+                final q = widget.searchQuery.toLowerCase();
+                projects = projects.where((project) {
+                  if (project.title.toLowerCase().contains(q)) return true;
+                  if (project.lastMessage.toLowerCase().contains(q))
+                    return true;
+                  // check contact name for 1-1 chats
+                  if (project.participantIds.length <= 2) {
+                    final otherId = project.participantIds.firstWhere(
+                      (id) => id != project.ownerId,
+                      orElse: () => project.ownerId,
+                    );
+                    final match =
+                        personState.persons.where((p) => p.id == otherId);
+                    if (match.isNotEmpty &&
+                        match.first.name.toLowerCase().contains(q)) return true;
+                  }
+                  return false;
+                }).toList();
+              }
 
               projects.sort((a, b) {
                 final aTime = a.lastMessageTime ?? a.createdAt;
-
                 final bTime = b.lastMessageTime ?? b.createdAt;
-
                 return bTime.compareTo(aTime);
               });
 
               if (projects.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'No Chats yet.\nTap + to create one.',
+                    widget.searchQuery.isEmpty
+                        ? 'No Chats yet.\nTap + to create one.'
+                        : 'No chats found for "${widget.searchQuery}"',
                     textAlign: TextAlign.center,
                   ),
                 );
@@ -100,44 +117,31 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                 itemCount: projects.length,
                 itemBuilder: (context, index) {
                   final project = projects[index];
-
                   final bool isGroup = project.participantIds.length > 2;
-
                   Person? otherPerson;
-
                   if (!isGroup) {
                     final otherPersonId = project.participantIds.firstWhere(
                       (id) => id != project.ownerId,
                       orElse: () => project.ownerId,
                     );
-
-                    final matches = personState.persons.where(
-                      (p) => p.id == otherPersonId,
-                    );
-
-                    if (matches.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
+                    final matches =
+                        personState.persons.where((p) => p.id == otherPersonId);
+                    if (matches.isEmpty) return const SizedBox.shrink();
                     otherPerson = matches.first;
                   }
 
                   String lastMessagePreview = project.lastMessage;
-
                   if (project.lastMessageImagePath != null) {
                     lastMessagePreview = project.lastMessage.isNotEmpty
-                        ? '🖼️ ${project.lastMessage}'
+                        ? '🖼 ${project.lastMessage}'
                         : 'Photo';
                   }
-
                   if (isGroup && project.lastSenderId != null) {
                     if (project.lastSenderId == project.ownerId) {
                       lastMessagePreview = 'You: $lastMessagePreview';
                     } else {
-                      final sender = personState.persons.where(
-                        (p) => p.id == project.lastSenderId,
-                      );
-
+                      final sender = personState.persons
+                          .where((p) => p.id == project.lastSenderId);
                       lastMessagePreview = sender.isNotEmpty
                           ? '${sender.first.name}: $lastMessagePreview'
                           : 'Unknown: $lastMessagePreview';
@@ -161,19 +165,15 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                   return ChatListItemWidget(
                     chat: chat,
                     isSelected: widget.selectedChatIds.contains(project.id),
-                    onLongPress: () {
-                      widget.onChatSelected(project.id);
-                    },
+                    onLongPress: () => widget.onChatSelected(project.id),
                     onTap: () async {
                       if (widget.selectedChatIds.isNotEmpty) {
                         widget.onChatSelected(project.id);
                         return;
                       }
-
                       await context
                           .read<GroupCubit>()
                           .clearUnreadCount(project.id);
-
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -191,16 +191,13 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                           ),
                         ),
                       );
-
-                      if (context.mounted) {
+                      if (context.mounted)
                         await context.read<GroupCubit>().loadProjects();
-                      }
                     },
                   );
                 },
               );
             }
-
             return const SizedBox.shrink();
           },
         );

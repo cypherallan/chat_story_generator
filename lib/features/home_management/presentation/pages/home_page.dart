@@ -15,17 +15,23 @@ import '../../../person_management/domain/entities/person.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   final Set<String> selectedChatIds = {};
-
+  final TextEditingController _chatSearchController = TextEditingController();
+  String _chatSearchQuery = '';
   String? _currentPersonId;
 
   bool get isSelectionMode => selectedChatIds.isNotEmpty;
+
+  @override
+  void dispose() {
+    _chatSearchController.dispose();
+    super.dispose();
+  }
 
   void toggleChatSelection(String id) {
     setState(() {
@@ -38,127 +44,80 @@ class _HomePageState extends State<HomePage> {
   }
 
   Person? _getCurrentPerson(List<Person> persons) {
-    if (persons.isEmpty) {
-      return null;
-    }
-
+    if (persons.isEmpty) return null;
     if (_currentPersonId != null) {
       for (final person in persons) {
-        if (person.id == _currentPersonId) {
-          return person;
-        }
+        if (person.id == _currentPersonId) return person;
       }
     }
-
     final pinnedPersons = persons.where((person) => person.isPinned).toList()
-      ..sort(
-        (a, b) => a.name.toLowerCase().compareTo(
-              b.name.toLowerCase(),
-            ),
-      );
-
-    if (pinnedPersons.isNotEmpty) {
-      return pinnedPersons.first;
-    }
-
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    if (pinnedPersons.isNotEmpty) return pinnedPersons.first;
     return persons.first;
   }
 
-  void _selectCurrentPerson(
-    BuildContext context,
-    List<Person> persons,
-  ) {
+  void _selectCurrentPerson(BuildContext context, List<Person> persons) {
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) {
         final sortedPersons = List<Person>.from(persons)
           ..sort((a, b) {
-            if (a.isPinned != b.isPinned) {
-              return a.isPinned ? -1 : 1;
-            }
-
-            return a.name.toLowerCase().compareTo(
-                  b.name.toLowerCase(),
-                );
+            if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+            return a.name.toLowerCase().compareTo(b.name.toLowerCase());
           });
-
         return SafeArea(
           child: ListView(
             shrinkWrap: true,
             children: [
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
-                child: Text(
-                  'Who are you?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Text('Who are you?',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               ),
-              ...sortedPersons.map(
-                (person) {
-                  final isSelected = person.id == _currentPersonId;
-
-                  return ListTile(
-                    leading: CircleAvatar(
-                      child: Text(
-                        person.name.isNotEmpty
-                            ? person.name[0].toUpperCase()
-                            : '?',
-                      ),
-                    ),
-                    title: Text(person.name),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip:
-                              person.isPinned ? 'Unpin contact' : 'Pin contact',
-                          icon: Icon(
+              ...sortedPersons.map((person) {
+                final isSelected = person.id == _currentPersonId;
+                return ListTile(
+                  leading: CircleAvatar(
+                      child: Text(person.name.isNotEmpty
+                          ? person.name[0].toUpperCase()
+                          : '?')),
+                  title: Text(person.name),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip:
+                            person.isPinned ? 'Unpin contact' : 'Pin contact',
+                        icon: Icon(
                             person.isPinned
                                 ? Icons.push_pin
                                 : Icons.push_pin_outlined,
-                            color: person.isPinned ? Colors.blue : null,
-                          ),
-                          onPressed: () {
-                            Navigator.pop(sheetContext);
-
-                            context
-                                .read<PersonCubit>()
-                                .togglePersonPin(person.id);
-
-                            Future.microtask(() {
-                              if (!mounted) return;
-
-                              final personState =
-                                  context.read<PersonCubit>().state;
-
-                              if (personState is PersonLoaded) {
-                                _selectCurrentPerson(
-                                  context,
-                                  personState.persons,
-                                );
-                              }
-                            });
-                          },
-                        ),
-                        if (isSelected)
-                          const Icon(
-                            Icons.check,
-                          ),
-                      ],
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _currentPersonId = person.id;
-                      });
-
-                      Navigator.pop(sheetContext);
-                    },
-                  );
-                },
-              ),
+                            color: person.isPinned ? Colors.blue : null),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          context
+                              .read<PersonCubit>()
+                              .togglePersonPin(person.id);
+                          Future.microtask(() {
+                            if (!mounted) return;
+                            final personState =
+                                context.read<PersonCubit>().state;
+                            if (personState is PersonLoaded)
+                              _selectCurrentPerson(
+                                  context, personState.persons);
+                          });
+                        },
+                      ),
+                      if (isSelected) const Icon(Icons.check),
+                    ],
+                  ),
+                  onTap: () {
+                    setState(() => _currentPersonId = person.id);
+                    Navigator.pop(sheetContext);
+                  },
+                );
+              }),
             ],
           ),
         );
@@ -166,124 +125,77 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void clearSelection() {
-    setState(() {
-      selectedChatIds.clear();
-    });
-  }
+  void clearSelection() => setState(() => selectedChatIds.clear());
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => di.sl<GroupCubit>()..loadProjects(),
-        ),
-        BlocProvider(
-          create: (_) => di.sl<PersonCubit>()..loadPersons(),
-        ),
-        BlocProvider(
-          create: (_) => di.sl<SimulatedNotificationCubit>(),
-        ),
-        BlocProvider(
-          create: (_) => di.sl<MessageCubit>(),
-        ),
+        BlocProvider(create: (_) => di.sl<GroupCubit>()..loadProjects()),
+        BlocProvider(create: (_) => di.sl<PersonCubit>()..loadPersons()),
+        BlocProvider(create: (_) => di.sl<SimulatedNotificationCubit>()),
+        BlocProvider(create: (_) => di.sl<MessageCubit>()),
       ],
       child: Builder(
         builder: (context) {
           return BlocListener<SimulatedNotificationCubit,
               SimulatedNotificationState>(
             listener: (context, state) {
-              if (!state.visible || state.notification == null) {
-                return;
-              }
+              if (!state.visible || state.notification == null) return;
             },
             child: DefaultTabController(
               length: 4,
               child: Scaffold(
                 appBar: AppBar(
                   title: isSelectionMode
-                      ? Row(
-                          children: [
-                            IconButton(
+                      ? Row(children: [
+                          IconButton(
                               icon: const Icon(Icons.arrow_back),
-                              onPressed: clearSelection,
-                            ),
-                            Text(selectedChatIds.length.toString()),
-                          ],
-                        )
+                              onPressed: clearSelection),
+                          Text(selectedChatIds.length.toString())
+                        ])
                       : BlocBuilder<PersonCubit, PersonState>(
                           builder: (context, personState) {
                             if (personState is! PersonLoaded) {
-                              return const Text(
-                                'WhatsApp',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
+                              return const Text('WhatsApp',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold));
                             }
-
-                            final currentPerson = _getCurrentPerson(
-                              personState.persons,
-                            );
-
-                            if (currentPerson == null) {
-                              return const Text(
-                                'WhatsApp',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            }
-
+                            final currentPerson =
+                                _getCurrentPerson(personState.persons);
+                            if (currentPerson == null)
+                              return const Text('WhatsApp',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold));
                             if (_currentPersonId == null) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (!mounted) return;
-
-                                if (_currentPersonId == null) {
-                                  setState(() {
-                                    _currentPersonId = currentPerson.id;
-                                  });
-                                }
+                                if (_currentPersonId == null)
+                                  setState(() =>
+                                      _currentPersonId = currentPerson.id);
                               });
                             }
-
                             return GestureDetector(
-                              onTap: () {
-                                _selectCurrentPerson(
-                                  context,
-                                  personState.persons,
-                                );
-                              },
+                              onTap: () => _selectCurrentPerson(
+                                  context, personState.persons),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
-                                    'WhatsApp',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  const Text('WhatsApp',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
-                                        Icons.person,
-                                        size: 15,
-                                      ),
+                                      const Icon(Icons.person, size: 15),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        currentPerson.name,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        size: 18,
-                                      ),
+                                      Text(currentPerson.name,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.normal)),
+                                      const Icon(Icons.arrow_drop_down,
+                                          size: 18),
                                     ],
                                   ),
                                 ],
@@ -294,9 +206,8 @@ class _HomePageState extends State<HomePage> {
                   actions: isSelectionMode
                       ? [
                           IconButton(
-                            icon: const Icon(Icons.push_pin_outlined),
-                            onPressed: () {},
-                          ),
+                              icon: const Icon(Icons.push_pin_outlined),
+                              onPressed: () {}),
                           IconButton(
                             icon: const Icon(Icons.delete_outline),
                             onPressed: () async {
@@ -304,53 +215,40 @@ class _HomePageState extends State<HomePage> {
                                 context: context,
                                 builder: (dialogContext) => AlertDialog(
                                   title: const Text('Delete chat'),
-                                  content: Text(
-                                    selectedChatIds.length == 1
-                                        ? 'Delete selected chat?'
-                                        : 'Delete ${selectedChatIds.length} chats?',
-                                  ),
+                                  content: Text(selectedChatIds.length == 1
+                                      ? 'Delete selected chat?'
+                                      : 'Delete ${selectedChatIds.length} chats?'),
                                   actions: [
                                     TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext, false),
-                                      child: const Text('Cancel'),
-                                    ),
+                                        onPressed: () =>
+                                            Navigator.pop(dialogContext, false),
+                                        child: const Text('Cancel')),
                                     FilledButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext, true),
-                                      child: const Text('Delete'),
-                                    ),
+                                        onPressed: () =>
+                                            Navigator.pop(dialogContext, true),
+                                        child: const Text('Delete')),
                                   ],
                                 ),
                               );
-
                               if (confirmed != true) return;
-
-                              final cubit = context.read<GroupCubit>();
-
-                              await cubit.removeProjects(
-                                selectedChatIds.toList(),
-                              );
-
+                              await context
+                                  .read<GroupCubit>()
+                                  .removeProjects(selectedChatIds.toList());
                               clearSelection();
                             },
                           ),
                           IconButton(
-                            icon: const Icon(Icons.notifications_off_outlined),
-                            onPressed: () {},
-                          ),
+                              icon:
+                                  const Icon(Icons.notifications_off_outlined),
+                              onPressed: () {}),
                           IconButton(
-                            icon: const Icon(Icons.archive_outlined),
-                            onPressed: () {},
-                          ),
+                              icon: const Icon(Icons.archive_outlined),
+                              onPressed: () {}),
                           PopupMenuButton<String>(
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(
-                                value: "more",
-                                child: Text("More"),
-                              ),
-                            ],
-                          ),
+                              itemBuilder: (context) => const [
+                                    PopupMenuItem(
+                                        value: "more", child: Text("More"))
+                                  ]),
                         ]
                       : [
                           const Icon(Icons.camera_alt_outlined),
@@ -362,120 +260,125 @@ class _HomePageState extends State<HomePage> {
                               switch (value) {
                                 case 'contacts':
                                   Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => MultiBlocProvider(
-                                        providers: [
-                                          BlocProvider.value(
-                                            value: context.read<PersonCubit>(),
-                                          ),
-                                          BlocProvider.value(
-                                            value: context.read<GroupCubit>(),
-                                          ),
-                                        ],
-                                        child: PersonsListPage(
-                                          currentPersonId: _currentPersonId!,
-                                        ),
-                                      ),
-                                    ),
-                                  );
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => MultiBlocProvider(
+                                                  providers: [
+                                                    BlocProvider.value(
+                                                        value: context.read<
+                                                            PersonCubit>()),
+                                                    BlocProvider.value(
+                                                        value: context
+                                                            .read<GroupCubit>())
+                                                  ],
+                                                  child: PersonsListPage(
+                                                      currentPersonId:
+                                                          _currentPersonId!))));
                                   break;
-
                                 case 'settings':
                                   break;
-
                                 case 'simulate_notification':
                                   const projectId =
                                       '2759ca44-dec8-4706-b3dd-0b1b7c55cd95';
-
                                   const senderId =
                                       'f3bc2f12-7fe7-4690-9e41-f8e2b0bc6e25';
-
                                   const messageText =
                                       'Bro, did you see that goal? 😂';
-
                                   final personState =
                                       context.read<PersonCubit>().state;
-
-                                  if (personState is! PersonLoaded) {
-                                    return;
-                                  }
-
+                                  if (personState is! PersonLoaded) return;
                                   final sender = personState.persons.firstWhere(
-                                    (person) => person.id == senderId,
-                                  );
-
+                                      (person) => person.id == senderId);
                                   final messageCubit =
                                       context.read<MessageCubit>();
-
                                   await messageCubit.createMessage(
-                                    projectId: projectId,
-                                    senderId: sender.id,
-                                    senderName: sender.name,
-                                    text: messageText,
-                                  );
-
+                                      projectId: projectId,
+                                      senderId: sender.id,
+                                      senderName: sender.name,
+                                      text: messageText);
                                   if (!context.mounted) return;
-
                                   context
                                       .read<SimulatedNotificationCubit>()
                                       .showNotification(
-                                        projectId: projectId,
-                                        messageId: const Uuid().v4(),
-                                        senderId: sender.id,
-                                        senderName: sender.name,
-                                        senderAvatarPath: sender.avatarPath,
-                                        messageText: messageText,
-                                      );
-
+                                          projectId: projectId,
+                                          messageId: const Uuid().v4(),
+                                          senderId: sender.id,
+                                          senderName: sender.name,
+                                          senderAvatarPath: sender.avatarPath,
+                                          messageText: messageText);
                                   break;
                               }
                             },
                             itemBuilder: (context) => const [
                               PopupMenuItem(
-                                value: 'new_group',
-                                child: Text('New group'),
-                              ),
+                                  value: 'new_group', child: Text('New group')),
                               PopupMenuItem(
-                                value: 'new_broadcast',
-                                child: Text('New broadcast'),
-                              ),
+                                  value: 'new_broadcast',
+                                  child: Text('New broadcast')),
                               PopupMenuItem(
-                                value: 'contacts',
-                                child: Text('Contacts'),
-                              ),
+                                  value: 'contacts', child: Text('Contacts')),
                               PopupMenuItem(
-                                value: 'settings',
-                                child: Text('Settings'),
-                              ),
+                                  value: 'settings', child: Text('Settings')),
                               PopupMenuItem(
-                                value: 'simulate_notification',
-                                child: Text('Simulate incoming message'),
-                              ),
+                                  value: 'simulate_notification',
+                                  child: Text('Simulate incoming message')),
                             ],
                           ),
                         ],
-                  bottom: const TabBar(
-                    tabs: [
-                      Tab(text: "Chats"),
-                      Tab(text: "Updates"),
-                      Tab(text: "Communities"),
-                      Tab(text: "Calls"),
-                    ],
-                  ),
+                  bottom: const TabBar(tabs: [
+                    Tab(text: "Chats"),
+                    Tab(text: "Updates"),
+                    Tab(text: "Communities"),
+                    Tab(text: "Calls")
+                  ]),
                 ),
                 body: BlocListener<MessageCubit, MessageState>(
                   listener: (context, messageState) {
-                    if (messageState is MessageLoaded) {
+                    if (messageState is MessageLoaded)
                       context.read<GroupCubit>().loadProjects();
-                    }
                   },
                   child: TabBarView(
                     children: [
-                      ProjectsListWidget(
-                        selectedChatIds: selectedChatIds,
-                        onChatSelected: toggleChatSelection,
-                        currentPersonId: _currentPersonId,
+                      // CHATS TAB WITH SEARCH BAR
+                      Column(
+                        children: [
+                          // SEARCH BAR BETWEEN HEADER AND CHAT LIST
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                            child: TextField(
+                              controller: _chatSearchController,
+                              onChanged: (v) => setState(
+                                  () => _chatSearchQuery = v.toLowerCase()),
+                              decoration: InputDecoration(
+                                hintText: "Ask Meta AI or Search",
+                                prefixIcon: const Icon(Icons.search, size: 20),
+                                suffixIcon: _chatSearchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear, size: 20),
+                                        onPressed: () {
+                                          _chatSearchController.clear();
+                                          setState(() => _chatSearchQuery = '');
+                                        })
+                                    : null,
+                                isDense: true,
+                                filled: true,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide.none),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: ProjectsListWidget(
+                              selectedChatIds: selectedChatIds,
+                              onChatSelected: toggleChatSelection,
+                              currentPersonId: _currentPersonId,
+                              searchQuery: _chatSearchQuery, // <-- NEW
+                            ),
+                          ),
+                        ],
                       ),
                       const Center(child: Text("Updates")),
                       const Center(child: Text("Communities")),
@@ -487,23 +390,19 @@ class _HomePageState extends State<HomePage> {
                   child: const Icon(Icons.chat),
                   onPressed: () async {
                     final newOwnerId = await Navigator.push<String>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MultiBlocProvider(
-                          providers: [
-                            BlocProvider.value(
-                                value: context.read<GroupCubit>()),
-                            BlocProvider.value(
-                                value: context.read<PersonCubit>()),
-                          ],
-                          child:
-                              AddGroupPage(currentPersonId: _currentPersonId),
-                        ),
-                      ),
-                    );
-                    if (newOwnerId != null && newOwnerId != _currentPersonId) {
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => MultiBlocProvider(
+                                    providers: [
+                                      BlocProvider.value(
+                                          value: context.read<GroupCubit>()),
+                                      BlocProvider.value(
+                                          value: context.read<PersonCubit>())
+                                    ],
+                                    child: AddGroupPage(
+                                        currentPersonId: _currentPersonId))));
+                    if (newOwnerId != null && newOwnerId != _currentPersonId)
                       setState(() => _currentPersonId = newOwnerId);
-                    }
                   },
                 ),
               ),
