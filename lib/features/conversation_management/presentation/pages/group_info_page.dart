@@ -29,6 +29,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   bool _saving = false;
   bool _savedSuccessfully = false;
   bool _addingParticipant = false;
+  String? _removingId;
 
   @override
   void initState() {
@@ -54,25 +55,19 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           .showSnackBar(const SnackBar(content: Text('Already in group')));
       return;
     }
-
     final newIds = [..._project.participantIds, personId];
     final updated = _project.copyWith(participantIds: newIds);
-
-    // optimistic UI update — shows instantly
     setState(() {
       _project = updated;
       _addingParticipant = true;
     });
-
     try {
       await context.read<GroupCubit>().editProject(updated);
-      // don't check state — Firestore write already succeeded if no exception
       if (!mounted) return;
       setState(() => _addingParticipant = false);
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Participant added')));
     } catch (e) {
-      // rollback on real failure
       if (!mounted) return;
       setState(() {
         _project = widget.project;
@@ -80,6 +75,54 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
       });
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
+  Future<void> _removeParticipant(String personId) async {
+    if (personId == _project.ownerId) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Remove member?'),
+        content: Text('Remove this contact from "${_project.title}"?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remove')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final previous = _project;
+    final newIds =
+        _project.participantIds.where((id) => id != personId).toList();
+    final updated = _project.copyWith(participantIds: newIds);
+
+    setState(() {
+      _project = updated;
+      _removingId = personId;
+    });
+
+    try {
+      await context.read<GroupCubit>().editProject(updated);
+      if (!mounted) return;
+      setState(() => _removingId = null);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Member removed')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _project = previous;
+        _removingId = null;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to remove: $e')));
     }
   }
 
@@ -130,13 +173,10 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                   } else if (_project.groupImagePath != null &&
                       _project.groupImagePath!.isNotEmpty) {
                     if (_project.groupImagePath!.startsWith('http')) {
-                      image = CachedNetworkImageProvider(
-                        _project.groupImagePath!,
-                      );
+                      image =
+                          CachedNetworkImageProvider(_project.groupImagePath!);
                     } else {
-                      image = FileImage(
-                        File(_project.groupImagePath!),
-                      );
+                      image = FileImage(File(_project.groupImagePath!));
                     }
                   }
                   return CircleAvatar(
@@ -156,18 +196,34 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
               decoration: const InputDecoration(
                   labelText: 'Group Name', border: OutlineInputBorder())),
           const SizedBox(height: 30),
-          Text('${members.length} participants',
+          Text('${members.length} members',
               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          ...members.map((p) => ListTile(
-                leading: PersonAvatar(person: p, radius: 22),
-                title: Text(p.id == _project.ownerId ? 'You' : p.name),
-                subtitle: p.bio == null || p.bio!.isEmpty
-                    ? null
-                    : Text(p.bio!,
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-              )),
+          ...members.map((p) {
+            final isOwner = p.id == _project.ownerId;
+            final isRemoving = _removingId == p.id;
+            return ListTile(
+              leading: PersonAvatar(person: p, radius: 22),
+              title: Text(isOwner ? 'You' : p.name),
+              subtitle: p.bio == null || p.bio!.isEmpty
+                  ? null
+                  : Text(p.bio!, maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: isOwner
+                  ? null
+                  : isRemoving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : IconButton(
+                          icon: const Icon(Icons.remove_circle_outline,
+                              color: Colors.red),
+                          tooltip: 'Remove',
+                          onPressed: () => _removeParticipant(p.id),
+                        ),
+            );
+          }),
           const SizedBox(height: 20),
           Card(
             margin: EdgeInsets.zero,
@@ -183,7 +239,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.person_add, color: Colors.white),
               ),
-              title: const Text("Add participants"),
+              title: const Text("Add members"),
               onTap: () async {
                 final personId = await Navigator.push<String>(
                   context,
@@ -207,18 +263,19 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           ),
           const SizedBox(height: 20),
           SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                  onPressed:
-                      _saving || _savedSuccessfully ? null : _saveChanges,
-                  child: _saving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(_savedSuccessfully
-                          ? 'Changes Saved Successfully'
-                          : 'Save Changes'))),
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _saving || _savedSuccessfully ? null : _saveChanges,
+              child: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(_savedSuccessfully
+                      ? 'Changes Saved Successfully'
+                      : 'Save Changes'),
+            ),
+          ),
         ],
       ),
     );
