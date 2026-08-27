@@ -7,15 +7,15 @@ import '../../../project_management/presentation/cubit/project_cubit.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
-class AddProjectPage extends StatefulWidget {
+class AddGroupPage extends StatefulWidget {
   final String? currentPersonId;
-  const AddProjectPage({super.key, this.currentPersonId});
+  const AddGroupPage({super.key, this.currentPersonId});
 
   @override
-  State<AddProjectPage> createState() => _AddProjectPageState();
+  State<AddGroupPage> createState() => _AddGroupPageState();
 }
 
-class _AddProjectPageState extends State<AddProjectPage> {
+class _AddGroupPageState extends State<AddGroupPage> {
   final _titleController = TextEditingController();
   File? _groupImage;
   final ImagePicker _picker = ImagePicker();
@@ -25,7 +25,6 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   void initState() {
     super.initState();
-    // auto-fill with owner from HomePage
     _ownerId = widget.currentPersonId;
   }
 
@@ -55,9 +54,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   Future<void> _pickGroupImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _groupImage = File(pickedFile.path);
-      });
+      setState(() => _groupImage = File(pickedFile.path));
     }
   }
 
@@ -85,11 +82,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
           participants: [_ownerId!, ..._selectedParticipants],
           groupImagePath: _groupImage?.path,
         );
-
     await context.read<ProjectCubit>().loadProjects();
-
     if (!mounted) return;
-    Navigator.pop(context, _ownerId); // return owner so home can switch to it
+    Navigator.pop(context, _ownerId);
   }
 
   @override
@@ -121,11 +116,15 @@ class _AddProjectPageState extends State<AddProjectPage> {
             BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
                 if (state is! PersonLoaded) return const SizedBox();
+                // sort You Are dropdown alphabetically too
+                final sortedPersons = List<Person>.from(state.persons)
+                  ..sort((a, b) =>
+                      a.name.toLowerCase().compareTo(b.name.toLowerCase()));
                 return DropdownButtonFormField<String>(
                   value: _ownerId,
                   decoration: const InputDecoration(
                       labelText: 'You are', border: OutlineInputBorder()),
-                  items: state.persons.map((person) {
+                  items: sortedPersons.map((person) {
                     return DropdownMenuItem(
                         value: person.id, child: Text(person.name));
                   }).toList(),
@@ -146,12 +145,17 @@ class _AddProjectPageState extends State<AddProjectPage> {
                   if (state is PersonLoading)
                     return const Center(child: CircularProgressIndicator());
                   if (state is PersonLoaded) {
+                    // alphabetical contacts
+                    final filtered = state.persons
+                        .where((p) => p.id != _ownerId)
+                        .toList()
+                      ..sort((a, b) =>
+                          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
                     return ListView.builder(
-                      itemCount: state.persons.length,
+                      itemCount: filtered.length,
                       itemBuilder: (context, index) {
-                        final person = state.persons[index];
-                        if (person.id == _ownerId)
-                          return const SizedBox.shrink();
+                        final person = filtered[index];
                         final selected =
                             _selectedParticipants.contains(person.id);
                         return CheckboxListTile(

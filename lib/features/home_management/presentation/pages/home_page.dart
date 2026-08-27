@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import '../../../project_management/presentation/cubit/project_cubit.dart';
-import '../../../project_management/presentation/pages/add_project_page.dart';
+import '../../../project_management/presentation/pages/add_group_page.dart';
 import '../../../project_management/presentation/pages/projects_list_widget.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
@@ -497,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                                 value: context.read<PersonCubit>()),
                           ],
                           child:
-                              AddProjectPage(currentPersonId: _currentPersonId),
+                              AddGroupPage(currentPersonId: _currentPersonId),
                         ),
                       ),
                     );
