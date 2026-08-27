@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/usecases/delete_message.dart';
 import '../../domain/usecases/update_message.dart';
-import '../../../project_management/domain/usecases/get_projects.dart';
-import '../../../project_management/domain/usecases/update_project.dart';
+import '../../../group_management/domain/usecases/get_projects.dart';
+import '../../../group_management/domain/usecases/update_project.dart';
 import 'message_cubit.dart';
 
 mixin MessageCubitDeleteMixin on Cubit<MessageState> {

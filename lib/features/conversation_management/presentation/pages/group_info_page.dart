@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../project_management/domain/entities/project.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/domain/entities/project.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import '../../../message_management/domain/entities/message.dart';
 
 import 'conversation_message_list.dart';

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../message_management/domain/entities/message.dart';
 import '../pages/group_info_page.dart';
 import '../../../message_management/presentation/widgets/reaction_picker.dart';
 import 'conversation_header.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
 
 class ConversationAppBar extends StatelessWidget
     implements PreferredSizeWidget {

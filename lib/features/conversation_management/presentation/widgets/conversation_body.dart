@@ -7,7 +7,7 @@ import '../../../message_management/presentation/widgets/message_bubble.dart';
 import '../../../message_management/presentation/widgets/typing_indicator.dart';
 import 'conversation_header.dart';
 
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 
 class ConversationBody extends StatelessWidget {
   final List<Message> messages;

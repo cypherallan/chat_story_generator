@@ -8,8 +8,8 @@ import '../../domain/usecases/add_message.dart';
 import '../../domain/usecases/delete_message.dart';
 import '../../domain/usecases/get_messages.dart';
 import '../../domain/usecases/update_message.dart';
-import '../../../project_management/domain/usecases/update_project.dart';
-import '../../../project_management/domain/usecases/get_projects.dart';
+import '../../../group_management/domain/usecases/update_project.dart';
+import '../../../group_management/domain/usecases/get_projects.dart';
 import '../../../../core/storage/firebase_storage_service.dart';
 
 import 'message_cubit_send.dart';

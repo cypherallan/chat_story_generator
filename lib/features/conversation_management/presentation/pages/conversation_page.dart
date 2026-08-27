@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
 
 import '../widgets/conversation_app_bar.dart';
 import '../../../replay_management/presentation/pages/conversation_playback_page.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/domain/entities/person.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../cubit/project_cubit.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 

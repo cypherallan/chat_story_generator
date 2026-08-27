@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/domain/entities/person.dart';
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
 import '../../domain/entities/notification.dart' as notification_entity;
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
 import 'package:uuid/uuid.dart';
 
 class CreateNotificationPage extends StatefulWidget {

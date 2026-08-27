@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../person_management/domain/entities/person.dart';
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import '../../../shared/widgets/profile_avatar.dart';
 
 class ConversationHeader extends StatelessWidget {

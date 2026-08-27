@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/presentation/cubit/person_cubit.dart';
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 import 'replay_home_chat_list.dart';
 
 class ReplayHomeView extends StatelessWidget {

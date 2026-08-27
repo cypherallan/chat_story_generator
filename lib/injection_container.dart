@@ -16,17 +16,17 @@ import 'features/person_management/domain/usecases/get_persons.dart';
 import 'features/notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import 'features/person_management/presentation/cubit/person_cubit.dart';
 
-import 'features/project_management/data/datasources/project_firestore_data_source.dart';
-import 'features/project_management/data/repositories/project_repository_impl.dart';
+import 'features/group_management/data/datasources/project_firestore_data_source.dart';
+import 'features/group_management/data/repositories/project_repository_impl.dart';
 
-import 'features/project_management/domain/repositories/project_repository.dart';
+import 'features/group_management/domain/repositories/project_repository.dart';
 
-import 'features/project_management/domain/usecases/add_project.dart';
-import 'features/project_management/domain/usecases/get_projects.dart';
-import 'features/project_management/domain/usecases/delete_project.dart';
-import 'features/project_management/domain/usecases/update_project.dart';
+import 'features/group_management/domain/usecases/add_project.dart';
+import 'features/group_management/domain/usecases/get_projects.dart';
+import 'features/group_management/domain/usecases/delete_project.dart';
+import 'features/group_management/domain/usecases/update_project.dart';
 
-import 'features/project_management/presentation/cubit/project_cubit.dart';
+import 'features/group_management/presentation/cubit/project_cubit.dart';
 
 import 'features/message_management/data/datasources/message_firestore_data_source.dart';
 import 'features/message_management/data/repositories/message_repository_impl.dart';
@@ -39,7 +39,7 @@ import 'features/message_management/domain/usecases/update_message.dart';
 import 'features/message_management/domain/usecases/delete_message.dart';
 
 import 'features/message_management/presentation/cubit/message_cubit.dart';
-import 'features/project_management/domain/usecases/delete_projects.dart';
+import 'features/group_management/domain/usecases/delete_projects.dart';
 
 import 'features/notification_management/data/datasources/notification_firestore_data_source.dart';
 

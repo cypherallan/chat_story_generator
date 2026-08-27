@@ -10,7 +10,7 @@ import '../../../notification_management/domain/usecases/get_notifications.dart'
 import '../../../notification_management/domain/usecases/get_recorded_notification_events.dart';
 import '../../../notification_management/domain/usecases/save_recorded_notification_events.dart';
 import '../../../message_management/domain/usecases/get_messages.dart';
-import '../../../project_management/domain/usecases/get_projects.dart';
+import '../../../group_management/domain/usecases/get_projects.dart';
 import '../../data/services/replay_export_service.dart';
 
 part 'conversation_replay_cubit_navigation.dart';

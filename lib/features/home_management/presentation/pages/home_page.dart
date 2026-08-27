@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../injection_container.dart' as di;
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
-import '../../../project_management/presentation/pages/add_group_page.dart';
-import '../../../project_management/presentation/pages/projects_list_widget.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/pages/add_group_page.dart';
+import '../../../group_management/presentation/pages/projects_list_widget.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/presentation/pages/persons_list_page.dart';

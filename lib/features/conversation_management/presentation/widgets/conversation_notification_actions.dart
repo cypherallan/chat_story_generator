@@ -9,8 +9,8 @@ import '../../../notification_management/domain/entities/simulated_notification.
 import '../../../notification_management/presentation/cubit/notification_cubit.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
-import '../../../project_management/domain/entities/project.dart';
-import '../../../project_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/domain/entities/project.dart';
+import '../../../group_management/presentation/cubit/project_cubit.dart';
 import '../pages/conversation_page.dart';
 import 'trigger_replay_notification_sheet.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/project_cubit.dart';
-import '../../presentation/widgets/chat_list_item_widget.dart';
+import '../widgets/chat_list_item_widget.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../conversation_management/presentation/pages/conversation_page.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';

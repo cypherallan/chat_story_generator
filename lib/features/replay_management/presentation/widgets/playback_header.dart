@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/domain/entities/person.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
-import '../../../project_management/domain/entities/project.dart';
+import '../../../group_management/domain/entities/project.dart';
 
 import '../cubit/conversation_replay_cubit.dart';
 import '../cubit/conversation_replay_state.dart';

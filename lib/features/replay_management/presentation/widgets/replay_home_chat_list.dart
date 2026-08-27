@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../project_management/domain/entities/project.dart';
-import '../../../project_management/presentation/models/chat_list_item.dart';
+import '../../../group_management/domain/entities/project.dart';
+import '../../../group_management/presentation/models/chat_list_item.dart';
 import '../../../person_management/domain/entities/person.dart';
 import '../../presentation/cubit/conversation_replay_cubit.dart';
 
