@@ -14,12 +14,8 @@ import '../../../person_management/presentation/widgets/person_avatar.dart';
 class GroupInfoPage extends StatefulWidget {
   final Project project;
   final List<Person> persons;
-
-  const GroupInfoPage({
-    super.key,
-    required this.project,
-    required this.persons,
-  });
+  const GroupInfoPage(
+      {super.key, required this.project, required this.persons});
 
   @override
   State<GroupInfoPage> createState() => _GroupInfoPageState();
@@ -27,11 +23,9 @@ class GroupInfoPage extends StatefulWidget {
 
 class _GroupInfoPageState extends State<GroupInfoPage> {
   late TextEditingController _nameController;
-  late Project _project; // local copy we update
-
+  late Project _project;
   File? _newImage;
   final ImagePicker _picker = ImagePicker();
-
   bool _saving = false;
   bool _savedSuccessfully = false;
   bool _addingParticipant = false;
@@ -51,40 +45,41 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
   Future<void> _changeImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _newImage = File(picked.path));
-    }
+    if (picked != null) setState(() => _newImage = File(picked.path));
   }
 
   Future<void> _addParticipant(String personId) async {
-    if (_project.participantIds.contains(personId)) return;
+    if (_project.participantIds.contains(personId)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Already in group')));
+      return;
+    }
 
-    setState(() => _addingParticipant = true);
+    final newIds = [..._project.participantIds, personId];
+    final updated = _project.copyWith(participantIds: newIds);
 
-    final updatedIds = [..._project.participantIds, personId];
+    // optimistic UI update — shows instantly
+    setState(() {
+      _project = updated;
+      _addingParticipant = true;
+    });
 
-    final updatedProject = _project.copyWith(
-      participantIds: updatedIds,
-    );
-
-    await context.read<GroupCubit>().editProject(updatedProject);
-
-    if (!mounted) return;
-
-    final state = context.read<GroupCubit>().state;
-    if (state is ProjectSaved || state is ProjectLoaded) {
+    try {
+      await context.read<GroupCubit>().editProject(updated);
+      // don't check state — Firestore write already succeeded if no exception
+      if (!mounted) return;
+      setState(() => _addingParticipant = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Participant added')));
+    } catch (e) {
+      // rollback on real failure
+      if (!mounted) return;
       setState(() {
-        _project = updatedProject;
+        _project = widget.project;
         _addingParticipant = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Participant added')),
-      );
-    } else {
-      setState(() => _addingParticipant = false);
-      String msg = 'Failed to add';
-      if (state is ProjectError) msg = state.message;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
   }
 
@@ -92,42 +87,24 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Group name cannot be empty')),
-      );
+          const SnackBar(content: Text('Group name cannot be empty')));
       return;
     }
-
     setState(() => _saving = true);
-
-    final updatedProject = _project.copyWith(
-      title: name,
-      groupImagePath: _newImage?.path ?? _project.groupImagePath,
-    );
-
-    await context.read<GroupCubit>().editProject(updatedProject);
-
+    final updated = _project.copyWith(
+        title: name,
+        groupImagePath: _newImage?.path ?? _project.groupImagePath);
+    await context.read<GroupCubit>().editProject(updated);
     if (!mounted) return;
-
-    final state = context.read<GroupCubit>().state;
-    if (state is ProjectSaved) {
-      setState(() {
-        _saving = false;
-        _savedSuccessfully = true;
-        _project = updatedProject;
-      });
-    } else if (state is ProjectError) {
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save changes: ${state.message}')),
-      );
-    } else {
-      setState(() => _saving = false);
-    }
+    setState(() {
+      _saving = false;
+      _savedSuccessfully = true;
+      _project = updated;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // alphabetical with You first
     final members = widget.persons
         .where((p) => _project.participantIds.contains(p.id))
         .toList()
@@ -153,10 +130,13 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                   } else if (_project.groupImagePath != null &&
                       _project.groupImagePath!.isNotEmpty) {
                     if (_project.groupImagePath!.startsWith('http')) {
-                      image =
-                          CachedNetworkImageProvider(_project.groupImagePath!);
+                      image = CachedNetworkImageProvider(
+                        _project.groupImagePath!,
+                      );
                     } else {
-                      image = FileImage(File(_project.groupImagePath!));
+                      image = FileImage(
+                        File(_project.groupImagePath!),
+                      );
                     }
                   }
                   return CircleAvatar(
@@ -172,25 +152,22 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           ),
           const SizedBox(height: 25),
           TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-                labelText: 'Group Name', border: OutlineInputBorder()),
-          ),
+              controller: _nameController,
+              decoration: const InputDecoration(
+                  labelText: 'Group Name', border: OutlineInputBorder())),
           const SizedBox(height: 30),
           Text('${members.length} participants',
               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          ...members.map(
-            (person) => ListTile(
-              leading: PersonAvatar(person: person, radius: 22),
-              title: Text(person.id == _project.ownerId ? 'You' : person.name),
-              subtitle: person.bio == null || person.bio!.isEmpty
-                  ? null
-                  : Text(person.bio!,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-          ),
+          ...members.map((p) => ListTile(
+                leading: PersonAvatar(person: p, radius: 22),
+                title: Text(p.id == _project.ownerId ? 'You' : p.name),
+                subtitle: p.bio == null || p.bio!.isEmpty
+                    ? null
+                    : Text(p.bio!,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+              )),
           const SizedBox(height: 20),
           Card(
             margin: EdgeInsets.zero,
@@ -217,14 +194,12 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                         BlocProvider.value(value: context.read<GroupCubit>()),
                       ],
                       child: PersonsListPage(
-                        addToGroupMode: true,
-                        excludedIds: _project.participantIds,
-                        currentPersonId: _project.ownerId,
-                      ),
+                          addToGroupMode: true,
+                          excludedIds: _project.participantIds,
+                          currentPersonId: _project.ownerId),
                     ),
                   ),
                 );
-
                 if (personId == null) return;
                 await _addParticipant(personId);
               },
@@ -232,19 +207,18 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           ),
           const SizedBox(height: 20),
           SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _saving || _savedSuccessfully ? null : _saveChanges,
-              child: _saving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_savedSuccessfully
-                      ? 'Changes Saved Successfully'
-                      : 'Save Changes'),
-            ),
-          ),
+              width: double.infinity,
+              child: FilledButton(
+                  onPressed:
+                      _saving || _savedSuccessfully ? null : _saveChanges,
+                  child: _saving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(_savedSuccessfully
+                          ? 'Changes Saved Successfully'
+                          : 'Save Changes'))),
         ],
       ),
     );

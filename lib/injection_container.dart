@@ -16,8 +16,8 @@ import 'features/person_management/domain/usecases/get_persons.dart';
 import 'features/notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import 'features/person_management/presentation/cubit/person_cubit.dart';
 
-import 'features/group_management/data/datasources/project_firestore_data_source.dart';
-import 'features/group_management/data/repositories/project_repository_impl.dart';
+import 'features/group_management/data/datasources/group_firestore_data_source.dart';
+import 'features/group_management/data/repositories/group_repository_impl.dart';
 
 import 'features/group_management/domain/repositories/project_repository.dart';
 
@@ -70,8 +70,8 @@ Future<void> init() async {
     () => PersonFirestoreDataSourceImpl(sl()),
   );
 
-  sl.registerLazySingleton<ProjectFirestoreDataSource>(
-    () => ProjectFirestoreDataSourceImpl(
+  sl.registerLazySingleton<GroupFirestoreDataSource>(
+    () => GroupFirestoreDataSourceImpl(
       sl(),
       sl(),
     ),
@@ -98,7 +98,7 @@ Future<void> init() async {
   );
 
   sl.registerLazySingleton<ProjectRepository>(
-    () => ProjectRepositoryImpl(sl()),
+    () => GroupRepositoryImpl(sl()),
   );
 
   sl.registerLazySingleton<MessageRepository>(

@@ -3,13 +3,13 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/project_repository.dart';
-import '../datasources/project_firestore_data_source.dart';
-import '../models/project_model.dart';
+import '../datasources/group_firestore_data_source.dart';
+import '../models/group_model.dart';
 
-class ProjectRepositoryImpl implements ProjectRepository {
-  final ProjectFirestoreDataSource firestoreDataSource;
+class GroupRepositoryImpl implements ProjectRepository {
+  final GroupFirestoreDataSource firestoreDataSource;
 
-  ProjectRepositoryImpl(
+  GroupRepositoryImpl(
     this.firestoreDataSource,
   );
 
@@ -31,7 +31,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     Project project,
   ) async {
     try {
-      final model = ProjectModel.fromEntity(project);
+      final model = GroupModel.fromEntity(project);
 
       final result = await firestoreDataSource.addProject(model);
 
@@ -48,7 +48,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     Project project,
   ) async {
     try {
-      final model = ProjectModel.fromEntity(project);
+      final model = GroupModel.fromEntity(project);
 
       final result = await firestoreDataSource.updateProject(model);
 

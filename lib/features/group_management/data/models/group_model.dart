@@ -1,8 +1,8 @@
 import '../../domain/entities/project.dart';
 import '../../../message_management/domain/entities/message_status.dart';
 
-class ProjectModel extends Project {
-  const ProjectModel({
+class GroupModel extends Project {
+  const GroupModel({
     required super.id,
     required super.title,
     required super.createdAt,
@@ -20,10 +20,10 @@ class ProjectModel extends Project {
     super.archived,
   });
 
-  factory ProjectModel.fromJson(
+  factory GroupModel.fromJson(
     Map<String, dynamic> json,
   ) {
-    return ProjectModel(
+    return GroupModel(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
@@ -70,10 +70,10 @@ class ProjectModel extends Project {
     };
   }
 
-  factory ProjectModel.fromEntity(
+  factory GroupModel.fromEntity(
     Project project,
   ) {
-    return ProjectModel(
+    return GroupModel(
       id: project.id,
       title: project.title,
       createdAt: project.createdAt,

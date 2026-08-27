@@ -1,17 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../models/project_model.dart';
+import '../models/group_model.dart';
 
-abstract class ProjectFirestoreDataSource {
-  Future<List<ProjectModel>> getProjects();
+abstract class GroupFirestoreDataSource {
+  Future<List<GroupModel>> getProjects();
 
-  Future<ProjectModel> addProject(
-    ProjectModel project,
+  Future<GroupModel> addProject(
+    GroupModel project,
   );
 
-  Future<ProjectModel> updateProject(
-    ProjectModel project,
+  Future<GroupModel> updateProject(
+    GroupModel project,
   );
 
   Future<void> deleteProject(
@@ -23,11 +23,11 @@ abstract class ProjectFirestoreDataSource {
   );
 }
 
-class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
+class GroupFirestoreDataSourceImpl implements GroupFirestoreDataSource {
   final FirebaseFirestore firestore;
   final FirebaseAuth auth;
 
-  ProjectFirestoreDataSourceImpl(
+  GroupFirestoreDataSourceImpl(
     this.firestore,
     this.auth,
   );
@@ -43,12 +43,12 @@ class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
   }
 
   @override
-  Future<List<ProjectModel>> getProjects() async {
+  Future<List<GroupModel>> getProjects() async {
     final snapshot = await _projectsCollection.get();
 
     return snapshot.docs
         .map(
-          (doc) => ProjectModel.fromJson(
+          (doc) => GroupModel.fromJson(
             doc.data(),
           ),
         )
@@ -56,8 +56,8 @@ class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
   }
 
   @override
-  Future<ProjectModel> addProject(
-    ProjectModel project,
+  Future<GroupModel> addProject(
+    GroupModel project,
   ) async {
     await _projectsCollection.doc(project.id).set(
           project.toJson(),
@@ -67,14 +67,18 @@ class ProjectFirestoreDataSourceImpl implements ProjectFirestoreDataSource {
   }
 
   @override
-  Future<ProjectModel> updateProject(
-    ProjectModel project,
+  Future<GroupModel> updateProject(
+    GroupModel project,
   ) async {
-    await _projectsCollection.doc(project.id).update(
-          project.toJson(),
-        );
-
-    return project;
+    try {
+      await _projectsCollection.doc(project.id).set(
+            project.toJson(),
+            SetOptions(merge: true),
+          );
+      return project;
+    } catch (e) {
+      throw Exception('Update failed: $e');
+    }
   }
 
   @override
