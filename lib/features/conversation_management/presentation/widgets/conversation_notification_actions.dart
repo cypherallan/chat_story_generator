@@ -114,9 +114,20 @@ class ConversationNotificationActions {
       return;
     }
 
+    // GET PROJECTS FOR GROUP NAME DISPLAY
+    final groupCubit = context.read<GroupCubit>();
+    final groupState = groupCubit.state;
+
+    if (groupState is! ProjectLoaded) {
+      return;
+    }
+
+    final projects = groupState.projects;
+
     final selectedNotification = await showTriggerReplayNotificationSheet(
       context,
       notifications,
+      projects, // <-- FIX
     );
 
     if (!context.mounted || selectedNotification == null) {

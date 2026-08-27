@@ -469,6 +469,17 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
               else
                 ...state.notifications
                     .map((notification_entity.Notification notification) {
+                  final project = widget.projects
+                          .where((p) => p.id == notification.projectId)
+                          .isNotEmpty
+                      ? widget.projects
+                          .firstWhere((p) => p.id == notification.projectId)
+                      : null;
+                  final isGroup =
+                      project != null && project.participantIds.length > 2;
+                  final groupName = _projectName(notification.projectId);
+                  final showGroup = isGroup && groupName != 'Unknown chat';
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: Padding(
@@ -476,13 +487,21 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(notification.senderName,
+                          Text(
+                            showGroup ? groupName : notification.senderName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          if (showGroup) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              notification.senderName,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(_projectName(notification.projectId),
-                              style: TextStyle(
-                                  color: Colors.grey.shade600, fontSize: 13)),
+                                  color: Color(0xFF25D366),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ],
                           const SizedBox(height: 8),
                           Text(notification.messageText,
                               style: const TextStyle(fontSize: 15)),
