@@ -60,6 +60,8 @@ abstract class _ConversationReplayCubitBase
   int? _replayNotificationMessageCount;
 
   List<ReplayNotificationEvent> _replayNotificationEvents = [];
+  Map<String, List<Message>> get replayVisiblePerProject =>
+      Map.unmodifiable(_visiblePerProject);
   int _nextNotificationEventIndex = 0;
 
   String _ownerId = '';

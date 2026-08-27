@@ -1,10 +1,25 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _NavigationMixin on _ConversationReplayCubitBase {
+  void _rebuildVisiblePerProjectUpTo(int index) {
+    _visiblePerProject.clear();
+    for (final m in _messages.take(index)) {
+      _visiblePerProject.putIfAbsent(m.projectId, () => []).add(m);
+    }
+  }
+
+  Message? _lastMessageAt(int index, String projectId) {
+    final list =
+        _messages.take(index).where((m) => m.projectId == projectId).toList();
+    return list.isEmpty ? null : list.last;
+  }
+
   void showHome() {
     _pauseDeletionTimer();
-
     _timer?.cancel();
+    _rebuildVisiblePerProjectUpTo(state.currentIndex);
+    print(
+        '[Nav] HOME preview at idx=${state.currentIndex} Wife last=${_lastMessageAt(state.currentIndex, state.currentProjectId ?? "")?.text}');
 
     emit(
       state.copyWith(
@@ -311,6 +326,9 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _returnProjectId = null;
     _replayStartIndex = nextIndex;
 
+    _rebuildVisiblePerProjectUpTo(returnIndex);
+    print(
+        '[Nav] RETURN HOME preview at returnIdx=$returnIndex Wife last=${_lastMessageAt(returnIndex, projectId)?.text}');
     emit(state.copyWith(
       visualInteraction: ReplayVisualInteraction.backTap,
       playing: false,

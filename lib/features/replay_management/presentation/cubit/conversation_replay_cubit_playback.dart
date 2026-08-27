@@ -234,11 +234,14 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       final prev = _messages[messageIndex - 1];
       final realGap = message.createdAt.difference(prev.createdAt);
       final gap = _compressRealGap(realGap);
+      _rebuildVisiblePerProjectUpTo(messageIndex);
       final filteredVisible = _visiblePerProject[message.projectId] ??
           _messages
               .take(messageIndex)
               .where((m) => m.projectId == message.projectId)
               .toList();
+      print(
+          '[Nav] HOME SWITCH preview leaving ${state.currentProjectId} last=${_lastMessageAt(messageIndex, state.currentProjectId ?? "")?.text} entering ${message.projectId} last=${_lastMessageAt(messageIndex, message.projectId)?.text}');
 
       _timer = Timer(const Duration(milliseconds: 380), () {
         if (isClosed) return;

@@ -8,66 +8,50 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     String projectId,
   ) async {
     _timer?.cancel();
-
     _messages
       ..clear()
       ..addAll(messages);
-
     _visiblePerProject.clear();
-
     _ownerId = ownerId;
-
     _persons
       ..clear()
       ..addAll(persons);
 
     DateTime? availableStartTime;
     DateTime? availableEndTime;
-
     if (messages.isNotEmpty) {
-      final sortedMessages = List<Message>.from(messages)
+      final sorted = List<Message>.from(messages)
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-      availableStartTime = sortedMessages.first.createdAt;
-      availableEndTime = sortedMessages.last.createdAt;
+      availableStartTime = sorted.first.createdAt;
+      availableEndTime = sorted.last.createdAt;
     }
-
     final initialReplayStartTime = availableStartTime;
-
     final initialVisibleMessages = initialReplayStartTime == null
         ? <Message>[]
         : messages
-            .where(
-                (message) => message.createdAt.isBefore(initialReplayStartTime))
+            .where((m) => m.createdAt.isBefore(initialReplayStartTime))
             .toList();
 
-    // ---------- MULTI-NOTIFICATION SUPPORT ----------
+    // rebuild _visiblePerProject up to initial messages for correct home preview
+    for (final m in initialVisibleMessages) {
+      _visiblePerProject.putIfAbsent(m.projectId, () => []).add(m);
+    }
+
     _replayNotificationEvents = [];
     _nextNotificationEventIndex = 0;
     _replayNotificationMessageCount = null;
-
     try {
-      // Load persisted notification events for this project.
       await notificationCubit.loadRecordedEvents(projectId);
-
-      // Only events that belong to THIS conversation.
-      final relevantEvents = notificationCubit.recordedEvents
+      final relevant = notificationCubit.recordedEvents
           .where((e) => e.sourceProjectId == projectId)
           .toList()
-        ..sort(
-          (a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex),
-        );
-
-      for (final e in relevantEvents) {
-        _replayNotificationEvents.add(
-          ReplayNotificationEvent(
+        ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
+      for (final e in relevant) {
+        _replayNotificationEvents.add(ReplayNotificationEvent(
             notification: e.notification,
             triggerIndex: e.sourceTriggerIndex,
-            interaction: e.interaction,
-          ),
-        );
+            interaction: e.interaction));
       }
-
       if (_replayNotificationEvents.isNotEmpty) {
         _replayNotificationMessageCount =
             _replayNotificationEvents.first.triggerIndex;
@@ -75,28 +59,23 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     } catch (_) {
       _replayNotificationEvents = [];
     }
-// --------------------------------------------------
 
     final Set<String> emojiSet = {};
-    for (final message in messages) {
-      for (final character in message.text.characters) {
-        if (_isEmoji(character)) {
-          emojiSet.add(character);
-        }
+    for (final m in messages) {
+      for (final c in m.text.characters) {
+        if (_isEmoji(c)) emojiSet.add(c);
       }
     }
 
-    emit(
-      ConversationReplayState(
-        availableEmojis: emojiSet.toList(),
-        screen: ReplayScreen.home,
-        availableStartTime: availableStartTime,
-        availableEndTime: availableEndTime,
-        replayStartTime: availableStartTime,
-        replayEndTime: availableEndTime,
-        visibleMessages: initialVisibleMessages,
-        replayNotificationMessageCount: _replayNotificationMessageCount,
-      ),
-    );
+    emit(ConversationReplayState(
+      availableEmojis: emojiSet.toList(),
+      screen: ReplayScreen.home,
+      availableStartTime: availableStartTime,
+      availableEndTime: availableEndTime,
+      replayStartTime: availableStartTime,
+      replayEndTime: availableEndTime,
+      visibleMessages: initialVisibleMessages,
+      replayNotificationMessageCount: _replayNotificationMessageCount,
+    ));
   }
 }
