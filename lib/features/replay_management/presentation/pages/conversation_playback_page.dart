@@ -5,7 +5,7 @@ import '../../../../injection_container.dart' as di;
 import '../../../message_management/domain/usecases/get_messages.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../group_management/domain/entities/project.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 import '../../../group_management/domain/usecases/get_projects.dart';
 import '../../../notification_management/domain/usecases/get_recorded_notification_events.dart';
 import '../../../notification_management/domain/usecases/save_recorded_notification_events.dart';
@@ -66,8 +66,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       length: 4,
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<ProjectCubit>(
-            create: (_) => di.sl<ProjectCubit>()..loadProjects(),
+          BlocProvider<GroupCubit>(
+            create: (_) => di.sl<GroupCubit>()..loadProjects(),
           ),
           BlocProvider<PersonCubit>(
             create: (_) => di.sl<PersonCubit>()..loadPersons(),
@@ -97,7 +97,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
 
   Widget _buildHome(BuildContext context, ConversationReplayState replayState) {
     final personState = context.watch<PersonCubit>().state;
-    final projectState = context.watch<ProjectCubit>().state;
+    final projectState = context.watch<GroupCubit>().state;
 
     if (personState is! PersonLoaded || projectState is! ProjectLoaded) {
       return const Scaffold(
@@ -136,7 +136,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
       );
     }
 
-    final projectState = context.watch<ProjectCubit>().state;
+    final projectState = context.watch<GroupCubit>().state;
     final personState = context.watch<PersonCubit>().state;
 
     if (projectState is! ProjectLoaded || personState is! PersonLoaded) {

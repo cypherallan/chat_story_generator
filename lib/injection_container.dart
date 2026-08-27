@@ -26,7 +26,7 @@ import 'features/group_management/domain/usecases/get_projects.dart';
 import 'features/group_management/domain/usecases/delete_project.dart';
 import 'features/group_management/domain/usecases/update_project.dart';
 
-import 'features/group_management/presentation/cubit/project_cubit.dart';
+import 'features/group_management/presentation/cubit/group_cubit.dart';
 
 import 'features/message_management/data/datasources/message_firestore_data_source.dart';
 import 'features/message_management/data/repositories/message_repository_impl.dart';
@@ -174,7 +174,7 @@ Future<void> init() async {
   );
 
   sl.registerFactory(
-    () => ProjectCubit(
+    () => GroupCubit(
       getProjects: sl(),
       addProject: sl(),
       updateProject: sl(),

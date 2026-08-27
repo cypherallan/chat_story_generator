@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/project_cubit.dart';
+import '../cubit/group_cubit.dart';
 import '../widgets/chat_list_item_widget.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../conversation_management/presentation/pages/conversation_page.dart';
@@ -56,7 +56,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
             child: CircularProgressIndicator(),
           );
         }
-        return BlocBuilder<ProjectCubit, ProjectState>(
+        return BlocBuilder<GroupCubit, ProjectState>(
           builder: (context, state) {
             if (state is ProjectLoading) {
               return const Center(
@@ -171,7 +171,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                       }
 
                       await context
-                          .read<ProjectCubit>()
+                          .read<GroupCubit>()
                           .clearUnreadCount(project.id);
 
                       await Navigator.push(
@@ -180,7 +180,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                           builder: (_) => MultiBlocProvider(
                             providers: [
                               BlocProvider.value(
-                                  value: context.read<ProjectCubit>()),
+                                  value: context.read<GroupCubit>()),
                               BlocProvider(
                                   create: (_) => di.sl<MessageCubit>()
                                     ..loadMessages(project.id)),
@@ -193,7 +193,7 @@ class _ProjectsListBodyState extends State<_ProjectsListBody> {
                       );
 
                       if (context.mounted) {
-                        await context.read<ProjectCubit>().loadProjects();
+                        await context.read<GroupCubit>().loadProjects();
                       }
                     },
                   );

@@ -12,14 +12,14 @@ import '../../../message_management/domain/entities/message.dart';
 import '../../../message_management/domain/entities/message_status.dart';
 part 'project_state.dart';
 
-class ProjectCubit extends Cubit<ProjectState> {
+class GroupCubit extends Cubit<ProjectState> {
   final GetProjects getProjects;
   final AddProject addProject;
   final UpdateProject updateProject;
   final DeleteProject deleteProject;
   final DeleteProjects deleteProjects;
 
-  ProjectCubit({
+  GroupCubit({
     required this.getProjects,
     required this.addProject,
     required this.updateProject,

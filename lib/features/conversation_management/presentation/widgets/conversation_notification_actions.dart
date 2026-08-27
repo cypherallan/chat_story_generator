@@ -1,3 +1,4 @@
+import 'package:chat_story_generator/features/group_management/presentation/cubit/group_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,7 +11,6 @@ import '../../../notification_management/presentation/cubit/notification_cubit.d
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../group_management/domain/entities/project.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
 import '../pages/conversation_page.dart';
 import 'trigger_replay_notification_sheet.dart';
 
@@ -28,11 +28,11 @@ class ConversationNotificationActions {
   Future<void> onNotificationTapped(
     SimulatedNotification notification,
   ) async {
-    final projectCubit = context.read<ProjectCubit>();
+    final groupCubit = context.read<GroupCubit>();
     final personCubit = context.read<PersonCubit>();
     final messageCubit = context.read<MessageCubit>();
 
-    final projectState = projectCubit.state;
+    final projectState = groupCubit.state;
 
     if (projectState is! ProjectLoaded) {
       return;
@@ -48,7 +48,7 @@ class ConversationNotificationActions {
 
     final project = matches.first;
 
-    await projectCubit.clearUnreadCount(project.id);
+    await groupCubit.clearUnreadCount(project.id);
 
     if (!context.mounted) {
       return;
@@ -68,7 +68,7 @@ class ConversationNotificationActions {
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: projectCubit),
+            BlocProvider.value(value: groupCubit),
             BlocProvider<MessageCubit>(
               create: (_) {
                 final cubit = di.sl<MessageCubit>();
@@ -90,7 +90,7 @@ class ConversationNotificationActions {
     );
 
     if (context.mounted) {
-      await projectCubit.loadProjects();
+      await groupCubit.loadProjects();
     }
   }
 
@@ -124,7 +124,7 @@ class ConversationNotificationActions {
     }
 
     final project = await context
-        .read<ProjectCubit>()
+        .read<GroupCubit>()
         .findProject(selectedNotification.projectId);
 
     if (project == null) {
@@ -175,7 +175,7 @@ class ConversationNotificationActions {
       isUnread: true,
     );
 
-    await context.read<ProjectCubit>().recordIncomingMessage(
+    await context.read<GroupCubit>().recordIncomingMessage(
           projectId: selectedNotification.projectId,
           message: message,
         );

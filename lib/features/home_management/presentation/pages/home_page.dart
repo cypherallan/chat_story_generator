@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../injection_container.dart' as di;
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 import '../../../group_management/presentation/pages/add_group_page.dart';
 import '../../../group_management/presentation/pages/projects_list_widget.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_state.dart';
@@ -177,7 +177,7 @@ class _HomePageState extends State<HomePage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => di.sl<ProjectCubit>()..loadProjects(),
+          create: (_) => di.sl<GroupCubit>()..loadProjects(),
         ),
         BlocProvider(
           create: (_) => di.sl<PersonCubit>()..loadPersons(),
@@ -326,7 +326,7 @@ class _HomePageState extends State<HomePage> {
 
                               if (confirmed != true) return;
 
-                              final cubit = context.read<ProjectCubit>();
+                              final cubit = context.read<GroupCubit>();
 
                               await cubit.removeProjects(
                                 selectedChatIds.toList(),
@@ -370,7 +370,7 @@ class _HomePageState extends State<HomePage> {
                                             value: context.read<PersonCubit>(),
                                           ),
                                           BlocProvider.value(
-                                            value: context.read<ProjectCubit>(),
+                                            value: context.read<GroupCubit>(),
                                           ),
                                         ],
                                         child: PersonsListPage(
@@ -467,7 +467,7 @@ class _HomePageState extends State<HomePage> {
                 body: BlocListener<MessageCubit, MessageState>(
                   listener: (context, messageState) {
                     if (messageState is MessageLoaded) {
-                      context.read<ProjectCubit>().loadProjects();
+                      context.read<GroupCubit>().loadProjects();
                     }
                   },
                   child: TabBarView(
@@ -492,7 +492,7 @@ class _HomePageState extends State<HomePage> {
                         builder: (_) => MultiBlocProvider(
                           providers: [
                             BlocProvider.value(
-                                value: context.read<ProjectCubit>()),
+                                value: context.read<GroupCubit>()),
                             BlocProvider.value(
                                 value: context.read<PersonCubit>()),
                           ],

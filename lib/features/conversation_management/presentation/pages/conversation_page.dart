@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../group_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 
 import '../widgets/conversation_app_bar.dart';
 import '../../../replay_management/presentation/pages/conversation_playback_page.dart';
@@ -53,7 +53,7 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   void _openCreateNotification() {
-    final projectState = context.read<ProjectCubit>().state;
+    final projectState = context.read<GroupCubit>().state;
     final personState = context.read<PersonCubit>().state;
 
     if (projectState is! ProjectLoaded) return;
@@ -63,7 +63,7 @@ class _ConversationPageState extends State<ConversationPage> {
       MaterialPageRoute(
         builder: (_) => MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: context.read<ProjectCubit>()),
+            BlocProvider.value(value: context.read<GroupCubit>()),
             BlocProvider.value(value: context.read<PersonCubit>()),
             BlocProvider.value(value: context.read<MessageCubit>()),
             BlocProvider(
@@ -98,7 +98,7 @@ class _ConversationPageState extends State<ConversationPage> {
         context.read<PersonCubit>().setPersonOnline(body.selectedSenderId);
       }
 
-      context.read<ProjectCubit>().clearUnreadCount(widget.project.id);
+      context.read<GroupCubit>().clearUnreadCount(widget.project.id);
     });
   }
 
@@ -123,7 +123,7 @@ class _ConversationPageState extends State<ConversationPage> {
             context.read<PersonCubit>().setPersonOffline(body.selectedSenderId);
           }
 
-          await context.read<ProjectCubit>().loadProjects();
+          await context.read<GroupCubit>().loadProjects();
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,

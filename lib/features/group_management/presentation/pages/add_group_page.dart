@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../person_management/domain/entities/person.dart';
-import '../cubit/project_cubit.dart';
+import '../cubit/group_cubit.dart';
+import '../../../shared/widgets/profile_avatar.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -76,13 +77,13 @@ class _AddGroupPageState extends State<AddGroupPage> {
       return;
     }
 
-    await context.read<ProjectCubit>().createProject(
+    await context.read<GroupCubit>().createProject(
           title: title,
           ownerId: _ownerId!,
           participants: [_ownerId!, ..._selectedParticipants],
           groupImagePath: _groupImage?.path,
         );
-    await context.read<ProjectCubit>().loadProjects();
+    await context.read<GroupCubit>().loadProjects();
     if (!mounted) return;
     Navigator.pop(context, _ownerId);
   }
@@ -116,7 +117,6 @@ class _AddGroupPageState extends State<AddGroupPage> {
             BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
                 if (state is! PersonLoaded) return const SizedBox();
-                // sort You Are dropdown alphabetically too
                 final sortedPersons = List<Person>.from(state.persons)
                   ..sort((a, b) =>
                       a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -145,7 +145,6 @@ class _AddGroupPageState extends State<AddGroupPage> {
                   if (state is PersonLoading)
                     return const Center(child: CircularProgressIndicator());
                   if (state is PersonLoaded) {
-                    // alphabetical contacts
                     final filtered = state.persons
                         .where((p) => p.id != _ownerId)
                         .toList()
@@ -161,12 +160,14 @@ class _AddGroupPageState extends State<AddGroupPage> {
                         return CheckboxListTile(
                           value: selected,
                           onChanged: (_) => _toggleParticipant(person),
+                          secondary: ProfileAvatar(
+                            imagePath: person.avatarPath,
+                            name: person.name,
+                            radius: 20,
+                          ),
                           title: Text(person.name),
                           subtitle:
                               person.bio == null ? null : Text(person.bio!),
-                          secondary: person.isVerified
-                              ? const Icon(Icons.verified, color: Colors.blue)
-                              : null,
                         );
                       },
                     );

@@ -1,4 +1,4 @@
-part of 'project_cubit.dart';
+part of 'group_cubit.dart';
 
 abstract class ProjectState extends Equatable {
   const ProjectState();

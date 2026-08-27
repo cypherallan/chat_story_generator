@@ -6,7 +6,7 @@ import '../../../group_management/domain/entities/project.dart';
 import '../cubit/notification_cubit.dart';
 import '../cubit/notification_state.dart';
 import '../../domain/entities/notification.dart' as notification_entity;
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 import 'package:uuid/uuid.dart';
 
 class CreateNotificationPage extends StatefulWidget {
@@ -129,10 +129,10 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
       return;
     }
 
-    final projectCubit = context.read<ProjectCubit>();
+    final groupCubit = context.read<GroupCubit>();
 
     // Find the existing conversation or create it automatically.
-    final project = await projectCubit.openOrCreatePrivateChat(
+    final project = await groupCubit.openOrCreatePrivateChat(
       ownerId: widget.currentPersonId,
       contactId: sender.id,
       contactName: sender.name,
@@ -176,7 +176,7 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
     _messageController.clear();
 
     // Refresh projects because a new conversation may have been created.
-    await projectCubit.loadProjects();
+    await groupCubit.loadProjects();
 
     if (!mounted) {
       return;

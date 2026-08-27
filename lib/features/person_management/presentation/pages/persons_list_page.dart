@@ -7,7 +7,7 @@ import '../cubit/person_cubit.dart';
 import '../widgets/person_card.dart';
 import 'add_participant_page.dart';
 
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../conversation_management/presentation/pages/conversation_page.dart';
 import '../widgets/person_avatar.dart';
@@ -34,7 +34,7 @@ class PersonsListPage extends StatelessWidget {
           value: context.read<PersonCubit>(),
         ),
         BlocProvider.value(
-          value: context.read<ProjectCubit>(),
+          value: context.read<GroupCubit>(),
         ),
       ],
       child: _PersonsListView(
@@ -205,7 +205,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
                         person: person,
                         onMessage: () async {
                           final project = await context
-                              .read<ProjectCubit>()
+                              .read<GroupCubit>()
                               .openOrCreatePrivateChat(
                                 ownerId: widget.currentPersonId,
                                 contactId: person.id,
@@ -214,7 +214,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
 
                           if (!mounted) return;
 
-                          await context.read<ProjectCubit>().loadProjects();
+                          await context.read<GroupCubit>().loadProjects();
 
                           Navigator.push(
                             context,
@@ -222,7 +222,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
                               builder: (_) => MultiBlocProvider(
                                 providers: [
                                   BlocProvider.value(
-                                    value: context.read<ProjectCubit>(),
+                                    value: context.read<GroupCubit>(),
                                   ),
                                   BlocProvider(
                                     create: (_) => di.sl<MessageCubit>()

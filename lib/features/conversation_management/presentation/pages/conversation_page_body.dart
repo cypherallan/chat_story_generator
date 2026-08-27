@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../group_management/domain/entities/project.dart';
 import '../../../person_management/presentation/cubit/person_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 import '../../../message_management/domain/entities/message.dart';
 
 import '../widgets/conversation_message_list.dart';
@@ -260,7 +260,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                         currentUserId: widget.project.ownerId,
                       );
                   context
-                      .read<ProjectCubit>()
+                      .read<GroupCubit>()
                       .clearUnreadCount(widget.project.id);
                   _notifyParent();
                 },
@@ -294,7 +294,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                           currentUserId: widget.project.ownerId,
                         );
                     context
-                        .read<ProjectCubit>()
+                        .read<GroupCubit>()
                         .clearUnreadCount(widget.project.id);
                   }
 
@@ -325,7 +325,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                           currentUserId: widget.project.ownerId,
                         );
                     context
-                        .read<ProjectCubit>()
+                        .read<GroupCubit>()
                         .clearUnreadCount(widget.project.id);
                   }
 
@@ -342,7 +342,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
 
                   if (senderId != widget.project.ownerId) {
                     context
-                        .read<ProjectCubit>()
+                        .read<GroupCubit>()
                         .incrementUnreadCount(widget.project.id);
                   }
 

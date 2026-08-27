@@ -8,7 +8,7 @@ import '../../../message_management/domain/entities/message.dart';
 import '../pages/group_info_page.dart';
 import '../../../message_management/presentation/widgets/reaction_picker.dart';
 import 'conversation_header.dart';
-import '../../../group_management/presentation/cubit/project_cubit.dart';
+import '../../../group_management/presentation/cubit/group_cubit.dart';
 
 class ConversationAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -75,7 +75,7 @@ class ConversationAppBar extends StatelessWidget
                                   value: context.read<PersonCubit>(),
                                 ),
                                 BlocProvider.value(
-                                  value: context.read<ProjectCubit>(),
+                                  value: context.read<GroupCubit>(),
                                 ),
                               ],
                               child: GroupInfoPage(
