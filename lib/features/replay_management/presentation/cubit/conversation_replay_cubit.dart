@@ -53,33 +53,32 @@ abstract class _ConversationReplayCubitBase
   String? _returnProjectId;
   int _returnMessageIndex = 0;
   int _replayStartIndex = 0;
-
   final Random _random = Random();
-
   int? _replayNotificationMessageCount;
-
   List<ReplayNotificationEvent> _replayNotificationEvents = [];
   Map<String, List<Message>> get replayVisiblePerProject =>
       Map.unmodifiable(_visiblePerProject);
+  List<Message> _deletionEvents = [];
+  int _nextDeletionIndex = 0;
+  DateTime? _lastPlayedTime;
   int _nextNotificationEventIndex = 0;
-
   String _ownerId = '';
-
   String get ownerId => _ownerId;
   Timer? _timer;
   Timer? _deletionTimer;
   final Map<String, Duration> _deletionElapsed = {};
   DateTime? _deletionStartedAt;
   String? _activeDeletionMessageId;
+
   void _playNext();
   void _pauseDeletionTimer() {
     _deletionTimer?.cancel();
     _deletionTimer = null;
-
     if (_activeDeletionMessageId != null && _deletionStartedAt != null) {
       final elapsed = DateTime.now().difference(_deletionStartedAt!);
-      final id = _activeDeletionMessageId!;
-      _deletionElapsed[id] = (_deletionElapsed[id] ?? Duration.zero) + elapsed;
+      _deletionElapsed[_activeDeletionMessageId!] =
+          (_deletionElapsed[_activeDeletionMessageId!] ?? Duration.zero) +
+              elapsed;
     }
     _deletionStartedAt = null;
   }
@@ -94,16 +93,11 @@ abstract class _ConversationReplayCubitBase
   void _typeOwnerMessage(Message message);
   void _startOwnerTyping(Message message);
   void _performSwipeThenType(Message message);
-  void _scheduleDeletion(Message originalMessage);
   void _resumeActiveDeletion();
-
-  Duration _humanCharacterDelay({
-    required String character,
-    required String? nextCharacter,
-  });
-
+  Duration _compressRealGap(Duration real);
+  Duration _humanCharacterDelay(
+      {required String character, required String? nextCharacter});
   Duration _humanTypingDuration(String text);
-
   bool _isEmoji(String character);
   void onRecordingCompleted(String tempPath);
   void onRecordingFailed(String error);
@@ -124,16 +118,14 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
         _TimingMixin,
         _UtilsMixin,
         _RecordingMixin {
-  ConversationReplayCubit({
-    required super.notificationCubit,
-    required super.getMessages,
-    required super.getProjects,
-    required super.getNotifications,
-    required super.getRecordedNotificationEvents,
-    required super.saveRecordedNotificationEvents,
-    required super.exportService,
-  });
-
+  ConversationReplayCubit(
+      {required super.notificationCubit,
+      required super.getMessages,
+      required super.getProjects,
+      required super.getNotifications,
+      required super.getRecordedNotificationEvents,
+      required super.saveRecordedNotificationEvents,
+      required super.exportService});
   @override
   Future<void> close() {
     _timer?.cancel();

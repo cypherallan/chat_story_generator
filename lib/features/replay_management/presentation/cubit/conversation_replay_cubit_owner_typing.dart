@@ -127,10 +127,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
         ),
       );
 
-      if (message.isDeleted) {
-        _scheduleDeletion(message);
-      }
-
       _timer = Timer(
         const Duration(milliseconds: 550),
         _playNext,

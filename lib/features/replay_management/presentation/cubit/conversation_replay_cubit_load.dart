@@ -11,6 +11,16 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     _messages
       ..clear()
       ..addAll(messages);
+
+    // --- sort and build deletion timeline ---
+    _messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    _deletionEvents = _messages
+        .where((m) => m.isDeleted && m.deletedAt != null)
+        .toList()
+      ..sort((a, b) => a.deletedAt!.compareTo(b.deletedAt!));
+    _nextDeletionIndex = 0;
+    _lastPlayedTime = _messages.isNotEmpty ? _messages.first.createdAt : null;
+
     _visiblePerProject.clear();
     _ownerId = ownerId;
     _persons
@@ -19,16 +29,14 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
 
     DateTime? availableStartTime;
     DateTime? availableEndTime;
-    if (messages.isNotEmpty) {
-      final sorted = List<Message>.from(messages)
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      availableStartTime = sorted.first.createdAt;
-      availableEndTime = sorted.last.createdAt;
+    if (_messages.isNotEmpty) {
+      availableStartTime = _messages.first.createdAt;
+      availableEndTime = _messages.last.createdAt;
     }
     final initialReplayStartTime = availableStartTime;
     final initialVisibleMessages = initialReplayStartTime == null
         ? <Message>[]
-        : messages
+        : _messages
             .where((m) => m.createdAt.isBefore(initialReplayStartTime))
             .toList();
 
@@ -60,7 +68,7 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     }
 
     final Set<String> emojiSet = {};
-    for (final m in messages) {
+    for (final m in _messages) {
       for (final c in m.text.characters) {
         if (_isEmoji(c)) emojiSet.add(c);
       }

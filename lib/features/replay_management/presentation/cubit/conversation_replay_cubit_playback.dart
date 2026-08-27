@@ -5,39 +5,15 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (state.playing) {
       return;
     }
-
     if (state.finished) {
       _timer?.cancel();
-
       _nextNotificationEventIndex = 0;
-
-      if (state.replayStartMethod == ReplayStartMethod.time) {
-        if (state.replayStartTime != null) {
-          _replayStartIndex = _messages.indexWhere(
-            (message) => !message.createdAt.isBefore(
-              state.replayStartTime!,
-            ),
-          );
-
-          if (_replayStartIndex == -1) {
-            _replayStartIndex = _messages.length;
-          }
-        } else {
-          _replayStartIndex = 0;
-        }
-      }
-
-      final replayStartIndex = _replayStartIndex.clamp(
-        0,
-        _messages.length,
-      );
-
-      final initialVisibleMessages = _messages.take(replayStartIndex).toList();
-
+      _nextDeletionIndex = 0;
+      final initialVisible = _messages.take(_replayStartIndex).toList();
       emit(
         state.copyWith(
-          visibleMessages: initialVisibleMessages,
-          currentIndex: replayStartIndex,
+          visibleMessages: initialVisible,
+          currentIndex: _replayStartIndex,
           playing: true,
           paused: false,
           finished: false,
@@ -54,7 +30,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           clearReplayNotification: true,
         ),
       );
-
+      _lastPlayedTime = _replayStartIndex > 0
+          ? _messages[_replayStartIndex - 1].createdAt
+          : _messages.isNotEmpty
+              ? _messages[0].createdAt
+              : DateTime.now();
       _playNext();
       return;
     }
@@ -64,14 +44,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (state.replayStartMethod == ReplayStartMethod.time) {
       if (state.replayStartTime != null) {
         _replayStartIndex = _messages.indexWhere(
-          (message) => !message.createdAt.isBefore(
-            state.replayStartTime!,
-          ),
+          (m) => !m.createdAt.isBefore(state.replayStartTime!),
         );
-
-        if (_replayStartIndex == -1) {
-          _replayStartIndex = _messages.length;
-        }
+        if (_replayStartIndex == -1) _replayStartIndex = _messages.length;
       } else {
         _replayStartIndex = 0;
       }
@@ -85,13 +60,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         emojiKeyboardVisible: false,
       ),
     );
-
     _playNext();
   }
 
   void pause() {
     _timer?.cancel();
-
     emit(
       state.copyWith(
         playing: false,
@@ -106,54 +79,47 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   void stop() {
     _timer?.cancel();
-
-    emit(
-      const ConversationReplayState(
-        keyboardVisible: false,
-      ),
-    );
+    emit(const ConversationReplayState(keyboardVisible: false));
   }
 
-  Duration _replayMessageGap(
-    Message previous,
-    Message current,
-  ) {
-    final originalGap = current.createdAt.difference(
-      previous.createdAt,
-    );
 
-    if (originalGap.isNegative || originalGap == Duration.zero) {
-      return Duration.zero;
-    }
-
-    final seconds = originalGap.inMilliseconds / 1000.0;
-
-    var replaySeconds = 0.8 + (log(seconds + 1) * 1.2);
-
-    replaySeconds = max(replaySeconds, 0.8);
-    replaySeconds = min(replaySeconds, 6.0);
-
-    return Duration(
-      milliseconds: (replaySeconds * 1000).round(),
-    );
+  @override
+  Duration _compressRealGap(Duration real) {
+    if (real.isNegative || real == Duration.zero) return Duration.zero;
+    final s = real.inMilliseconds / 1000.0;
+    var rs = 0.8 + (log(s + 1) * 1.2);
+    rs = rs.clamp(0.8, 6.0);
+    return Duration(milliseconds: (rs * 1000).round());
   }
 
   @override
   void _playNext() {
-    if (!state.playing) {
-      return;
-    }
+    if (!state.playing) return;
     if (state.currentIndex < _replayStartIndex) {
-      emit(
-        state.copyWith(
-          currentIndex: _replayStartIndex,
-        ),
-      );
+      emit(state.copyWith(currentIndex: _replayStartIndex));
+    }
+
+    // --- DELETION TIMELINE: if next delete is before next message, play it first ---
+    while (_nextDeletionIndex < _deletionEvents.length) {
+      final del = _deletionEvents[_nextDeletionIndex];
+      final alreadyVisible =
+          state.visibleMessages.any((m) => m.id == del.id && !m.isDeleted);
+      if (!alreadyVisible) break;
+
+      if (state.currentIndex >= _messages.length) {
+        _playDeletion(del);
+        return;
+      }
+      final nextMsg = _messages[state.currentIndex];
+      if (!del.deletedAt!.isAfter(nextMsg.createdAt)) {
+        _playDeletion(del);
+        return;
+      }
+      break;
     }
 
     if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
       final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
-
       if (state.currentProjectId != null) {
         String sourceProjectId;
         try {
@@ -164,13 +130,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         } catch (_) {
           sourceProjectId = state.currentProjectId!;
         }
-
         if (sourceProjectId == state.currentProjectId) {
           final playedOfSource = _messages
               .take(state.currentIndex)
               .where((m) => m.projectId == sourceProjectId)
               .length;
-
           if (playedOfSource == nextEvent.triggerIndex) {
             _replayNotificationEvent(nextEvent);
             return;
@@ -180,29 +144,21 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     if (state.currentIndex >= _messages.length) {
-      if (state.currentIndex >= _messages.length) {
-        if (_returnMessages.isNotEmpty && _returnProjectId != null) {
-          returnFromNotificationConversation();
-          return;
-        }
-
-        emit(
-          state.copyWith(
-            playing: false,
-            finished: true,
-            typing: false,
-            keyboardVisible: true,
-            emojiKeyboardVisible: false,
-            composerText: '',
-            pressedKey: null,
-            pressedEmoji: null,
-            lastPressedEmoji: null,
-            shiftPressed: false,
-          ),
-        );
-
+      if (_returnMessages.isNotEmpty && _returnProjectId != null) {
+        returnFromNotificationConversation();
         return;
       }
+      emit(state.copyWith(
+          playing: false,
+          finished: true,
+          typing: false,
+          keyboardVisible: true,
+          emojiKeyboardVisible: false,
+          composerText: '',
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+          shiftPressed: false));
       return;
     }
 
@@ -213,10 +169,9 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         message.projectId != state.currentProjectId) {
       _timer?.cancel();
       emit(state.copyWith(
-        visualInteraction: ReplayVisualInteraction.backTap,
-        playing: false,
-        paused: true,
-      ));
+          visualInteraction: ReplayVisualInteraction.backTap,
+          playing: false,
+          paused: true));
       final prev = _messages[messageIndex - 1];
       final realGap = message.createdAt.difference(prev.createdAt);
       final gap = _compressRealGap(realGap);
@@ -225,16 +180,14 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
               .take(messageIndex)
               .where((m) => m.projectId == message.projectId)
               .toList();
-
       _timer = Timer(const Duration(milliseconds: 380), () {
         if (isClosed) return;
         emit(state.copyWith(
-          visualInteraction: ReplayVisualInteraction.none,
-          screen: ReplayScreen.home,
-          highlightedChatProjectId: message.projectId,
-          currentProjectId: null,
-          visibleMessages: const [],
-        ));
+            visualInteraction: ReplayVisualInteraction.none,
+            screen: ReplayScreen.home,
+            highlightedChatProjectId: message.projectId,
+            currentProjectId: null,
+            visibleMessages: const []));
         _timer = Timer(const Duration(milliseconds: 350), () {
           if (isClosed) return;
           emit(state.copyWith(
@@ -242,22 +195,21 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           _timer = Timer(const Duration(milliseconds: 380), () {
             if (isClosed) return;
             emit(state.copyWith(
-              screen: ReplayScreen.conversation,
-              currentProjectId: message.projectId,
-              visualInteraction: ReplayVisualInteraction.none,
-              clearHighlightedChat: true,
-              visibleMessages: filteredVisible,
-              typing: false,
-              typingPersonId: null,
-            ));
+                screen: ReplayScreen.conversation,
+                currentProjectId: message.projectId,
+                visualInteraction: ReplayVisualInteraction.none,
+                clearHighlightedChat: true,
+                visibleMessages: filteredVisible,
+                typing: false,
+                typingPersonId: null));
             _timer = Timer(gap, () {
               if (isClosed) return;
+              _lastPlayedTime = message.createdAt;
               emit(state.copyWith(playing: true, paused: false));
-              if (message.senderId == _ownerId) {
+              if (message.senderId == _ownerId)
                 _typeOwnerMessage(message);
-              } else {
+              else
                 _typeOtherPersonMessage(message);
-              }
             });
           });
         });
@@ -266,102 +218,87 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     Duration gap;
-
-    if (messageIndex == 0) {
+    if (_lastPlayedTime == null) {
       gap = Duration.zero;
     } else {
-      final previousMessage = _messages[messageIndex - 1];
-      gap = _replayMessageGap(
-        previousMessage,
-        message,
-      );
+      gap = _compressRealGap(message.createdAt.difference(_lastPlayedTime!));
     }
 
-    _timer = Timer(
-      gap,
-      () {
-        if (!state.playing) {
-          return;
-        }
-        if (message.senderId == _ownerId) {
-          _typeOwnerMessage(message);
-        } else {
-          _typeOtherPersonMessage(message);
-        }
-      },
-    );
+    _timer = Timer(gap, () {
+      if (!state.playing) return;
+      _lastPlayedTime = message.createdAt;
+      if (message.senderId == _ownerId)
+        _typeOwnerMessage(message);
+      else
+        _typeOtherPersonMessage(message);
+    });
+  }
+
+  void _playDeletion(Message del) {
+    final realGap = del.deletedAt!.difference(_lastPlayedTime ?? del.createdAt);
+    final gap = _compressRealGap(realGap);
+    _timer = Timer(gap, () {
+      if (!state.playing) return;
+      _lastPlayedTime = del.deletedAt;
+      final current = List<Message>.from(state.visibleMessages);
+      final idx = current.indexWhere((m) => m.id == del.id);
+      if (idx != -1) {
+        current[idx] = current[idx].copyWith(
+          originalText:
+              current[idx].originalText ?? del.originalText ?? del.text,
+          text: 'This message was deleted',
+          isDeleted: true,
+          imagePath: null,
+          replyToMessageId: null,
+          replyToSenderId: null,
+          replyToSenderName: null,
+          replyToText: null,
+        );
+      }
+      _visiblePerProject[del.projectId] = List<Message>.from(current);
+      emit(state.copyWith(visibleMessages: current));
+      _nextDeletionIndex++;
+      _timer = Timer(const Duration(milliseconds: 400), _playNext);
+    });
   }
 
   Future<void> _handleReplayNotificationTap(
       ReplayNotificationEvent event) async {
     _timer?.cancel();
-
-    emit(
-      state.copyWith(
+    emit(state.copyWith(
         visualInteraction: ReplayVisualInteraction.notificationTap,
         replayNotificationInteraction: ReplayNotificationInteraction.tapped,
         playing: false,
         paused: true,
-        finished: false,
-      ),
-    );
-
+        finished: false));
     await Future.delayed(const Duration(milliseconds: 350));
-
     if (isClosed) return;
-
     notificationCubit.hideNotificationPreserveInteraction();
-
     await openConversationFromNotification(
-      projectId: event.notification.projectId,
-      notificationMessageId: event.notification.messageId,
-    );
+        projectId: event.notification.projectId,
+        notificationMessageId: event.notification.messageId);
   }
 
   void _handleReplayNotificationSwipe() {
     _timer?.cancel();
-
-    emit(
-      state.copyWith(
+    emit(state.copyWith(
         visualInteraction: ReplayVisualInteraction.notificationSwipe,
-        replayNotificationInteraction: ReplayNotificationInteraction.swiped,
-      ),
-    );
-
-    _timer = Timer(
-      const Duration(milliseconds: 450),
-      () {
-        if (isClosed) {
-          return;
-        }
-
-        notificationCubit.hideNotificationPreserveInteraction();
-
-        emit(
-          state.copyWith(
-            replayNotification: null,
-            visualInteraction: ReplayVisualInteraction.none,
-          ),
-        );
-
-        _timer = Timer(
-          const Duration(milliseconds: 300),
-          _playNext,
-        );
-      },
-    );
+        replayNotificationInteraction: ReplayNotificationInteraction.swiped));
+    _timer = Timer(const Duration(milliseconds: 450), () {
+      if (isClosed) return;
+      notificationCubit.hideNotificationPreserveInteraction();
+      emit(state.copyWith(
+          replayNotification: null,
+          visualInteraction: ReplayVisualInteraction.none));
+      _timer = Timer(const Duration(milliseconds: 300), _playNext);
+    });
   }
 
   void _replayNotificationEvent(ReplayNotificationEvent event) {
     _nextNotificationEventIndex++;
-
-    emit(
-      state.copyWith(
+    emit(state.copyWith(
         replayNotification: event.notification,
-        replayNotificationInteraction: ReplayNotificationInteraction.none,
-      ),
-    );
-
+        replayNotificationInteraction: ReplayNotificationInteraction.none));
     switch (event.interaction) {
       case NotificationInteraction.tapped:
         _timer = Timer(const Duration(seconds: 3), () {
@@ -369,27 +306,20 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           _handleReplayNotificationTap(event);
         });
         break;
-
       case NotificationInteraction.swiped:
         _timer = Timer(const Duration(seconds: 3), () {
           if (!state.playing) return;
           _handleReplayNotificationSwipe();
         });
         break;
-
       case NotificationInteraction.expired:
       case NotificationInteraction.none:
         _timer = Timer(const Duration(seconds: 3), () {
           if (!state.playing) return;
-
-          emit(
-            state.copyWith(
+          emit(state.copyWith(
               replayNotification: null,
               replayNotificationInteraction:
-                  ReplayNotificationInteraction.expired,
-            ),
-          );
-
+                  ReplayNotificationInteraction.expired));
           _timer = Timer(const Duration(milliseconds: 300), _playNext);
         });
         break;
@@ -397,12 +327,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   void _typeOtherPersonMessage(Message message) {
-    final delay = _humanTypingDuration(
-      message.originalText ?? message.text,
-    );
-
-    emit(
-      state.copyWith(
+    final delay = _humanTypingDuration(message.originalText ?? message.text);
+    emit(state.copyWith(
         typing: true,
         typingPersonId: message.senderId,
         onlinePersonId: message.senderId,
@@ -412,50 +338,24 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         pressedKey: null,
         pressedEmoji: null,
         lastPressedEmoji: null,
-        shiftPressed: false,
-      ),
-    );
-
-    _timer = Timer(
-      delay,
-      () {
-        if (!state.playing) {
-          return;
-        }
-
-        final messageToShow = message.isDeleted
-            ? message.copyWith(
-                text: message.originalText ?? message.text,
-                isDeleted: false,
-              )
-            : message;
-
-        final updatedMessages = List<Message>.from(
-          state.visibleMessages,
-        )..add(messageToShow);
-
-        _visiblePerProject[message.projectId] =
-            List<Message>.from(updatedMessages);
-
-        emit(
-          state.copyWith(
-            typing: false,
-            typingPersonId: null,
-            visibleMessages: updatedMessages,
-            currentIndex: state.currentIndex + 1,
-            keyboardVisible: true,
-          ),
-        );
-
-        if (message.isDeleted) {
-          _scheduleDeletion(message);
-        }
-
-        _timer = Timer(
-          const Duration(milliseconds: 650),
-          _playNext,
-        );
-      },
-    );
+        shiftPressed: false));
+    _timer = Timer(delay, () {
+      if (!state.playing) return;
+      final messageToShow = message.isDeleted
+          ? message.copyWith(
+              text: message.originalText ?? message.text, isDeleted: false)
+          : message;
+      final updatedMessages = List<Message>.from(state.visibleMessages)
+        ..add(messageToShow);
+      _visiblePerProject[message.projectId] =
+          List<Message>.from(updatedMessages);
+      emit(state.copyWith(
+          typing: false,
+          typingPersonId: null,
+          visibleMessages: updatedMessages,
+          currentIndex: state.currentIndex + 1,
+          keyboardVisible: true));
+      _timer = Timer(const Duration(milliseconds: 650), _playNext);
+    });
   }
 }
