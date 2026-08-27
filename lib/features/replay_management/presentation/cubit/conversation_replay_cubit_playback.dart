@@ -205,10 +205,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
               if (isClosed) return;
               _lastPlayedTime = message.createdAt;
               emit(state.copyWith(playing: true, paused: false));
-              if (message.senderId == _ownerId)
+              if (message.senderId == _ownerId) {
                 _typeOwnerMessage(message);
-              else
+              } else {
                 _typeOtherPersonMessage(message);
+              }
             });
           });
         });
@@ -226,10 +227,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     _timer = Timer(gap, () {
       if (!state.playing) return;
       _lastPlayedTime = message.createdAt;
-      if (message.senderId == _ownerId)
+      if (message.senderId == _ownerId) {
         _typeOwnerMessage(message);
-      else
+      } else {
         _typeOtherPersonMessage(message);
+      }
     });
   }
 
