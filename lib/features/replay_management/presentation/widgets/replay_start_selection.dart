@@ -24,79 +24,86 @@ class ReplayStartSelection {
 Future<ReplayStartSelection?> showReplayStartSelection(
   BuildContext context,
   List<Message> messages,
+  String projectId, // <-- NEW: selected conversation
 ) async {
-  final sortedMessages = List<Message>.from(messages)
+  // 1. ONLY this conversation + NOT deleted
+  // 1. ONLY this conversation + NOT deleted
+  final filtered = messages.where((m) {
+    if (m.projectId != projectId) return false;
+
+    try {
+      final d = m as dynamic;
+      if (d.isDeleted == true) return false;
+      if (d.deletedAt != null) return false;
+      if (d.isDeletedMessage == true) return false;
+      if (d.isRemoved == true) return false;
+    } catch (_) {}
+
+    return true;
+  }).toList();
+
+  final sortedMessages = List<Message>.from(filtered)
     ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  if (sortedMessages.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('No messages in this conversation to replay from.')),
+      );
+    }
+    return null;
+  }
 
   final result = await showDialog<ReplayStartSelection>(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text(
-          'Where do you want the replay to start from?',
-        ),
+        title: const Text('Where do you want the replay to start from?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                'Choose method:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text('Choose method:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 12),
-
-            // TIME
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.access_time),
               title: const Text('Time'),
-              subtitle: const Text(
-                'Choose a time to start the replay from.',
-              ),
+              subtitle: const Text('Choose a time to start the replay from.'),
               onTap: () async {
                 final startTime = await showReplayStartTimePicker(
                   dialogContext,
-                  sortedMessages,
+                  sortedMessages, // now filtered
                 );
-
                 if (startTime != null && dialogContext.mounted) {
                   Navigator.of(dialogContext).pop(
                     ReplayStartSelection(
-                      choice: ReplayStartChoice.time,
-                      startTime: startTime,
-                    ),
+                        choice: ReplayStartChoice.time, startTime: startTime),
                   );
                 }
               },
             ),
-
             const Divider(),
-
-            // MESSAGE
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.message_outlined),
               title: const Text('Message'),
-              subtitle: const Text(
-                'Choose a message to start replay after.',
-              ),
+              subtitle: const Text('Choose a message to start replay after.'),
               onTap: () async {
                 final messageId = await showReplayStartMessagePicker(
                   dialogContext,
-                  sortedMessages,
+                  sortedMessages, // now filtered
                 );
-
                 if (messageId != null && dialogContext.mounted) {
                   Navigator.of(dialogContext).pop(
                     ReplayStartSelection(
-                      choice: ReplayStartChoice.message,
-                      messageId: messageId,
-                    ),
+                        choice: ReplayStartChoice.message,
+                        messageId: messageId),
                   );
                 }
               },
@@ -105,9 +112,7 @@ Future<ReplayStartSelection?> showReplayStartSelection(
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-            },
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('CANCEL'),
           ),
         ],

@@ -218,7 +218,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
           project.id,
         );
 
-        final selection = await showReplayStartSelection(context, allMessages);
+        final selection =
+            await showReplayStartSelection(context, allMessages, project.id);
         if (!mounted || selection == null) return;
 
         if (selection.choice == ReplayStartChoice.time) {
