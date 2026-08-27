@@ -27,34 +27,19 @@ class ReplayHomeView extends StatelessWidget {
       builder: (context, personState) {
         if (personState is PersonLoading || personState is PersonInitial) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
+              body: Center(child: CircularProgressIndicator()));
         }
-
         if (personState is PersonError) {
-          return Scaffold(
-            body: Center(
-              child: Text(personState.message),
-            ),
-          );
+          return Scaffold(body: Center(child: Text(personState.message)));
         }
-
         if (personState is! PersonLoaded) {
-          return const Scaffold(
-            body: SizedBox.shrink(),
-          );
+          return const Scaffold(body: SizedBox.shrink());
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'WhatsApp',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            title: const Text('WhatsApp',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             actions: const [
               Icon(Icons.camera_alt_outlined),
               SizedBox(width: 18),
@@ -74,23 +59,46 @@ class ReplayHomeView extends StatelessWidget {
           ),
           body: TabBarView(
             children: [
-              ReplayHomeChatList(
-                projects: projects,
-                persons: personState.persons,
-                ownerId: ownerId,
-                onChatTap: onChatTap,
-                highlightedProjectId: highlightedProjectId,
-                isChatTapPressed: isChatTapPressed,
+              // CHATS TAB WITH SEARCH BAR - WILL BE CAPTURED IN REPLAY
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    child: TextField(
+                      enabled: false, // replay is view-only
+                      decoration: InputDecoration(
+                        hintText: "Ask Meta AI or Search",
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        isDense: true,
+                        filled: true,
+                        fillColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceVariant
+                            .withOpacity(0.6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ReplayHomeChatList(
+                      projects: projects,
+                      persons: personState.persons,
+                      ownerId: ownerId,
+                      onChatTap: onChatTap,
+                      highlightedProjectId: highlightedProjectId,
+                      isChatTapPressed: isChatTapPressed,
+                    ),
+                  ),
+                ],
               ),
-              const Center(
-                child: Text('Updates'),
-              ),
-              const Center(
-                child: Text('Communities'),
-              ),
-              const Center(
-                child: Text('Calls'),
-              ),
+              const Center(child: Text('Updates')),
+              const Center(child: Text('Communities')),
+              const Center(child: Text('Calls')),
             ],
           ),
         );
