@@ -234,7 +234,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       final prev = _messages[messageIndex - 1];
       final realGap = message.createdAt.difference(prev.createdAt);
       final gap = _compressRealGap(realGap);
-      _rebuildVisiblePerProjectUpTo(messageIndex);
       final filteredVisible = _visiblePerProject[message.projectId] ??
           _messages
               .take(messageIndex)

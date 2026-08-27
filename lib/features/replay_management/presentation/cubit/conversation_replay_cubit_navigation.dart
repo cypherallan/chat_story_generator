@@ -263,13 +263,8 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
   }
 
   void returnFromNotificationConversation() {
-    print(
-        '[Nav] RETURN start returnProj=$_returnProjectId returnIdx=$_returnMessageIndex returnLen=${_returnMessages.length} currProj=${state.currentProjectId} lastMsg=${_messages.isNotEmpty ? _messages.last.id : "empty"}');
     _timer?.cancel();
-    if (_returnMessages.isEmpty || _returnProjectId == null) {
-      print('[Nav] RETURN abort - empty');
-      return;
-    }
+    if (_returnMessages.isEmpty || _returnProjectId == null) return;
 
     final projectId = _returnProjectId!;
     final returnIndex = _returnMessageIndex;
@@ -279,71 +274,48 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     try {
       if (lastAcMessage != null && _returnMessages.length > returnIndex) {
         final nextAb = _returnMessages.firstWhere(
-          (m) =>
-              m.projectId == projectId &&
-              m.createdAt.isAfter(lastAcMessage.createdAt),
-          orElse: () => _returnMessages[returnIndex],
-        );
+            (m) =>
+                m.projectId == projectId &&
+                m.createdAt.isAfter(lastAcMessage.createdAt),
+            orElse: () => _returnMessages[returnIndex]);
         realGap = nextAb.createdAt.difference(lastAcMessage.createdAt);
-        print(
-            '[Nav] RETURN realGap from nextAb=${realGap.inMilliseconds}ms id=${nextAb.id}');
       }
-      final match = notificationCubit.recordedEvents.lastWhere(
-        (e) => e.notification.projectId == state.currentProjectId,
-      );
-      print(
-          '[Nav] RETURN matched event delayMs=${match.returnDelayMs} for proj=${match.notification.projectId}');
-      if (match.returnDelayMs != null) {
+      final match = notificationCubit.recordedEvents
+          .lastWhere((e) => e.notification.projectId == state.currentProjectId);
+      if (match.returnDelayMs != null)
         realGap = Duration(milliseconds: match.returnDelayMs!);
-        print(
-            '[Nav] RETURN override gap to ${realGap.inMilliseconds}ms from returnDelayMs');
-      }
-    } catch (e) {
-      print('[Nav] RETURN gap calc error $e');
-    }
+    } catch (_) {}
 
-    // Find next AB index in the combined list after the AC block
     int nextIndex = returnIndex;
     if (lastAcMessage != null) {
-      final idx = _returnMessages.indexWhere(
-        (m) =>
-            m.projectId == projectId &&
-            m.createdAt.isAfter(lastAcMessage.createdAt),
-      );
+      final idx = _returnMessages.indexWhere((m) =>
+          m.projectId == projectId &&
+          m.createdAt.isAfter(lastAcMessage.createdAt));
       if (idx != -1) nextIndex = idx;
     }
-
     final compressed = _compressRealGap(realGap);
-    print(
-        '[Nav] RETURN compressed=${compressed.inMilliseconds}ms from real=${realGap.inMilliseconds}ms nextIdx=$nextIndex returnIdx=$returnIndex');
 
+    // restore full history, but KEEP visible map (A=Hello A, B=Hi B, C=reply)
     _messages
       ..clear()
       ..addAll(_returnMessages);
     _returnMessages.clear();
-    _replayNotificationMessageCount = _returnNotificationMessageCount;
-    _returnNotificationMessageCount = null;
-    _returnProjectId = null;
     _replayStartIndex = nextIndex;
 
-    _rebuildVisiblePerProjectUpTo(returnIndex);
-    print(
-        '[Nav] RETURN HOME preview at returnIdx=$returnIndex Wife last=${_lastMessageAt(returnIndex, projectId)?.text}');
     emit(state.copyWith(
-      visualInteraction: ReplayVisualInteraction.backTap,
-      playing: false,
-      paused: true,
-    ));
+        visualInteraction: ReplayVisualInteraction.backTap,
+        playing: false,
+        paused: true));
 
     _timer = Timer(const Duration(milliseconds: 380), () {
       if (isClosed) return;
+      // home preview now reads from _visiblePerProject which has C=reply, not final
       emit(state.copyWith(
-        visualInteraction: ReplayVisualInteraction.none,
-        screen: ReplayScreen.home,
-        highlightedChatProjectId: projectId,
-        currentProjectId: null,
-        visibleMessages: const [],
-      ));
+          visualInteraction: ReplayVisualInteraction.none,
+          screen: ReplayScreen.home,
+          highlightedChatProjectId: projectId,
+          currentProjectId: null,
+          visibleMessages: const []));
       _timer = Timer(const Duration(milliseconds: 350), () {
         if (isClosed) return;
         emit(
@@ -355,29 +327,14 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
             currentProjectId: projectId,
             visualInteraction: ReplayVisualInteraction.none,
             clearHighlightedChat: true,
-            visibleMessages: _visiblePerProject[projectId] ??
-                _messages
-                    .take(nextIndex)
-                    .where((m) => m.projectId == projectId)
-                    .toList(),
+            visibleMessages: _visiblePerProject[projectId] ?? [],
             currentIndex: nextIndex,
             playing: false,
             paused: true,
             finished: false,
             typing: false,
-            typingPersonId: null,
-            onlinePersonId: null,
-            keyboardVisible: true,
-            emojiKeyboardVisible: false,
-            composerText: '',
-            pressedKey: null,
-            pressedEmoji: null,
-            shiftPressed: false,
-            replayNotification: null,
           ));
           _timer = Timer(compressed, () {
-            print(
-                '[Nav] RETURN timer fired -> _playNext proj=$projectId idx=$nextIndex');
             if (isClosed) return;
             emit(state.copyWith(playing: true, paused: false));
             _playNext();
