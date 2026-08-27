@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../domain/entities/message.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'message_reply_preview.dart';
@@ -12,6 +11,7 @@ class MessageBubbleContent extends StatelessWidget {
   final Person sender;
   final bool isMine;
   final bool isGroup;
+  final bool isFirstInGroup;
   final bool isLastInGroup;
   final String timeText;
   final VoidCallback? onReplyTap;
@@ -22,6 +22,7 @@ class MessageBubbleContent extends StatelessWidget {
     required this.sender,
     required this.isMine,
     required this.isGroup,
+    required this.isFirstInGroup,
     required this.isLastInGroup,
     required this.timeText,
     this.onReplyTap,
@@ -33,7 +34,7 @@ class MessageBubbleContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isGroup && !isMine && isLastInGroup)
+        if (isGroup && !isMine && isFirstInGroup)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(

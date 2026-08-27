@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -5,12 +6,12 @@ import '../../../person_management/domain/entities/person.dart';
 
 class MessageSenderAvatar extends StatelessWidget {
   final Person sender;
-  final bool isLastInGroup;
+  final bool isFirstInGroup; // changed from isLastInGroup
 
   const MessageSenderAvatar({
     super.key,
     required this.sender,
-    required this.isLastInGroup,
+    required this.isFirstInGroup,
   });
 
   ImageProvider? _getAvatarImage() {
@@ -24,31 +25,36 @@ class MessageSenderAvatar extends StatelessWidget {
       return CachedNetworkImageProvider(avatarPath);
     }
 
-    // Local Windows/device paths are intentionally not loaded here.
-    // They are not valid network URLs.
+    // FIX: load local file instantly - WhatsApp style
+    try {
+      final file = File(avatarPath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    } catch (_) {}
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!isFirstInGroup) {
+      return const SizedBox(width: 42);
+    }
+
     final avatarImage = _getAvatarImage();
 
     return SizedBox(
       width: 42,
-      child: isLastInGroup
-          ? CircleAvatar(
-              radius: 16,
-              backgroundImage: avatarImage,
-              child: avatarImage == null
-                  ? Text(
-                      sender.name.isNotEmpty
-                          ? sender.name[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(fontSize: 13),
-                    )
-                  : null,
-            )
-          : null,
+      child: CircleAvatar(
+        radius: 16,
+        backgroundImage: avatarImage,
+        child: avatarImage == null
+            ? Text(
+                sender.name.isNotEmpty ? sender.name[0].toUpperCase() : '?',
+                style: const TextStyle(fontSize: 13),
+              )
+            : null,
+      ),
     );
   }
 }

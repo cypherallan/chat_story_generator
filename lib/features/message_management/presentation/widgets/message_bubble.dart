@@ -17,8 +17,8 @@ class MessageBubble extends StatefulWidget {
   final bool isLastInGroup;
   final bool isSelected;
   final bool isHighlighted;
-  final double? forcedDragOffset; // NEW
-  final bool forceShowReplyArrow; // NEW
+  final double? forcedDragOffset;
+  final bool forceShowReplyArrow;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onReplyTap;
@@ -38,8 +38,8 @@ class MessageBubble extends StatefulWidget {
     this.onLongPress,
     this.onReplyTap,
     this.onSwipeReply,
-    this.forcedDragOffset, // NEW
-    this.forceShowReplyArrow = false, // NEW
+    this.forcedDragOffset,
+    this.forceShowReplyArrow = false,
   });
 
   @override
@@ -64,14 +64,12 @@ class _MessageBubbleState extends State<MessageBubble>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..addListener(() {
         setState(() {});
       });
-
     if (widget.isHighlighted) {
       _controller.forward();
     }
@@ -80,7 +78,6 @@ class _MessageBubbleState extends State<MessageBubble>
   @override
   void didUpdateWidget(covariant MessageBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (widget.isHighlighted && !oldWidget.isHighlighted) {
       _controller.forward(from: 0);
     }
@@ -95,7 +92,6 @@ class _MessageBubbleState extends State<MessageBubble>
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
-
     return '$hour:$minute';
   }
 
@@ -106,12 +102,9 @@ class _MessageBubbleState extends State<MessageBubble>
       onLongPress: widget.onLongPress,
       onHorizontalDragUpdate: (details) {
         final delta = details.primaryDelta ?? 0;
-
         if (delta <= 0) return;
-
         setState(() {
           _dragOffset += delta;
-
           if (_dragOffset > 80) {
             _dragOffset = 80;
           }
@@ -121,7 +114,6 @@ class _MessageBubbleState extends State<MessageBubble>
         if (_dragOffset > 55) {
           widget.onSwipeReply?.call();
         }
-
         setState(() {
           _dragOffset = 0;
         });
@@ -140,7 +132,7 @@ class _MessageBubbleState extends State<MessageBubble>
             if (!widget.isMine && widget.isGroup)
               MessageSenderAvatar(
                 sender: widget.sender,
-                isLastInGroup: widget.isLastInGroup,
+                isFirstInGroup: widget.isFirstInGroup,
               ),
             Stack(
               clipBehavior: Clip.none,
@@ -155,12 +147,7 @@ class _MessageBubbleState extends State<MessageBubble>
                     isSelected: widget.isSelected,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 1000),
-                      margin: const EdgeInsets.fromLTRB(
-                        8,
-                        2,
-                        8,
-                        6,
-                      ),
+                      margin: const EdgeInsets.fromLTRB(8, 2, 8, 6),
                       constraints: BoxConstraints(
                         maxWidth: widget.isGroup && !widget.isMine
                             ? MediaQuery.of(context).size.width * .68
@@ -172,6 +159,7 @@ class _MessageBubbleState extends State<MessageBubble>
                         sender: widget.sender,
                         isMine: widget.isMine,
                         isGroup: widget.isGroup,
+                        isFirstInGroup: widget.isFirstInGroup,
                         isLastInGroup: widget.isLastInGroup,
                         timeText: _formatTime(widget.message.createdAt),
                         onReplyTap: widget.onReplyTap,

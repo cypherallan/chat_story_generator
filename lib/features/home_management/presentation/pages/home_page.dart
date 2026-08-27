@@ -485,23 +485,25 @@ class _HomePageState extends State<HomePage> {
                 ),
                 floatingActionButton: FloatingActionButton(
                   child: const Icon(Icons.chat),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final newOwnerId = await Navigator.push<String>(
                       context,
                       MaterialPageRoute(
                         builder: (_) => MultiBlocProvider(
                           providers: [
                             BlocProvider.value(
-                              value: context.read<ProjectCubit>(),
-                            ),
+                                value: context.read<ProjectCubit>()),
                             BlocProvider.value(
-                              value: context.read<PersonCubit>(),
-                            ),
+                                value: context.read<PersonCubit>()),
                           ],
-                          child: const AddProjectPage(),
+                          child:
+                              AddProjectPage(currentPersonId: _currentPersonId),
                         ),
                       ),
                     );
+                    if (newOwnerId != null && newOwnerId != _currentPersonId) {
+                      setState(() => _currentPersonId = newOwnerId);
+                    }
                   },
                 ),
               ),
