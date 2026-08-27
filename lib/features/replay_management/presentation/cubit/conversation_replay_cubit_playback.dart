@@ -82,7 +82,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     emit(const ConversationReplayState(keyboardVisible: false));
   }
 
-
   @override
   Duration _compressRealGap(Duration real) {
     if (real.isNegative || real == Duration.zero) return Duration.zero;
@@ -240,25 +239,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     _timer = Timer(gap, () {
       if (!state.playing) return;
       _lastPlayedTime = del.deletedAt;
-      final current = List<Message>.from(state.visibleMessages);
-      final idx = current.indexWhere((m) => m.id == del.id);
-      if (idx != -1) {
-        current[idx] = current[idx].copyWith(
-          originalText:
-              current[idx].originalText ?? del.originalText ?? del.text,
-          text: 'This message was deleted',
-          isDeleted: true,
-          imagePath: null,
-          replyToMessageId: null,
-          replyToSenderId: null,
-          replyToSenderName: null,
-          replyToText: null,
-        );
-      }
-      _visiblePerProject[del.projectId] = List<Message>.from(current);
-      emit(state.copyWith(visibleMessages: current));
-      _nextDeletionIndex++;
-      _timer = Timer(const Duration(milliseconds: 400), _playNext);
+      _startVisualDeletion(del);
     });
   }
 

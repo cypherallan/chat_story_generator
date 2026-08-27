@@ -76,51 +76,48 @@ mixin _DeletionMixin on _ConversationReplayCubitBase {
     });
   }
 
+  @override
   void _startVisualDeletion(Message originalMessage) {
     if (state.screen != ReplayScreen.conversation) return;
-    // REPLAY MODE: direct flip like your MessageCubitDeleteMixin
+
+    // PLAYING MODE: show scroll-back -> long-press -> delete icon -> confirm -> delete
     if (state.playing) {
-      final current = List<Message>.from(state.visibleMessages);
-      final index = current.indexWhere((m) => m.id == originalMessage.id);
-      if (index != -1) {
-        final msg = current[index];
-        current[index] = msg.copyWith(
-          originalText: msg.originalText ??
-              originalMessage.originalText ??
-              originalMessage.text,
-          text: 'This message was deleted',
-          isDeleted: true,
-          imagePath: null,
-          replyToMessageId: null,
-          replyToSenderId: null,
-          replyToSenderName: null,
-          replyToText: null,
-        );
-      }
-      _visiblePerProject[originalMessage.projectId] =
-          List<Message>.from(current);
+      // 1. scroll-back / long-press select
       emit(state.copyWith(
-        visibleMessages: current,
-        clearSelection: true,
+        selectedMessageIds: {originalMessage.id},
         deleteIconPressed: false,
         showDeleteConfirmation: false,
+        keyboardVisible: false,
+        emojiKeyboardVisible: false,
       ));
-      _deletionElapsed.remove(originalMessage.id);
-      _activeDeletionMessageId = null;
-      _deletionStartedAt = null;
-      _timer?.cancel();
-      _timer = Timer(const Duration(milliseconds: 400), _playNext);
+
+      // 2. delete icon appears
+      _deletionTimer?.cancel();
+      _deletionTimer = Timer(const Duration(milliseconds: 700), () {
+        if (!state.playing || state.screen != ReplayScreen.conversation) return;
+        emit(state.copyWith(deleteIconPressed: true));
+
+        // 3. confirmation popup
+        _deletionTimer = Timer(const Duration(milliseconds: 500), () {
+          if (!state.playing || state.screen != ReplayScreen.conversation)
+            return;
+          emit(state.copyWith(
+              deleteIconPressed: false, showDeleteConfirmation: true));
+
+          // 4. press OK -> actual delete like MessageCubitDeleteMixin
+          _deletionTimer = Timer(const Duration(milliseconds: 700), () {
+            if (!state.playing || state.screen != ReplayScreen.conversation)
+              return;
+            deleteMessageForMe(originalMessage);
+            _nextDeletionIndex++;
+            _timer = Timer(const Duration(milliseconds: 400), _playNext);
+          });
+        });
+      });
       return;
     }
-    // NORMAL MODE
-    if (state.typing && state.typingPersonId == _ownerId) {
-      _waitForTypingToFinish(originalMessage);
-      return;
-    }
-    if (state.composerText.isNotEmpty) {
-      _waitForTypingToFinish(originalMessage);
-      return;
-    }
+
+    // NORMAL MODE (not playing) - your existing logic
     _deletionTimer?.cancel();
     _deletionTimer = null;
     _deletionStartedAt = null;
@@ -136,15 +133,10 @@ mixin _DeletionMixin on _ConversationReplayCubitBase {
       emit(state.copyWith(deleteIconPressed: true));
       _deletionTimer = Timer(const Duration(milliseconds: 450), () {
         if (state.screen != ReplayScreen.conversation) return;
-        _showDeleteConfirmation(originalMessage);
+        emit(state.copyWith(
+            deleteIconPressed: false, showDeleteConfirmation: true));
       });
     });
-  }
-
-  void _showDeleteConfirmation(Message originalMessage) {
-    if (state.screen != ReplayScreen.conversation) return;
-    emit(
-        state.copyWith(deleteIconPressed: false, showDeleteConfirmation: true));
   }
 
   void deleteMessageForMe(Message originalMessage) {

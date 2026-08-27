@@ -69,7 +69,7 @@ abstract class _ConversationReplayCubitBase
   final Map<String, Duration> _deletionElapsed = {};
   DateTime? _deletionStartedAt;
   String? _activeDeletionMessageId;
-
+  void _startVisualDeletion(Message originalMessage);
   void _playNext();
   void _pauseDeletionTimer() {
     _deletionTimer?.cancel();
