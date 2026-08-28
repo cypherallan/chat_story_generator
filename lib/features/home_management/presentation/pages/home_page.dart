@@ -103,9 +103,10 @@ class _HomePageState extends State<HomePage> {
                             if (!mounted) return;
                             final personState =
                                 context.read<PersonCubit>().state;
-                            if (personState is PersonLoaded)
+                            if (personState is PersonLoaded) {
                               _selectCurrentPerson(
                                   context, personState.persons);
+                            }
                           });
                         },
                       ),
@@ -163,16 +164,18 @@ class _HomePageState extends State<HomePage> {
                             }
                             final currentPerson =
                                 _getCurrentPerson(personState.persons);
-                            if (currentPerson == null)
+                            if (currentPerson == null) {
                               return const Text('WhatsApp',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold));
+                            }
                             if (_currentPersonId == null) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (!mounted) return;
-                                if (_currentPersonId == null)
+                                if (_currentPersonId == null) {
                                   setState(() =>
                                       _currentPersonId = currentPerson.id);
+                                }
                               });
                             }
                             return GestureDetector(
@@ -334,8 +337,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 body: BlocListener<MessageCubit, MessageState>(
                   listener: (context, messageState) {
-                    if (messageState is MessageLoaded)
+                    if (messageState is MessageLoaded) {
                       context.read<GroupCubit>().loadProjects();
+                    }
                   },
                   child: TabBarView(
                     children: [
