@@ -126,9 +126,10 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           .where((m) => m.projectId == currentPid)
           .length;
 
-      print(
-          '[REPLAY-DEBUG] Wife check: pid=$currentPid idx=${state.currentIndex} played=$playedOfSource totalMsgs=${_messages.length} events=${_replayNotificationEvents.map((e) => '${e.notification.messageText.substring(0, 10)} trig=${e.triggerIndex}').toList()} next=$_nextNotificationEventIndex');
+      // debug for N6
+      // debugPrint('[N-CHECK] pid=$currentPid played=$playedOfSource nextIdx=$_nextNotificationEventIndex all=${_replayNotificationEvents.map((e)=>"${e.sourceProjectId.substring(0,4)}:${e.notification.senderName} trig=${e.triggerIndex}").toList()}');
 
+      // scan forward, don't break on other project's trigger
       for (int i = _nextNotificationEventIndex;
           i < _replayNotificationEvents.length;
           i++) {
@@ -139,8 +140,10 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           _replayNotificationEvent(ev);
           return;
         }
-        if (ev.triggerIndex > playedOfSource)
-          break; // events sorted by trigger per source
+        if (ev.triggerIndex > playedOfSource) {
+          // since events for SAME source are in time order, future ones will be even larger
+          break;
+        }
       }
     }
 

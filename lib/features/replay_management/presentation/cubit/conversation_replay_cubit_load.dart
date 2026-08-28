@@ -50,13 +50,14 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     try {
       final projectIdsInReplay =
           _messages.map((m) => m.projectId).toSet().toList();
-      // add Home for N8 if not in messages
       await notificationCubit.loadAllRecordedEvents(projectIdsInReplay);
 
+      // KEEP CHRONOLOGICAL ORDER (when you triggered live), not triggerIndex
       final relevant = notificationCubit.recordedEvents
           .where((e) => projectIdsInReplay.contains(e.sourceProjectId))
           .toList()
-        ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
+        ..sort((a, b) =>
+            a.notification.createdAt.compareTo(b.notification.createdAt));
 
       for (final e in relevant) {
         _replayNotificationEvents.add(ReplayNotificationEvent(
@@ -64,10 +65,6 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
             triggerIndex: e.sourceTriggerIndex,
             interaction: e.interaction,
             sourceProjectId: e.sourceProjectId));
-      }
-      if (_replayNotificationEvents.isNotEmpty) {
-        _replayNotificationMessageCount =
-            _replayNotificationEvents.first.triggerIndex;
       }
     } catch (_) {
       _replayNotificationEvents = [];
