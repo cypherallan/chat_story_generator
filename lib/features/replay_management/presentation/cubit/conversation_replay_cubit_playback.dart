@@ -2,6 +2,8 @@ part of 'conversation_replay_cubit.dart';
 
 mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   void play() {
+    debugPrint(
+        '[REPLAY-PLAY] play() project=${state.currentProjectId} finished=${state.finished} events=${_replayNotificationEvents.length}');
     if (state.playing) {
       return;
     }
@@ -119,6 +121,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
       final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
+      debugPrint(
+          '[REPLAY-NEXT] check idx=$_nextNotificationEventIndex/${_replayNotificationEvents.length} notif=${nextEvent.notification.messageText} currentProject=${state.currentProjectId} currentIndex=${state.currentIndex}');
       if (state.currentProjectId != null) {
         String sourceProjectId;
         try {
@@ -129,11 +133,14 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         } catch (_) {
           sourceProjectId = state.currentProjectId!;
         }
+        debugPrint('[REPLAY-NEXT] resolved source=$sourceProjectId');
         if (sourceProjectId == state.currentProjectId) {
           final playedOfSource = _messages
               .take(state.currentIndex)
               .where((m) => m.projectId == sourceProjectId)
               .length;
+          debugPrint(
+              '[REPLAY-NEXT] playedOfSource=$playedOfSource vs triggerIndex=${nextEvent.triggerIndex} -> ${playedOfSource == nextEvent.triggerIndex ? 'TRIGGER' : 'SKIP'}');
           if (playedOfSource == nextEvent.triggerIndex) {
             _replayNotificationEvent(nextEvent);
             return;
@@ -247,6 +254,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   Future<void> _handleReplayNotificationTap(
       ReplayNotificationEvent event) async {
+    debugPrint('[REPLAY-TAP] tap ${event.notification.messageText}');
     _timer?.cancel();
     emit(state.copyWith(
         visualInteraction: ReplayVisualInteraction.notificationTap,
@@ -263,6 +271,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   void _handleReplayNotificationSwipe() {
+    debugPrint('[REPLAY-SWIPE] swipe');
     _timer?.cancel();
     emit(state.copyWith(
         visualInteraction: ReplayVisualInteraction.notificationSwipe,
@@ -278,6 +287,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   }
 
   void _replayNotificationEvent(ReplayNotificationEvent event) {
+    debugPrint(
+        '[REPLAY-EVENT] SHOW ${event.notification.senderName}:${event.notification.messageText} group=${event.notification.groupName} interaction=${event.interaction} idx=$_nextNotificationEventIndex');
     _nextNotificationEventIndex++;
     emit(state.copyWith(
         replayNotification: event.notification,
@@ -298,6 +309,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       case NotificationInteraction.expired:
       case NotificationInteraction.none:
         _timer = Timer(const Duration(seconds: 3), () {
+          debugPrint(
+              '[REPLAY-EXPIRED] hiding ${event.notification.messageText}');
           if (!state.playing) return;
           emit(state.copyWith(
               replayNotification: null,

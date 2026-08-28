@@ -49,10 +49,18 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     _replayNotificationMessageCount = null;
     try {
       await notificationCubit.loadRecordedEvents(projectId);
+      debugPrint('[REPLAY-LOAD] load for projectId=$projectId');
+      debugPrint(
+          '[REPLAY-LOAD] recordedEvents in cubit total=${notificationCubit.recordedEvents.length}');
       final relevant = notificationCubit.recordedEvents
           .where((e) => e.sourceProjectId == projectId)
           .toList()
         ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
+      debugPrint('[REPLAY-LOAD] relevant for $projectId = ${relevant.length}');
+      for (final e in relevant) {
+        debugPrint(
+            '[REPLAY-LOAD] -> ${e.notification.senderName}:${e.notification.messageText} group=${e.notification.groupName} triggerIndex=${e.sourceTriggerIndex} interaction=${e.interaction}');
+      }
       for (final e in relevant) {
         _replayNotificationEvents.add(ReplayNotificationEvent(
             notification: e.notification,
@@ -60,6 +68,8 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
             interaction: e.interaction));
       }
       if (_replayNotificationEvents.isNotEmpty) {
+        debugPrint(
+            '[REPLAY-LOAD] _replayNotificationEvents built = ${_replayNotificationEvents.length} first trigger=${_replayNotificationEvents.first.triggerIndex}');
         _replayNotificationMessageCount =
             _replayNotificationEvents.first.triggerIndex;
       }
