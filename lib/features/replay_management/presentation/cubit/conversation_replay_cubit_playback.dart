@@ -58,6 +58,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         paused: false,
         keyboardVisible: true,
         emojiKeyboardVisible: false,
+        clearReplayNotification: true, // add
       ),
     );
     _playNext();
@@ -118,20 +119,28 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       break;
     }
 
-    if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
-      final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
-      if (state.currentProjectId != null) {
-        final sourceProjectId = nextEvent.sourceProjectId;
-        if (sourceProjectId == state.currentProjectId) {
-          final playedOfSource = _messages
-              .take(state.currentIndex)
-              .where((m) => m.projectId == sourceProjectId)
-              .length;
-          if (playedOfSource == nextEvent.triggerIndex) {
-            _replayNotificationEvent(nextEvent);
-            return;
-          }
+    if (state.currentProjectId != null) {
+      final currentPid = state.currentProjectId!;
+      final playedOfSource = _messages
+          .take(state.currentIndex)
+          .where((m) => m.projectId == currentPid)
+          .length;
+
+      print(
+          '[REPLAY-DEBUG] Wife check: pid=$currentPid idx=${state.currentIndex} played=$playedOfSource totalMsgs=${_messages.length} events=${_replayNotificationEvents.map((e) => '${e.notification.messageText.substring(0, 10)} trig=${e.triggerIndex}').toList()} next=$_nextNotificationEventIndex');
+
+      for (int i = _nextNotificationEventIndex;
+          i < _replayNotificationEvents.length;
+          i++) {
+        final ev = _replayNotificationEvents[i];
+        if (ev.sourceProjectId != currentPid) continue;
+        if (ev.triggerIndex == playedOfSource) {
+          _nextNotificationEventIndex = i;
+          _replayNotificationEvent(ev);
+          return;
         }
+        if (ev.triggerIndex > playedOfSource)
+          break; // events sorted by trigger per source
       }
     }
 
@@ -286,7 +295,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       if (isClosed) return;
       notificationCubit.hideNotificationPreserveInteraction();
       emit(state.copyWith(
-          replayNotification: null,
+          clearReplayNotification: true,
           visualInteraction: ReplayVisualInteraction.none));
       _timer = Timer(const Duration(milliseconds: 300), _playNext);
     });
@@ -315,7 +324,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         _timer = Timer(const Duration(seconds: 3), () {
           if (!state.playing) return;
           emit(state.copyWith(
-              replayNotification: null,
+              clearReplayNotification: true,
               replayNotificationInteraction:
                   ReplayNotificationInteraction.expired));
           _timer = Timer(const Duration(milliseconds: 300), _playNext);

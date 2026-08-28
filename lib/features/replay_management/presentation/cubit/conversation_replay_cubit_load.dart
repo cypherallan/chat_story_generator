@@ -48,9 +48,13 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
     _nextNotificationEventIndex = 0;
     _replayNotificationMessageCount = null;
     try {
-      await notificationCubit.loadRecordedEvents(projectId);
+      final projectIdsInReplay =
+          _messages.map((m) => m.projectId).toSet().toList();
+      // add Home for N8 if not in messages
+      await notificationCubit.loadAllRecordedEvents(projectIdsInReplay);
+
       final relevant = notificationCubit.recordedEvents
-          .where((e) => e.sourceProjectId == projectId)
+          .where((e) => projectIdsInReplay.contains(e.sourceProjectId))
           .toList()
         ..sort((a, b) => a.sourceTriggerIndex.compareTo(b.sourceTriggerIndex));
 

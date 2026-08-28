@@ -61,22 +61,22 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
   final SaveRecordedNotificationEvents saveRecordedNotificationEvents;
   final GetRecordedNotificationEvents getRecordedNotificationEvents;
 
-  Future<void> loadRecordedEvents(String projectId) async {
+  Future<void> loadRecordedEvents([String? projectId]) async {
     if (isClosed) return;
-
     try {
+      if (projectId == null) {
+        // load all - keep what is in memory (you already recorded 8 live)
+        // if you have a getAll use-case, call it here, otherwise just return
+        return;
+      }
       final savedEvents = await getRecordedNotificationEvents(projectId);
-
       if (isClosed) return;
-
       _recordedEvents.removeWhere(
         (event) => event.sourceProjectId == projectId,
       );
-
       for (final data in savedEvents) {
         final notificationData =
             Map<String, dynamic>.from(data['notification'] as Map);
-
         final notification = SimulatedNotification(
           id: notificationData['id'] ?? '',
           projectId: notificationData['projectId'] ?? '',
@@ -91,7 +91,6 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
           groupName: notificationData['groupName'],
           groupAvatarPath: notificationData['groupAvatarPath'],
         );
-
         _recordedEvents.add(
           RecordedNotificationEvent(
             sourceProjectId: data['sourceProjectId'] ?? projectId,
@@ -105,6 +104,52 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
             returnDelayMs: data['returnDelayMs'] as int?,
           ),
         );
+      }
+    } catch (_) {}
+  }
+
+  Future<void> loadAllRecordedEvents([List<String>? projectIds]) async {
+    if (isClosed) return;
+    try {
+      _recordedEvents.clear();
+      // if no list given, load for all your 5 chats you use in reference
+      final idsToLoad = projectIds ??
+          ['vincent_id', 'wife_id', 'agwonas_id', 'allans_id', 'home_id'];
+      // replace above with your real ids or get them from messages - we pass them from load mixin
+      for (final pid in idsToLoad) {
+        if (pid.isEmpty) continue;
+        final saved = await getRecordedNotificationEvents(pid);
+        for (final data in saved) {
+          final notificationData =
+              Map<String, dynamic>.from(data['notification'] as Map);
+          final notification = SimulatedNotification(
+            id: notificationData['id'] ?? '',
+            projectId: notificationData['projectId'] ?? '',
+            messageId: notificationData['messageId'] ?? '',
+            triggerMessageIndex: notificationData['triggerMessageIndex'],
+            senderId: notificationData['senderId'] ?? '',
+            senderName: notificationData['senderName'] ?? '',
+            senderAvatarPath: notificationData['senderAvatarPath'],
+            messageText: notificationData['messageText'] ?? '',
+            imagePath: notificationData['imagePath'],
+            createdAt: DateTime.parse(notificationData['createdAt']),
+            groupName: notificationData['groupName'],
+            groupAvatarPath: notificationData['groupAvatarPath'],
+          );
+          _recordedEvents.add(
+            RecordedNotificationEvent(
+              sourceProjectId: data['sourceProjectId'] ?? pid,
+              sourceTriggerIndex: data['sourceTriggerIndex'] ?? 0,
+              notification: notification,
+              interaction: NotificationInteraction.values.firstWhere(
+                (v) => v.name == data['interaction'],
+                orElse: () => NotificationInteraction.none,
+              ),
+              targetVisibleCount: data['targetVisibleCount'] ?? 0,
+              returnDelayMs: data['returnDelayMs'] as int?,
+            ),
+          );
+        }
       }
     } catch (_) {}
   }
