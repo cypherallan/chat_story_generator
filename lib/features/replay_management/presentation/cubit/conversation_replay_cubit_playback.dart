@@ -145,7 +145,10 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     if (state.currentIndex >= _messages.length) {
-      if (_returnMessages.isNotEmpty && _returnProjectId != null) {
+      // for your reference flow, don't return to Wife after Agwona's
+      if (_returnMessages.isNotEmpty &&
+          _returnProjectId != null &&
+          _messages.length < 7) {
         returnFromNotificationConversation();
         return;
       }

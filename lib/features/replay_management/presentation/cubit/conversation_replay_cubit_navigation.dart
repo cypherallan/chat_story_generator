@@ -149,54 +149,52 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     _pauseDeletionTimer();
     _timer?.cancel();
 
-    _returnMessages
-      ..clear()
-      ..addAll(_messages);
-
-    _returnProjectId = state.currentProjectId;
-    _returnMessageIndex = state.currentIndex;
+    // FOR GLOBAL REPLAY: don't save return, we are moving forward in timeline
+    final isGlobalReplay = _returnMessages.isNotEmpty || _messages.length > 7;
+    if (!isGlobalReplay) {
+      _returnMessages
+        ..clear()
+        ..addAll(_messages);
+      _returnProjectId = state.currentProjectId;
+      _returnMessageIndex = state.currentIndex;
+    } else {
+      // forward navigation - clear return so we don't jump back to Wife
+      _returnMessages.clear();
+      _returnProjectId = null;
+    }
 
     final result = await getMessages(projectId).first;
 
     result.fold((failure) {
-      emit(
-        state.copyWith(
-          screen: ReplayScreen.conversation,
-          currentProjectId: projectId,
-          visibleMessages: const [],
-          currentIndex: 0,
-          playing: false,
-          paused: true,
-          finished: true,
-        ),
-      );
+      emit(state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: projectId,
+        visibleMessages: const [],
+        currentIndex: 0,
+        playing: false,
+        paused: true,
+        finished: true,
+      ));
     }, (messages) {
       _messages
         ..clear()
         ..addAll(messages);
 
       var replyStartIndex = 0;
-
       final messageIdToFind = notificationMessageId ??
           notificationCubit.currentNotification?.messageId;
 
       if (messageIdToFind != null) {
-        final notificationIndex = _messages.indexWhere(
-          (message) => message.id == messageIdToFind,
-        );
-
+        final notificationIndex =
+            _messages.indexWhere((m) => m.id == messageIdToFind);
         if (notificationIndex != -1) {
           replyStartIndex = notificationIndex + 1;
         }
       }
-      int endIndex = _messages.length;
 
-      for (int i = replyStartIndex; i < _messages.length; i++) {
-        if (_messages[i].senderId == _ownerId) {
-          endIndex = i + 1;
-          break;
-        }
-      }
+      // FIX: don't stop at first owner message, play ALL remaining for this chat
+      // so Sawa mimi naleta sodas + chairs + Sawa all play
+      int endIndex = _messages.length;
 
       _replayStartIndex = replyStartIndex;
       _replayNotificationMessageCount = null;
@@ -208,27 +206,25 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
 
       final messagesBeforeReply = _messages.take(replyStartIndex).toList();
 
-      emit(
-        state.copyWith(
-          screen: ReplayScreen.conversation,
-          currentProjectId: projectId,
-          clearReplayNotification: true,
-          visibleMessages: messagesBeforeReply,
-          currentIndex: replyStartIndex,
-          playing: true,
-          paused: false,
-          finished: false,
-          typing: false,
-          typingPersonId: null,
-          onlinePersonId: null,
-          keyboardVisible: true,
-          emojiKeyboardVisible: false,
-          composerText: '',
-          pressedKey: null,
-          pressedEmoji: null,
-          shiftPressed: false,
-        ),
-      );
+      emit(state.copyWith(
+        screen: ReplayScreen.conversation,
+        currentProjectId: projectId,
+        clearReplayNotification: true,
+        visibleMessages: messagesBeforeReply,
+        currentIndex: replyStartIndex,
+        playing: true,
+        paused: false,
+        finished: false,
+        typing: false,
+        typingPersonId: null,
+        onlinePersonId: null,
+        keyboardVisible: true,
+        emojiKeyboardVisible: false,
+        composerText: '',
+        pressedKey: null,
+        pressedEmoji: null,
+        shiftPressed: false,
+      ));
       _playNext();
     });
   }
