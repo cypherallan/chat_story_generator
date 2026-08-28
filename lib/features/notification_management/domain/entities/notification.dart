@@ -12,7 +12,11 @@ class Notification extends Equatable {
 
   final String messageText;
   final String? imagePath;
-  final DateTime createdAt; // <-- NEW
+  final DateTime createdAt;
+  final String? groupName;
+  final String? groupAvatarPath;
+
+  bool get isGroup => groupName != null && groupName!.isNotEmpty;
 
   const Notification({
     required this.id,
@@ -25,6 +29,8 @@ class Notification extends Equatable {
     required this.messageText,
     this.imagePath,
     required this.createdAt,
+    this.groupName,
+    this.groupAvatarPath,
   });
 
   Notification copyWith({
@@ -38,6 +44,8 @@ class Notification extends Equatable {
     String? messageText,
     String? imagePath,
     DateTime? createdAt,
+    String? groupName,
+    String? groupAvatarPath,
   }) {
     return Notification(
       id: id ?? this.id,
@@ -50,6 +58,8 @@ class Notification extends Equatable {
       messageText: messageText ?? this.messageText,
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
+      groupName: groupName ?? this.groupName,
+      groupAvatarPath: groupAvatarPath ?? this.groupAvatarPath,
     );
   }
 
@@ -65,5 +75,7 @@ class Notification extends Equatable {
         messageText,
         imagePath,
         createdAt,
+        groupName,
+        groupAvatarPath,
       ];
 }

@@ -87,9 +87,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
           senderAvatarPath: notificationData['senderAvatarPath'],
           messageText: notificationData['messageText'] ?? '',
           imagePath: notificationData['imagePath'],
-          createdAt: DateTime.parse(
-            notificationData['createdAt'],
-          ),
+          createdAt: DateTime.parse(notificationData['createdAt']),
+          groupName: notificationData['groupName'],
+          groupAvatarPath: notificationData['groupAvatarPath'],
         );
 
         _recordedEvents.add(
@@ -206,6 +206,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
               'messageText': e.notification.messageText,
               'imagePath': e.notification.imagePath,
               'createdAt': e.notification.createdAt.toIso8601String(),
+              'groupName': e.notification.groupName,
+              'groupAvatarPath': e.notification.groupAvatarPath,
             },
             'interaction': e.interaction.name,
             'targetVisibleCount': e.targetVisibleCount,
@@ -240,6 +242,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       messageText: notification.messageText,
       imagePath: notification.imagePath,
       createdAt: DateTime.now(),
+      groupName: notification.groupName,
+      groupAvatarPath: notification.groupAvatarPath,
     );
 
     _pendingSourceProjectId = sourceProjectId;
@@ -306,6 +310,8 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
                 'messageText': e.notification.messageText,
                 'imagePath': e.notification.imagePath,
                 'createdAt': e.notification.createdAt.toIso8601String(),
+                'groupName': e.notification.groupName,
+                'groupAvatarPath': e.notification.groupAvatarPath,
               },
               'interaction': e.interaction.name,
               'targetVisibleCount': e.targetVisibleCount,
@@ -329,9 +335,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
     String? senderAvatarPath,
     required String messageText,
     String? imagePath,
+    String? groupName,
+    String? groupAvatarPath,
   }) {
-    if (isClosed) return;
-
     final notification = SimulatedNotification(
       id: const Uuid().v4(),
       projectId: projectId,
@@ -343,8 +349,9 @@ class SimulatedNotificationCubit extends Cubit<SimulatedNotificationState> {
       messageText: messageText,
       imagePath: imagePath,
       createdAt: DateTime.now(),
+      groupName: groupName,
+      groupAvatarPath: groupAvatarPath,
     );
-
     triggerNotification(notification);
   }
 

@@ -146,8 +146,13 @@ class _SimulatedNotificationBannerState
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               ProfileAvatar(
-                                imagePath: notification.senderAvatarPath,
-                                name: notification.senderName,
+                                imagePath: notification.isGroup
+                                    ? notification.groupAvatarPath ??
+                                        notification.senderAvatarPath
+                                    : notification.senderAvatarPath,
+                                name: notification.isGroup
+                                    ? notification.groupName!
+                                    : notification.senderName,
                                 radius: 25,
                               ),
                               const SizedBox(width: 12),
@@ -160,47 +165,45 @@ class _SimulatedNotificationBannerState
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            notification.senderName,
+                                            notification.isGroup
+                                                ? notification.groupName!
+                                                : notification.senderName,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        Text(
-                                          'now',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
+                                        Text('now',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600)),
                                       ],
                                     ),
                                     const SizedBox(height: 3),
                                     Row(
                                       children: [
                                         if (notification.imagePath != null) ...[
-                                          Icon(
-                                            Icons.image_outlined,
-                                            size: 16,
-                                            color: Colors.grey.shade600,
-                                          ),
+                                          Icon(Icons.image_outlined,
+                                              size: 16,
+                                              color: Colors.grey.shade600),
                                           const SizedBox(width: 4),
                                         ],
                                         Expanded(
                                           child: Text(
-                                            notification.messageText.isEmpty
-                                                ? 'Photo'
-                                                : notification.messageText,
+                                            notification.isGroup
+                                                ? '${notification.senderName}: ${notification.messageText.isEmpty ? 'Photo' : notification.messageText}'
+                                                : notification
+                                                        .messageText.isEmpty
+                                                    ? 'Photo'
+                                                    : notification.messageText,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade700,
-                                            ),
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700),
                                           ),
                                         ),
                                       ],

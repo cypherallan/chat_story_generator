@@ -30,7 +30,6 @@ class NotificationCubit extends Cubit<NotificationState> {
     try {
       final notifications = await getNotifications();
       if (isClosed) return;
-      // NEWEST FIRST
       notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       emit(state.copyWith(notifications: notifications, loading: false));
     } catch (e) {
@@ -48,6 +47,8 @@ class NotificationCubit extends Cubit<NotificationState> {
     String? senderAvatarPath,
     required String messageText,
     String? imagePath,
+    String? groupName,
+    String? groupAvatarPath,
   }) async {
     final notification = Notification(
       id: const Uuid().v4(),
@@ -59,7 +60,9 @@ class NotificationCubit extends Cubit<NotificationState> {
       senderAvatarPath: senderAvatarPath,
       messageText: messageText,
       imagePath: imagePath,
-      createdAt: DateTime.now(), // <-- NEW
+      createdAt: DateTime.now(),
+      groupName: groupName,
+      groupAvatarPath: groupAvatarPath,
     );
     try {
       final saved = await addNotification(notification);
@@ -70,13 +73,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       return true;
     } catch (e) {
       if (isClosed) return false;
-
-      emit(
-        state.copyWith(
-          error: e.toString(),
-        ),
-      );
-
+      emit(state.copyWith(error: e.toString()));
       return false;
     }
   }
@@ -86,7 +83,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   ) async {
     if (isClosed) return;
 
-    // 1. Create the actual chat message (replay that stays forever)
+    // 1. Create the actual banner (now with group)
     simulatedNotificationCubit.showNotification(
       projectId: notification.projectId,
       messageId: notification.messageId,
@@ -96,69 +93,38 @@ class NotificationCubit extends Cubit<NotificationState> {
       senderAvatarPath: notification.senderAvatarPath,
       messageText: notification.messageText,
       imagePath: notification.imagePath,
+      groupName: notification.groupName,
+      groupAvatarPath: notification.groupAvatarPath,
     );
 
-    // 2. Delete from saved list - use the cubit method, not the usecase
+    // 2. Delete from saved list
     await removeNotification(notification.id);
   }
 
-  Future<void> updateNotification(
-    Notification notification,
-  ) async {
+  Future<void> updateNotification(Notification notification) async {
     try {
       final saved = await updateNotificationUseCase(notification);
-
       if (isClosed) return;
-
       final updatedList = state.notifications.map((item) {
-        if (item.id == saved.id) {
-          return saved;
-        }
-
+        if (item.id == saved.id) return saved;
         return item;
       }).toList();
-
-      emit(
-        state.copyWith(
-          notifications: updatedList,
-          clearError: true,
-        ),
-      );
+      emit(state.copyWith(notifications: updatedList, clearError: true));
     } catch (e) {
       if (isClosed) return;
-
-      emit(
-        state.copyWith(
-          error: e.toString(),
-        ),
-      );
+      emit(state.copyWith(error: e.toString()));
     }
   }
 
   Future<void> removeNotification(String id) async {
     try {
       await deleteNotification(id);
-
       if (isClosed) return;
-
-      final updatedList = state.notifications
-          .where((notification) => notification.id != id)
-          .toList();
-
-      emit(
-        state.copyWith(
-          notifications: updatedList,
-          clearError: true,
-        ),
-      );
+      final updatedList = state.notifications.where((n) => n.id != id).toList();
+      emit(state.copyWith(notifications: updatedList, clearError: true));
     } catch (e) {
       if (isClosed) return;
-
-      emit(
-        state.copyWith(
-          error: e.toString(),
-        ),
-      );
+      emit(state.copyWith(error: e.toString()));
     }
   }
 }

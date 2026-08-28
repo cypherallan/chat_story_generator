@@ -117,8 +117,13 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         ProfileAvatar(
-                          imagePath: widget.notification.senderAvatarPath,
-                          name: widget.notification.senderName,
+                          imagePath: widget.notification.isGroup
+                              ? widget.notification.groupAvatarPath ??
+                                  widget.notification.senderAvatarPath
+                              : widget.notification.senderAvatarPath,
+                          name: widget.notification.isGroup
+                              ? widget.notification.groupName!
+                              : widget.notification.senderName,
                           radius: 25,
                         ),
                         const SizedBox(width: 12),
@@ -131,7 +136,9 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      widget.notification.senderName,
+                                      widget.notification.isGroup
+                                          ? widget.notification.groupName!
+                                          : widget.notification.senderName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -164,9 +171,12 @@ class _ReplayNotificationBannerState extends State<ReplayNotificationBanner>
                                   ],
                                   Expanded(
                                     child: Text(
-                                      widget.notification.messageText.isEmpty
-                                          ? 'Photo'
-                                          : widget.notification.messageText,
+                                      widget.notification.isGroup
+                                          ? '${widget.notification.senderName}: ${widget.notification.messageText.isEmpty ? 'Photo' : widget.notification.messageText}'
+                                          : widget.notification.messageText
+                                                  .isEmpty
+                                              ? 'Photo'
+                                              : widget.notification.messageText,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(

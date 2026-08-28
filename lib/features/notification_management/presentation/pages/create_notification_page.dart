@@ -295,6 +295,8 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
     if (!mounted) return;
     final messageId = const Uuid().v4();
 
+    final isGroup = project.participantIds.length > 2;
+
     final success = await context.read<NotificationCubit>().createNotification(
           projectId: project.id,
           messageId: messageId,
@@ -302,6 +304,8 @@ class _CreateNotificationPageState extends State<CreateNotificationPage> {
           senderName: sender.name,
           senderAvatarPath: sender.avatarPath,
           messageText: messageText,
+          groupName: isGroup ? project.title : null,
+          groupAvatarPath: isGroup ? project.groupImagePath : null,
         );
 
     if (!mounted) return;
