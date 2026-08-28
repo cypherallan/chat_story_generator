@@ -79,6 +79,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   void stop() {
     _timer?.cancel();
+    notificationCubit.clear();
     emit(const ConversationReplayState(keyboardVisible: false));
   }
 
@@ -120,15 +121,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     if (_nextNotificationEventIndex < _replayNotificationEvents.length) {
       final nextEvent = _replayNotificationEvents[_nextNotificationEventIndex];
       if (state.currentProjectId != null) {
-        String sourceProjectId;
-        try {
-          sourceProjectId = notificationCubit.recordedEvents
-              .firstWhere((e) =>
-                  e.notification.messageId == nextEvent.notification.messageId)
-              .sourceProjectId;
-        } catch (_) {
-          sourceProjectId = state.currentProjectId!;
-        }
+        final sourceProjectId = nextEvent.sourceProjectId;
         if (sourceProjectId == state.currentProjectId) {
           final playedOfSource = _messages
               .take(state.currentIndex)
@@ -150,6 +143,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       emit(state.copyWith(
           playing: false,
           finished: true,
+          clearReplayNotification: true,
           typing: false,
           keyboardVisible: true,
           emojiKeyboardVisible: false,
@@ -276,6 +270,11 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         if (!_visiblePerProject[targetId]!.any((m) => m.id == msg.id)) {
           _visiblePerProject[targetId]!.add(msg);
         }
+      }
+      // skip the message we just added so it won't be re-typed
+      if (state.currentIndex < _messages.length &&
+          _messages[state.currentIndex].id == swiped.messageId) {
+        emit(state.copyWith(currentIndex: state.currentIndex + 1));
       }
     }
 

@@ -47,12 +47,12 @@ class ReplayNotificationEvent {
   final SimulatedNotification notification;
   final int triggerIndex;
   final NotificationInteraction interaction;
-
-  const ReplayNotificationEvent({
-    required this.notification,
-    required this.triggerIndex,
-    required this.interaction,
-  });
+  final String sourceProjectId;
+  const ReplayNotificationEvent(
+      {required this.notification,
+      required this.triggerIndex,
+      required this.interaction,
+      required this.sourceProjectId});
 }
 
 class ConversationReplayState extends Equatable {

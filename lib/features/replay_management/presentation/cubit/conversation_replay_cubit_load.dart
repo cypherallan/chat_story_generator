@@ -58,7 +58,8 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
         _replayNotificationEvents.add(ReplayNotificationEvent(
             notification: e.notification,
             triggerIndex: e.sourceTriggerIndex,
-            interaction: e.interaction));
+            interaction: e.interaction,
+            sourceProjectId: e.sourceProjectId));
       }
       if (_replayNotificationEvents.isNotEmpty) {
         _replayNotificationMessageCount =
