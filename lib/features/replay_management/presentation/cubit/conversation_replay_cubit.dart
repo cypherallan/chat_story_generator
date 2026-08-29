@@ -105,7 +105,7 @@ abstract class _ConversationReplayCubitBase
   void onRecordingFailed(String error);
   void setSelectedQuality(ReplayExportQuality quality);
   Future<void> startRecordReplay();
-  Future<void> exportRecordedVideo();
+  Future<void> exportRecordedVideo({String? customFileName});
   void resetRecording();
 }
 

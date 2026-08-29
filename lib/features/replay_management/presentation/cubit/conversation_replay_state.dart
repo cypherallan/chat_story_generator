@@ -3,29 +3,18 @@ import '../../../notification_management/domain/entities/simulated_notification.
 import '../../../message_management/domain/entities/message.dart';
 import '../../../notification_management/presentation/cubit/simulated_notification_cubit.dart';
 
-enum ReplayScreen {
-  home,
-  conversation,
-}
+enum ReplayScreen { home, conversation }
 
-enum ReplayStartMethod {
-  time,
-  message,
-}
+enum ReplayStartMethod { time, message }
 
-enum ReplayNotificationInteraction {
-  none,
-  tapped,
-  swiped,
-  expired,
-}
+enum ReplayNotificationInteraction { none, tapped, swiped, expired }
 
 enum ReplayVisualInteraction {
   none,
   notificationTap,
   notificationSwipe,
   backTap,
-  chatTap,
+  chatTap
 }
 
 enum ReplayRecordingStatus {
@@ -34,13 +23,37 @@ enum ReplayRecordingStatus {
   recorded,
   exporting,
   exported,
-  failed,
+  failed
 }
 
-enum ReplayExportQuality {
-  low,
-  medium,
-  high,
+enum ReplayExportQuality { low, medium, high, ultra }
+
+extension ReplayExportQualityX on ReplayExportQuality {
+  String get label {
+    switch (this) {
+      case ReplayExportQuality.low:
+        return '480p - Safe';
+      case ReplayExportQuality.medium:
+        return '720p - Balanced';
+      case ReplayExportQuality.high:
+        return '1080p - Realistic';
+      case ReplayExportQuality.ultra:
+        return '4K Ultra';
+    }
+  }
+
+  String get resolutionNote {
+    switch (this) {
+      case ReplayExportQuality.low:
+        return '15 FPS, 2 Mbps - smallest file';
+      case ReplayExportQuality.medium:
+        return '30 FPS, 5 Mbps - balanced';
+      case ReplayExportQuality.high:
+        return '60 FPS, 10 Mbps - best for sharing';
+      case ReplayExportQuality.ultra:
+        return '60 FPS, 10 Mbps MAX - 4K';
+    }
+  }
 }
 
 class ReplayNotificationEvent {
@@ -104,182 +117,181 @@ class ConversationReplayState extends Equatable {
   final String? recordingError;
   final ReplayExportQuality selectedQuality;
 
-  const ConversationReplayState({
-    this.visibleMessages = const [],
-    this.playing = false,
-    this.paused = false,
-    this.finished = false,
-    this.currentIndex = 0,
-    this.typing = false,
-    this.typingPersonId,
-    this.onlinePersonId,
-    this.composerText = '',
-    this.pressedKey,
-    this.keyboardVisible = false,
-    this.shiftEnabled = true,
-    this.shiftPressed = false,
-    this.emojiKeyboardVisible = false,
-    this.pressedEmoji,
-    this.availableEmojis = const [],
-    this.lastPressedEmoji,
-    this.emojiPressCount = 0,
-    this.screen = ReplayScreen.home,
-    this.currentProjectId,
-    this.replayNotification,
-    this.replayNotificationInteraction = ReplayNotificationInteraction.none,
-    this.replayNotificationMessageCount,
-    this.replayStartTime,
-    this.replayEndTime,
-    this.availableStartTime,
-    this.availableEndTime,
-    this.replayStartMethod = ReplayStartMethod.time,
-    this.replayStartMessageId,
-    this.swipingMessageId,
-    this.swipeOffset = 0,
-    this.replyPreviewText,
-    this.replyPreviewSenderName,
-    this.selectedMessageIds = const {},
-    this.deleteIconPressed = false,
-    this.showDeleteConfirmation = false,
-    this.deleteDialogVisible = false,
-    this.deleteCancelPressed = false,
-    this.deleteForMePressed = false,
-    this.deletingMessageId,
-    this.visualInteraction = ReplayVisualInteraction.none,
-    this.highlightedChatProjectId,
-    this.recordingStatus = ReplayRecordingStatus.idle,
-    this.recordedTempPath,
-    this.exportedPath,
-    this.recordingError,
-    this.selectedQuality = ReplayExportQuality.high,
-  });
+  const ConversationReplayState(
+      {this.visibleMessages = const [],
+      this.playing = false,
+      this.paused = false,
+      this.finished = false,
+      this.currentIndex = 0,
+      this.typing = false,
+      this.typingPersonId,
+      this.onlinePersonId,
+      this.composerText = '',
+      this.pressedKey,
+      this.keyboardVisible = false,
+      this.shiftEnabled = true,
+      this.shiftPressed = false,
+      this.emojiKeyboardVisible = false,
+      this.pressedEmoji,
+      this.availableEmojis = const [],
+      this.lastPressedEmoji,
+      this.emojiPressCount = 0,
+      this.screen = ReplayScreen.home,
+      this.currentProjectId,
+      this.replayNotification,
+      this.replayNotificationInteraction = ReplayNotificationInteraction.none,
+      this.replayNotificationMessageCount,
+      this.replayStartTime,
+      this.replayEndTime,
+      this.availableStartTime,
+      this.availableEndTime,
+      this.replayStartMethod = ReplayStartMethod.time,
+      this.replayStartMessageId,
+      this.swipingMessageId,
+      this.swipeOffset = 0,
+      this.replyPreviewText,
+      this.replyPreviewSenderName,
+      this.selectedMessageIds = const {},
+      this.deleteIconPressed = false,
+      this.showDeleteConfirmation = false,
+      this.deleteDialogVisible = false,
+      this.deleteCancelPressed = false,
+      this.deleteForMePressed = false,
+      this.deletingMessageId,
+      this.visualInteraction = ReplayVisualInteraction.none,
+      this.highlightedChatProjectId,
+      this.recordingStatus = ReplayRecordingStatus.idle,
+      this.recordedTempPath,
+      this.exportedPath,
+      this.recordingError,
+      this.selectedQuality = ReplayExportQuality.high});
 
   bool get isRecording => recordingStatus == ReplayRecordingStatus.recording;
   bool get hasRecordedVideo => recordedTempPath != null;
 
-  ConversationReplayState copyWith({
-    List<Message>? visibleMessages,
-    bool? playing,
-    bool? paused,
-    bool? finished,
-    int? currentIndex,
-    bool? typing,
-    String? typingPersonId,
-    String? onlinePersonId,
-    String? composerText,
-    String? pressedKey,
-    bool? keyboardVisible,
-    bool? shiftEnabled,
-    bool? shiftPressed,
-    bool? emojiKeyboardVisible,
-    String? pressedEmoji,
-    List<String>? availableEmojis,
-    String? lastPressedEmoji,
-    int? emojiPressCount,
-    ReplayScreen? screen,
-    String? currentProjectId,
-    SimulatedNotification? replayNotification,
-    ReplayNotificationInteraction? replayNotificationInteraction,
-    int? replayNotificationMessageCount,
-    DateTime? replayStartTime,
-    DateTime? replayEndTime,
-    DateTime? availableStartTime,
-    DateTime? availableEndTime,
-    ReplayStartMethod? replayStartMethod,
-    String? replayStartMessageId,
-    String? swipingMessageId,
-    double? swipeOffset,
-    String? replyPreviewText,
-    String? replyPreviewSenderName,
-    Set<String>? selectedMessageIds,
-    bool? deleteIconPressed,
-    bool? showDeleteConfirmation,
-    bool clearSwipe = false,
-    bool clearReplyPreview = false,
-    bool clearSelection = false,
-    bool clearReplayNotification = false,
-    bool? deleteDialogVisible,
-    bool? deleteCancelPressed,
-    bool? deleteForMePressed,
-    String? deletingMessageId,
-    ReplayVisualInteraction? visualInteraction,
-    String? highlightedChatProjectId,
-    bool clearHighlightedChat = false,
-    ReplayRecordingStatus? recordingStatus,
-    String? recordedTempPath,
-    String? exportedPath,
-    String? recordingError,
-    ReplayExportQuality? selectedQuality,
-    bool clearRecordedTempPath = false,
-    bool clearExportedPath = false,
-    bool clearRecordingError = false,
-  }) {
+  ConversationReplayState copyWith(
+      {List<Message>? visibleMessages,
+      bool? playing,
+      bool? paused,
+      bool? finished,
+      int? currentIndex,
+      bool? typing,
+      String? typingPersonId,
+      String? onlinePersonId,
+      String? composerText,
+      String? pressedKey,
+      bool? keyboardVisible,
+      bool? shiftEnabled,
+      bool? shiftPressed,
+      bool? emojiKeyboardVisible,
+      String? pressedEmoji,
+      List<String>? availableEmojis,
+      String? lastPressedEmoji,
+      int? emojiPressCount,
+      ReplayScreen? screen,
+      String? currentProjectId,
+      SimulatedNotification? replayNotification,
+      ReplayNotificationInteraction? replayNotificationInteraction,
+      int? replayNotificationMessageCount,
+      DateTime? replayStartTime,
+      DateTime? replayEndTime,
+      DateTime? availableStartTime,
+      DateTime? availableEndTime,
+      ReplayStartMethod? replayStartMethod,
+      String? replayStartMessageId,
+      String? swipingMessageId,
+      double? swipeOffset,
+      String? replyPreviewText,
+      String? replyPreviewSenderName,
+      Set<String>? selectedMessageIds,
+      bool? deleteIconPressed,
+      bool? showDeleteConfirmation,
+      bool clearSwipe = false,
+      bool clearReplyPreview = false,
+      bool clearSelection = false,
+      bool clearReplayNotification = false,
+      bool? deleteDialogVisible,
+      bool? deleteCancelPressed,
+      bool? deleteForMePressed,
+      String? deletingMessageId,
+      ReplayVisualInteraction? visualInteraction,
+      String? highlightedChatProjectId,
+      bool clearHighlightedChat = false,
+      ReplayRecordingStatus? recordingStatus,
+      String? recordedTempPath,
+      String? exportedPath,
+      String? recordingError,
+      ReplayExportQuality? selectedQuality,
+      bool clearRecordedTempPath = false,
+      bool clearExportedPath = false,
+      bool clearRecordingError = false}) {
     return ConversationReplayState(
-      visibleMessages: visibleMessages ?? this.visibleMessages,
-      playing: playing ?? this.playing,
-      paused: paused ?? this.paused,
-      finished: finished ?? this.finished,
-      currentIndex: currentIndex ?? this.currentIndex,
-      typing: typing ?? this.typing,
-      typingPersonId: typingPersonId ?? this.typingPersonId,
-      onlinePersonId: onlinePersonId ?? this.onlinePersonId,
-      composerText: composerText ?? this.composerText,
-      pressedKey: pressedKey ?? this.pressedKey,
-      keyboardVisible: keyboardVisible ?? this.keyboardVisible,
-      shiftEnabled: shiftEnabled ?? this.shiftEnabled,
-      shiftPressed: shiftPressed ?? this.shiftPressed,
-      emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
-      pressedEmoji: pressedEmoji ?? this.pressedEmoji,
-      deleteDialogVisible: deleteDialogVisible ?? this.deleteDialogVisible,
-      deleteCancelPressed: deleteCancelPressed ?? this.deleteCancelPressed,
-      deleteForMePressed: deleteForMePressed ?? this.deleteForMePressed,
-      replayNotification: clearReplayNotification
-          ? null
-          : (replayNotification ?? this.replayNotification),
-      replayNotificationInteraction:
-          replayNotificationInteraction ?? this.replayNotificationInteraction,
-      replayNotificationMessageCount:
-          replayNotificationMessageCount ?? this.replayNotificationMessageCount,
-      replayStartTime: replayStartTime ?? this.replayStartTime,
-      replayEndTime: replayEndTime ?? this.replayEndTime,
-      availableStartTime: availableStartTime ?? this.availableStartTime,
-      availableEndTime: availableEndTime ?? this.availableEndTime,
-      replayStartMethod: replayStartMethod ?? this.replayStartMethod,
-      replayStartMessageId: replayStartMessageId ?? this.replayStartMessageId,
-      deletingMessageId: deletingMessageId ?? this.deletingMessageId,
-      availableEmojis: availableEmojis ?? this.availableEmojis,
-      lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
-      emojiPressCount: emojiPressCount ?? this.emojiPressCount,
-      screen: screen ?? this.screen,
-      currentProjectId: currentProjectId ?? this.currentProjectId,
-      swipingMessageId:
-          clearSwipe ? null : (swipingMessageId ?? this.swipingMessageId),
-      swipeOffset: clearSwipe ? 0 : (swipeOffset ?? this.swipeOffset),
-      replyPreviewText: clearReplyPreview
-          ? null
-          : (replyPreviewText ?? this.replyPreviewText),
-      replyPreviewSenderName: clearReplyPreview
-          ? null
-          : (replyPreviewSenderName ?? this.replyPreviewSenderName),
-      selectedMessageIds:
-          clearSelection ? {} : (selectedMessageIds ?? this.selectedMessageIds),
-      deleteIconPressed: deleteIconPressed ?? this.deleteIconPressed,
-      showDeleteConfirmation:
-          showDeleteConfirmation ?? this.showDeleteConfirmation,
-      visualInteraction: visualInteraction ?? this.visualInteraction,
-      highlightedChatProjectId: clearHighlightedChat
-          ? null
-          : (highlightedChatProjectId ?? this.highlightedChatProjectId),
-      recordingStatus: recordingStatus ?? this.recordingStatus,
-      recordedTempPath: clearRecordedTempPath
-          ? null
-          : (recordedTempPath ?? this.recordedTempPath),
-      exportedPath:
-          clearExportedPath ? null : (exportedPath ?? this.exportedPath),
-      recordingError:
-          clearRecordingError ? null : (recordingError ?? this.recordingError),
-      selectedQuality: selectedQuality ?? this.selectedQuality,
-    );
+        visibleMessages: visibleMessages ?? this.visibleMessages,
+        playing: playing ?? this.playing,
+        paused: paused ?? this.paused,
+        finished: finished ?? this.finished,
+        currentIndex: currentIndex ?? this.currentIndex,
+        typing: typing ?? this.typing,
+        typingPersonId: typingPersonId ?? this.typingPersonId,
+        onlinePersonId: onlinePersonId ?? this.onlinePersonId,
+        composerText: composerText ?? this.composerText,
+        pressedKey: pressedKey ?? this.pressedKey,
+        keyboardVisible: keyboardVisible ?? this.keyboardVisible,
+        shiftEnabled: shiftEnabled ?? this.shiftEnabled,
+        shiftPressed: shiftPressed ?? this.shiftPressed,
+        emojiKeyboardVisible: emojiKeyboardVisible ?? this.emojiKeyboardVisible,
+        pressedEmoji: pressedEmoji ?? this.pressedEmoji,
+        deleteDialogVisible: deleteDialogVisible ?? this.deleteDialogVisible,
+        deleteCancelPressed: deleteCancelPressed ?? this.deleteCancelPressed,
+        deleteForMePressed: deleteForMePressed ?? this.deleteForMePressed,
+        replayNotification: clearReplayNotification
+            ? null
+            : (replayNotification ?? this.replayNotification),
+        replayNotificationInteraction:
+            replayNotificationInteraction ?? this.replayNotificationInteraction,
+        replayNotificationMessageCount: replayNotificationMessageCount ??
+            this.replayNotificationMessageCount,
+        replayStartTime: replayStartTime ?? this.replayStartTime,
+        replayEndTime: replayEndTime ?? this.replayEndTime,
+        availableStartTime: availableStartTime ?? this.availableStartTime,
+        availableEndTime: availableEndTime ?? this.availableEndTime,
+        replayStartMethod: replayStartMethod ?? this.replayStartMethod,
+        replayStartMessageId: replayStartMessageId ?? this.replayStartMessageId,
+        deletingMessageId: deletingMessageId ?? this.deletingMessageId,
+        availableEmojis: availableEmojis ?? this.availableEmojis,
+        lastPressedEmoji: lastPressedEmoji ?? this.lastPressedEmoji,
+        emojiPressCount: emojiPressCount ?? this.emojiPressCount,
+        screen: screen ?? this.screen,
+        currentProjectId: currentProjectId ?? this.currentProjectId,
+        swipingMessageId:
+            clearSwipe ? null : (swipingMessageId ?? this.swipingMessageId),
+        swipeOffset: clearSwipe ? 0 : (swipeOffset ?? this.swipeOffset),
+        replyPreviewText: clearReplyPreview
+            ? null
+            : (replyPreviewText ?? this.replyPreviewText),
+        replyPreviewSenderName: clearReplyPreview
+            ? null
+            : (replyPreviewSenderName ?? this.replyPreviewSenderName),
+        selectedMessageIds: clearSelection
+            ? {}
+            : (selectedMessageIds ?? this.selectedMessageIds),
+        deleteIconPressed: deleteIconPressed ?? this.deleteIconPressed,
+        showDeleteConfirmation:
+            showDeleteConfirmation ?? this.showDeleteConfirmation,
+        visualInteraction: visualInteraction ?? this.visualInteraction,
+        highlightedChatProjectId: clearHighlightedChat
+            ? null
+            : (highlightedChatProjectId ?? this.highlightedChatProjectId),
+        recordingStatus: recordingStatus ?? this.recordingStatus,
+        recordedTempPath: clearRecordedTempPath
+            ? null
+            : (recordedTempPath ?? this.recordedTempPath),
+        exportedPath:
+            clearExportedPath ? null : (exportedPath ?? this.exportedPath),
+        recordingError: clearRecordingError
+            ? null
+            : (recordingError ?? this.recordingError),
+        selectedQuality: selectedQuality ?? this.selectedQuality);
   }
 
   @override
@@ -330,6 +342,6 @@ class ConversationReplayState extends Equatable {
         recordedTempPath,
         exportedPath,
         recordingError,
-        selectedQuality,
+        selectedQuality
       ];
 }
