@@ -58,7 +58,7 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         paused: false,
         keyboardVisible: true,
         emojiKeyboardVisible: false,
-        clearReplayNotification: true, // add
+        clearReplayNotification: true,
       ),
     );
     _playNext();
@@ -100,7 +100,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
       emit(state.copyWith(currentIndex: _replayStartIndex));
     }
 
-    // --- DELETION TIMELINE: if next delete is before next message, play it first ---
     while (_nextDeletionIndex < _deletionEvents.length) {
       final del = _deletionEvents[_nextDeletionIndex];
       final alreadyVisible =
@@ -126,10 +125,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           .where((m) => m.projectId == currentPid)
           .length;
 
-      // debug for N6
-      // debugPrint('[N-CHECK] pid=$currentPid played=$playedOfSource nextIdx=$_nextNotificationEventIndex all=${_replayNotificationEvents.map((e)=>"${e.sourceProjectId.substring(0,4)}:${e.notification.senderName} trig=${e.triggerIndex}").toList()}');
-
-      // scan forward, don't break on other project's trigger
       for (int i = _nextNotificationEventIndex;
           i < _replayNotificationEvents.length;
           i++) {
@@ -141,14 +136,12 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           return;
         }
         if (ev.triggerIndex > playedOfSource) {
-          // since events for SAME source are in time order, future ones will be even larger
           break;
         }
       }
     }
 
     if (state.currentIndex >= _messages.length) {
-      // for your reference flow, don't return to Wife after Agwona's
       if (_returnMessages.isNotEmpty &&
           _returnProjectId != null &&
           _messages.length < 7) {
@@ -277,7 +270,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
     final swiped = state.replayNotification;
     if (swiped != null) {
       final targetId = swiped.projectId;
-      // find the actual Message that matches this notification
       final idx = _messages.indexWhere((m) => m.id == swiped.messageId);
       if (idx != -1) {
         final msg = _messages[idx];
@@ -286,7 +278,6 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
           _visiblePerProject[targetId]!.add(msg);
         }
       }
-      // skip the message we just added so it won't be re-typed
       if (state.currentIndex < _messages.length &&
           _messages[state.currentIndex].id == swiped.messageId) {
         emit(state.copyWith(currentIndex: state.currentIndex + 1));
@@ -309,6 +300,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   void _replayNotificationEvent(ReplayNotificationEvent event) {
     _nextNotificationEventIndex++;
+    // play notification sound when banner shows
+    soundService.playNotification();
     emit(state.copyWith(
         replayNotification: event.notification,
         replayNotificationInteraction: ReplayNotificationInteraction.none));
@@ -362,6 +355,8 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
         ..add(messageToShow);
       _visiblePerProject[message.projectId] =
           List<Message>.from(updatedMessages);
+      // SOUND: incoming
+      soundService.playReceive();
       emit(state.copyWith(
           typing: false,
           typingPersonId: null,

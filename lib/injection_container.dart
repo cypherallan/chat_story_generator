@@ -18,7 +18,7 @@ import 'features/person_management/presentation/cubit/person_cubit.dart';
 
 import 'features/group_management/data/datasources/group_firestore_data_source.dart';
 import 'features/group_management/data/repositories/group_repository_impl.dart';
-
+import 'core/services/sound_service.dart';
 import 'features/group_management/domain/repositories/project_repository.dart';
 
 import 'features/group_management/domain/usecases/add_project.dart';
@@ -65,6 +65,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AuthService(sl()));
   sl.registerLazySingleton(() => FirebaseStorageService(sl()));
   sl.registerLazySingleton(() => ReplayExportService());
+  sl.registerLazySingleton(() => SoundService());
 
   sl.registerLazySingleton<PersonFirestoreDataSource>(
     () => PersonFirestoreDataSourceImpl(sl()),
@@ -202,6 +203,7 @@ Future<void> init() async {
       getRecordedNotificationEvents: sl<GetRecordedNotificationEvents>(),
       saveRecordedNotificationEvents: sl<SaveRecordedNotificationEvents>(),
       exportService: sl<ReplayExportService>(),
+      soundService: sl<SoundService>(),
     ),
   );
 

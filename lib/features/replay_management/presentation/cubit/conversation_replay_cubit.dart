@@ -12,6 +12,7 @@ import '../../../notification_management/domain/usecases/save_recorded_notificat
 import '../../../message_management/domain/usecases/get_messages.dart';
 import '../../../group_management/domain/usecases/get_projects.dart';
 import '../../data/services/replay_export_service.dart';
+import '../../../../core/services/sound_service.dart';
 part 'conversation_replay_cubit_navigation.dart';
 part 'conversation_replay_cubit_load.dart';
 part 'conversation_replay_cubit_playback.dart';
@@ -32,6 +33,7 @@ abstract class _ConversationReplayCubitBase
     required this.getRecordedNotificationEvents,
     required this.saveRecordedNotificationEvents,
     required this.exportService,
+    required this.soundService,
   }) : super(const ConversationReplayState());
 
   final SimulatedNotificationCubit notificationCubit;
@@ -41,6 +43,7 @@ abstract class _ConversationReplayCubitBase
   final GetRecordedNotificationEvents getRecordedNotificationEvents;
   final SaveRecordedNotificationEvents saveRecordedNotificationEvents;
   final ReplayExportService exportService;
+  final SoundService soundService;
   List<Person> _persons = [];
   void setPersons(List<Person> persons) {
     _persons = List<Person>.from(persons);
@@ -124,7 +127,8 @@ class ConversationReplayCubit extends _ConversationReplayCubitBase
       required super.getNotifications,
       required super.getRecordedNotificationEvents,
       required super.saveRecordedNotificationEvents,
-      required super.exportService});
+      required super.exportService,
+      required super.soundService});
   @override
   Future<void> close() {
     _timer?.cancel();

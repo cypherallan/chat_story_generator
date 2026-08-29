@@ -112,6 +112,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
       _visiblePerProject[message.projectId] =
           List<Message>.from(updatedMessages);
 
+      // SOUND: sent
+      soundService.playSend();
+
       emit(
         state.copyWith(
           composerText: '',
