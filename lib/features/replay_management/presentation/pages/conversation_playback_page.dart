@@ -122,7 +122,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                 debugPrint('[Parent] start recording');
                 await _recorderController.start();
               }
-              // ONLY stop when replay truly finished (not intermediate home)
               if (state.finished && _recorderController.isRecording) {
                 debugPrint('[Parent] finished=true -> stop recording');
                 await _recorderController.stop();
@@ -136,16 +135,20 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
               final content = replayState.screen == ReplayScreen.conversation
                   ? _buildConversation(context, replayState)
                   : _buildHome(context, replayState);
-              // WidgetRecorder wraps EVERYTHING (home + conversation) - controls outside, not recorded
               return Scaffold(
                 body: Column(children: [
                   Expanded(
                       child: WidgetRecorder(
-                          controller: _recorderController, child: content)),
-                  ReplayPlaybackControls(
-                      state: replayState,
-                      replayCubit: _replayCubit,
-                      recorderController: _recorderController),
+                          controller: _recorderController,
+                          child: RepaintBoundary(
+                              child:
+                                  content))), // FIX 1: added RepaintBoundary inside
+                  if (replayState.screen ==
+                      ReplayScreen.conversation) // FIX 2: hide buttons on home
+                    ReplayPlaybackControls(
+                        state: replayState,
+                        replayCubit: _replayCubit,
+                        recorderController: _recorderController),
                 ]),
               );
             },
@@ -186,9 +189,11 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     }
     if (project == null) return const Center(child: Text('Project not found.'));
     return ReplayConversationView(
-      project: project, persons: personState.persons, replayCubit: _replayCubit,
+      project: project,
+      persons: personState.persons,
+      replayCubit: _replayCubit,
       state: replayState,
-      recorderController: _recorderController, // pass parent controller
+      recorderController: _recorderController,
       onBack: () {
         context.read<SimulatedNotificationCubit>().clear();
         _replayCubit.showHome();
@@ -220,8 +225,12 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
             content: Text('This conversation has no messages to replay.')));
         return;
       }
-      _replayCubit.load(
-          allMessages, widget.ownerId, personState.persons, project.id);
+      await _replayCubit.load(
+          // FIX 3: added await - was racing and resetting to home
+          allMessages,
+          widget.ownerId,
+          personState.persons,
+          project.id);
       final selection =
           await showReplayStartSelection(context, allMessages, project.id);
       if (!mounted || selection == null) return;
@@ -232,7 +241,8 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         final mid = selection.messageId;
         if (mid != null) _replayCubit.setReplayStartMessage(mid);
       }
-      _replayCubit.openConversationViaHome(project.id);
+      _replayCubit.openConversation(
+          project.id); // FIX 4: open directly, no highlight timer
     });
   }
 }

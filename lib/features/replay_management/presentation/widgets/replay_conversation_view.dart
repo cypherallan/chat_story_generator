@@ -51,11 +51,12 @@ class _ReplayConversationViewState extends State<ReplayConversationView> {
       listener: (context, state) {
         if (state.finished) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients)
+            if (_scrollController.hasClients) {
               _scrollController.animateTo(
                   _scrollController.position.maxScrollExtent,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut);
+            }
           });
         }
       },

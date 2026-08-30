@@ -34,6 +34,7 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
       clearRecordingError: true,
     ));
   }
+
   @override
   Future<void> startRecordReplay() async {
     _timer?.cancel();
