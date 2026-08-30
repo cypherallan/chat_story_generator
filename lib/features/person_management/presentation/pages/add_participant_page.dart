@@ -5,7 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../cubit/person_cubit.dart';
 
 class AddParticipantPage extends StatefulWidget {
-  const AddParticipantPage({super.key});
+  final String? ownerId;
+  const AddParticipantPage({super.key, this.ownerId});
 
   @override
   State<AddParticipantPage> createState() => _AddPersonPageState();
@@ -27,16 +28,11 @@ class _AddPersonPageState extends State<AddParticipantPage> {
 
   Future<void> _submit() async {
     final name = _nameController.text.trim();
-
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Name is required'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Name is required')));
       return;
     }
-
     await context.read<PersonCubit>().createPerson(
           name: name,
           bio: _bioController.text.trim().isEmpty
@@ -44,6 +40,7 @@ class _AddPersonPageState extends State<AddParticipantPage> {
               : _bioController.text.trim(),
           avatarPath: _imagePath,
           isVerified: _isVerified,
+          ownerId: widget.ownerId,
         );
   }
 
@@ -57,23 +54,16 @@ class _AddPersonPageState extends State<AddParticipantPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Participant'),
-      ),
+      appBar: AppBar(title: const Text('New Participant')),
       body: BlocConsumer<PersonCubit, PersonState>(
         listener: (context, state) {
           if (state is PersonSaved) {
             Navigator.pop(context);
           }
-
           if (state is PersonError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(state.message),
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+                behavior: SnackBarBehavior.floating));
           }
         },
         builder: (context, state) {
@@ -98,10 +88,9 @@ class _AddPersonPageState extends State<AddParticipantPage> {
                   controller: _nameController,
                   enabled: state is! PersonSaving,
                   decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'e.g. Cristiano Ronaldo',
-                    border: OutlineInputBorder(),
-                  ),
+                      labelText: 'Name',
+                      hintText: 'e.g. Cristiano Ronaldo',
+                      border: OutlineInputBorder()),
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 16),
@@ -109,10 +98,9 @@ class _AddPersonPageState extends State<AddParticipantPage> {
                   controller: _bioController,
                   enabled: state is! PersonSaving,
                   decoration: const InputDecoration(
-                    labelText: 'Bio / About',
-                    hintText: 'e.g. Footballer, 5x Ballon d\'Or winner',
-                    border: OutlineInputBorder(),
-                  ),
+                      labelText: 'Bio / About',
+                      hintText: 'e.g. Footballer, 5x Ballon d\'Or winner',
+                      border: OutlineInputBorder()),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),
@@ -135,14 +123,9 @@ class _AddPersonPageState extends State<AddParticipantPage> {
                             width: 22,
                             height: 22,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Create Character',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                                strokeWidth: 2, color: Colors.white))
+                        : const Text('Create Character',
+                            style: TextStyle(fontSize: 16)),
                   ),
                 ),
               ],

@@ -10,6 +10,7 @@ class PersonModel extends Person {
     super.isOnline,
     super.lastSeen,
     super.isPinned,
+    super.ownerId,
   });
 
   factory PersonModel.fromJson(Map<String, dynamic> json) {
@@ -23,9 +24,8 @@ class PersonModel extends Person {
       lastSeen: json['lastSeen'] != null
           ? DateTime.parse(json['lastSeen'] as String)
           : null,
-
-      // Contacts created before the pin feature are unpinned.
       isPinned: json['isPinned'] as bool? ?? false,
+      ownerId: json['ownerId'] as String?,
     );
   }
 
@@ -39,6 +39,7 @@ class PersonModel extends Person {
       'isOnline': isOnline,
       'lastSeen': lastSeen?.toIso8601String(),
       'isPinned': isPinned,
+      'ownerId': ownerId,
     };
   }
 
@@ -52,6 +53,7 @@ class PersonModel extends Person {
       isOnline: person.isOnline,
       lastSeen: person.lastSeen,
       isPinned: person.isPinned,
+      ownerId: person.ownerId,
     );
   }
 }

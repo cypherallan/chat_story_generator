@@ -8,7 +8,6 @@ import '../models/person_model.dart';
 
 class PersonRepositoryImpl implements PersonRepository {
   final PersonFirestoreDataSource firestoreDataSource;
-
   PersonRepositoryImpl(this.firestoreDataSource);
 
   @override
@@ -22,12 +21,21 @@ class PersonRepositoryImpl implements PersonRepository {
   }
 
   @override
+  Future<Either<Failure, List<Person>>> getPersonsByOwner(
+      String ownerId) async {
+    try {
+      final persons = await firestoreDataSource.getPersonsByOwner(ownerId);
+      return Right(persons);
+    } catch (e) {
+      return Left(ErrorHandler.handle(e));
+    }
+  }
+
+  @override
   Future<Either<Failure, Person>> updatePerson(Person person) async {
     try {
       final model = PersonModel.fromEntity(person);
-
       final result = await firestoreDataSource.updatePerson(model);
-
       return Right(result);
     } catch (e) {
       return Left(ErrorHandler.handle(e));

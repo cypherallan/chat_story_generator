@@ -55,6 +55,8 @@ import 'features/notification_management/domain/usecases/save_recorded_notificat
 import 'features/replay_management/data/services/replay_export_service.dart';
 import 'features/notification_management/presentation/cubit/notification_cubit.dart';
 
+import 'features/person_management/domain/usecases/get_persons_by_owner.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -164,9 +166,12 @@ Future<void> init() async {
       sl(),
     ),
   );
+  sl.registerLazySingleton(() => GetPersonsByOwner(sl()));
+
   sl.registerFactory(
     () => PersonCubit(
       getPersons: sl(),
+      getPersonsByOwner: sl(),
       addPerson: sl(),
       updatePerson: sl(),
       deletePerson: sl(),

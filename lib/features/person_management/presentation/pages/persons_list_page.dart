@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'edit_participant_page.dart';
 import '../../../../injection_container.dart' as di;
 import '../cubit/person_cubit.dart';
 import '../widgets/person_card.dart';
 import 'add_participant_page.dart';
-
 import '../../../group_management/presentation/cubit/group_cubit.dart';
 import '../../../message_management/presentation/cubit/message_cubit.dart';
 import '../../../conversation_management/presentation/pages/conversation_page.dart';
@@ -66,6 +64,18 @@ class _PersonsListViewState extends State<_PersonsListView> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Don't filter the cubit, just make sure ALL is loaded for HomePage arrow
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = context.read<PersonCubit>().state;
+      if (state is! PersonLoaded || state.persons.isEmpty) {
+        context.read<PersonCubit>().loadPersons();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -77,7 +87,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: context.read<PersonCubit>(),
-          child: const AddParticipantPage(),
+          child: AddParticipantPage(ownerId: widget.currentPersonId),
         ),
       ),
     );
@@ -113,7 +123,6 @@ class _PersonsListViewState extends State<_PersonsListView> {
       ),
       body: Column(
         children: [
-          // HEADER: Add Contact button + Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
             child: Row(
@@ -148,8 +157,6 @@ class _PersonsListViewState extends State<_PersonsListView> {
             ),
           ),
           const Divider(height: 1),
-
-          // CONTACTS LIST
           Expanded(
             child: BlocBuilder<PersonCubit, PersonState>(
               builder: (context, state) {
@@ -161,6 +168,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
                 }
                 if (state is PersonLoaded) {
                   final filteredPersons = state.persons.where((person) {
+                    if (person.ownerId != widget.currentPersonId) return false;
                     if (person.id == widget.currentPersonId) return false;
                     if (widget.excludedIds.contains(person.id)) return false;
                     return person.name
@@ -232,9 +240,8 @@ class _PersonsListViewState extends State<_PersonsListView> {
                                   BlocProvider.value(
                                       value: context.read<GroupCubit>()),
                                   BlocProvider(
-                                    create: (_) => di.sl<MessageCubit>()
-                                      ..loadMessages(project.id),
-                                  ),
+                                      create: (_) => di.sl<MessageCubit>()
+                                        ..loadMessages(project.id)),
                                   BlocProvider.value(
                                       value: context.read<PersonCubit>()),
                                 ],
@@ -297,7 +304,7 @@ class _PersonsListViewState extends State<_PersonsListView> {
               onPressed: () => Navigator.pop(context, _selectedIds),
               child: const Icon(Icons.check),
             )
-          : null, // no FAB, button is in header now
+          : null,
     );
   }
 }
