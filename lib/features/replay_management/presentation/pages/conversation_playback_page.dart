@@ -56,7 +56,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   void _createController(ReplayExportQuality q) {
     _currentQ = q;
     _recorderController = WidgetRecorderController(
-      recordAudio: false,
+      recordAudio: true,
       onComplete: (p) {
         debugPrint('[Parent] onComplete $p');
         _replayCubit.onRecordingCompleted(p);
@@ -66,10 +66,21 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         _replayCubit.onRecordingFailed(e);
       },
     );
-    // ALWAYS low for this device, ignore user choice to prevent OOM
-    _recorderController.applyVideoQuality(VideoQuality.low); // 15 FPS, 2 Mbps
-    _recorderController.fps = 10; // even lower than your old 15 fix
-    debugPrint('[Parent] forced low quality 10 FPS to avoid OOM');
+    switch (q) {
+      case ReplayExportQuality.low:
+        _recorderController.applyVideoQuality(VideoQuality.low);
+        break;
+      case ReplayExportQuality.medium:
+        _recorderController.applyVideoQuality(VideoQuality.low);
+        break;
+      case ReplayExportQuality.high:
+        _recorderController.applyVideoQuality(VideoQuality.medium);
+        break;
+      case ReplayExportQuality.ultra:
+        _recorderController.applyVideoQuality(VideoQuality.high);
+        break;
+    }
+    debugPrint('[Parent] created controller quality=$q');
   }
 
   @override
