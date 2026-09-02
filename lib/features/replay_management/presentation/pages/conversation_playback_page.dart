@@ -56,7 +56,7 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   void _createController(ReplayExportQuality q) {
     _currentQ = q;
     _recorderController = WidgetRecorderController(
-      recordAudio: true,
+      recordAudio: false,
       onComplete: (p) {
         debugPrint('[Parent] onComplete $p');
         _replayCubit.onRecordingCompleted(p);
@@ -116,11 +116,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                     '[Parent] quality change ${_currentQ} -> ${state.selectedQuality}');
                 _recorderController.dispose();
                 _createController(state.selectedQuality);
-              }
-              if (state.recordingStatus == ReplayRecordingStatus.recording &&
-                  !_recorderController.isRecording) {
-                debugPrint('[Parent] start recording');
-                await _recorderController.start();
               }
               if (state.finished && _recorderController.isRecording) {
                 debugPrint('[Parent] finished=true -> stop recording');
