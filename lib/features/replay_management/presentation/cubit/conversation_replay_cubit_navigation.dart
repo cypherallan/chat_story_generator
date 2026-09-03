@@ -427,7 +427,10 @@ mixin _NavigationMixin on _ConversationReplayCubitBase {
     final selectedMessage = _messages[index];
     _replayStartIndex = index + 1;
 
-    final loadedMessages = _messages.take(index + 1).toList();
+    final loadedMessages = _messages
+        .take(index + 1)
+        .where((message) => message.projectId == selectedMessage.projectId)
+        .toList();
 
     emit(
       state.copyWith(

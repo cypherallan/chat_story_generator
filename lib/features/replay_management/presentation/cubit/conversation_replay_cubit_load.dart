@@ -77,14 +77,35 @@ mixin _LoadMixin on _ConversationReplayCubitBase {
       }
     }
 
+    final selectedProjectMessages =
+        _messages.where((m) => m.projectId == projectId).toList();
+
+    final selectedProjectStartIndex = _messages.indexWhere(
+      (m) => m.projectId == projectId,
+    );
+
+    if (selectedProjectStartIndex != -1) {
+      _replayStartIndex = selectedProjectStartIndex;
+    }
+
+    final replayInitialVisibleMessages = <Message>[];
+
+    _visiblePerProject[projectId] = [];
+
     emit(ConversationReplayState(
       availableEmojis: emojiSet.toList(),
       screen: ReplayScreen.home,
       availableStartTime: availableStartTime,
       availableEndTime: availableEndTime,
-      replayStartTime: availableStartTime,
-      replayEndTime: availableEndTime,
-      visibleMessages: initialVisibleMessages,
+      replayStartTime: selectedProjectMessages.isNotEmpty
+          ? selectedProjectMessages.first.createdAt
+          : availableStartTime,
+      replayEndTime: selectedProjectMessages.isNotEmpty
+          ? selectedProjectMessages.last.createdAt
+          : availableEndTime,
+      visibleMessages: replayInitialVisibleMessages,
+      currentIndex: _replayStartIndex,
+      currentProjectId: projectId,
       replayNotificationMessageCount: _replayNotificationMessageCount,
     ));
   }
