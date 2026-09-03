@@ -48,7 +48,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
                 width: 7,
                 height: 7,
                 decoration: const BoxDecoration(
-                  color: Colors.grey,
+                  color: const Color(0xff25D366),
                   shape: BoxShape.circle,
                 ),
               ),

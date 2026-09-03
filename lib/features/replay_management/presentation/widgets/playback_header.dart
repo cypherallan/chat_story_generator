@@ -77,8 +77,12 @@ class PlaybackHeader extends StatelessWidget {
                   )
                   .toList();
 
-              final participantNames =
-                  groupMembers.map((person) => person.name).toList();
+              final participantNames = [
+                'You',
+                ...groupMembers
+                    .where((person) => person.id != project.ownerId)
+                    .map((person) => person.name),
+              ];
 
               String subtitle;
 
@@ -137,7 +141,7 @@ class PlaybackHeader extends StatelessWidget {
                 ? 'typing...'
                 : replayState.onlinePersonId != null
                     ? 'online'
-                    : 'last seen recently';
+                    : '';
 
             return _buildHeader(
               context,
@@ -212,7 +216,9 @@ class PlaybackHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isTyping ? Colors.green : Colors.grey.shade600,
+                    color: (isTyping || subtitle == 'online')
+                        ? const Color(0xff25D366)
+                        : Colors.grey.shade600,
                   ),
                 ),
               ],

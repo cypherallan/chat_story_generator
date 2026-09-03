@@ -20,23 +20,6 @@ class ConversationHeader extends StatelessWidget {
     this.typingPersonIds = const {},
   });
 
-  String _formatLastSeen(DateTime dateTime) {
-    final now = DateTime.now();
-    if (now.difference(dateTime).inMinutes < 1) return 'just now';
-    if (now.day == dateTime.day &&
-        now.month == dateTime.month &&
-        now.year == dateTime.year) {
-      return 'today at ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    }
-    final yesterday = now.subtract(const Duration(days: 1));
-    if (yesterday.day == dateTime.day &&
-        yesterday.month == dateTime.month &&
-        yesterday.year == dateTime.year) {
-      return 'yesterday at ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    }
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-  }
-
   List<Person> _sortedOthers() {
     if (project == null || persons == null) return [];
     final others = persons!
@@ -63,10 +46,12 @@ class ConversationHeader extends StatelessWidget {
         others.where((p) => typingPersonIds.contains(p.id)).toList();
     // if owner is typing, don't show in subtitle (you are typing yourself)
     if (typingOthers.isEmpty) return _groupParticipants();
-    if (typingOthers.length == 1)
+    if (typingOthers.length == 1) {
       return '${typingOthers.first.name} is typing...';
-    if (typingOthers.length == 2)
+    }
+    if (typingOthers.length == 2) {
       return '${typingOthers[0].name}, ${typingOthers[1].name} are typing...';
+    }
     return '${typingOthers.length} people are typing...';
   }
 
@@ -106,23 +91,21 @@ class ConversationHeader extends StatelessWidget {
                       ? _groupTypingText()
                       : isTyping
                           ? 'typing...'
-                          : person!.isOnline
-                              ? 'online'
-                              : person!.lastSeen == null
-                                  ? 'last seen recently'
-                                  : 'last seen ${_formatLastSeen(person!.lastSeen!)}',
-                  key: ValueKey(isGroup
-                      ? 'group'
-                      : isTyping
-                          ? 'typing'
-                          : person!.isOnline
-                              ? 'online'
-                              : person!.lastSeen),
+                          : 'online',
+                  key: ValueKey(
+                    isGroup
+                        ? _groupTypingText()
+                        : isTyping
+                            ? 'typing'
+                            : 'online',
+                  ),
                   style: TextStyle(
                     fontSize: 12,
-                    color: (isTyping || typingPersonIds.isNotEmpty)
-                        ? const Color(0xff25D366)
-                        : Colors.grey,
+                    color: isGroup
+                        ? (typingPersonIds.isNotEmpty
+                            ? const Color(0xff25D366)
+                            : Colors.grey)
+                        : const Color(0xff25D366),
                   ),
                 ),
               ),
