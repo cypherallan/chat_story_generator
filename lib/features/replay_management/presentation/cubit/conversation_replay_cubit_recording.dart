@@ -1,8 +1,41 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
+  final List<ReplayAudioEvent> _recordingAudioEvents = [];
+  Stopwatch? _recordingAudioClock;
+
+  void _startRecordingAudioTracking() {
+    _recordingAudioEvents.clear();
+
+    _recordingAudioClock = Stopwatch()..start();
+
+    soundService.onSoundPlayed = (sound) {
+      final clock = _recordingAudioClock;
+
+      if (clock == null || !clock.isRunning) return;
+
+      _recordingAudioEvents.add(
+        ReplayAudioEvent(
+          sound: sound,
+          offset: clock.elapsed,
+        ),
+      );
+    };
+  }
+
+  void _stopRecordingAudioTracking() {
+    _recordingAudioClock?.stop();
+    _recordingAudioClock = null;
+    soundService.onSoundPlayed = null;
+  }
+
   @override
   void onRecordingCompleted(String tempPath) {
+    _stopRecordingAudioTracking();
+
+    // ignore: unused_local_variable
+    for (final event in _recordingAudioEvents) {}
+
     if (isClosed) return;
     emit(state.copyWith(
       recordingStatus: ReplayRecordingStatus.recorded,
@@ -13,6 +46,8 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
   @override
   void onRecordingFailed(String error) {
+    _stopRecordingAudioTracking();
+
     if (isClosed) return;
     emit(state.copyWith(
       recordingStatus: ReplayRecordingStatus.failed,
@@ -55,6 +90,7 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     final replayStartIndex = _replayStartIndex.clamp(0, _messages.length);
     final initialVisibleMessages = _messages.take(replayStartIndex).toList();
+    _startRecordingAudioTracking();
 
     emit(state.copyWith(
       visibleMessages: initialVisibleMessages,
@@ -92,6 +128,7 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
         tempPath: tempPath,
         quality: state.selectedQuality,
         customFileName: customFileName,
+        audioEvents: List<ReplayAudioEvent>.from(_recordingAudioEvents),
       );
       emit(state.copyWith(
           recordingStatus: ReplayRecordingStatus.exported,
