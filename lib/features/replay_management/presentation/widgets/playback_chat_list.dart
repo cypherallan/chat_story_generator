@@ -54,19 +54,16 @@ class PlaybackChatList extends StatelessWidget {
             }
           },
           builder: (context, replayState) {
-            final messages = replayState.visibleMessages;
+            final chronological =
+                List<Message>.from(replayState.visibleMessages)
+                  ..sort((a, b) {
+                    final c = a.createdAt.compareTo(b.createdAt);
+                    if (c != 0) return c;
+                    return a.id.compareTo(b.id);
+                  });
 
-            if (messages.isEmpty) {
-              return const Center(
-                child: Text(
-                  'No messages yet',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-              );
-            }
-
-            // Newest messages at the bottom (same pattern as the normal conversation list)
-            final displayMessages = messages.reversed.toList();
+// Newest messages at the bottom
+            final displayMessages = chronological.reversed.toList();
 
             return ListView.builder(
               controller: scrollController,
@@ -76,16 +73,21 @@ class PlaybackChatList extends StatelessWidget {
               itemBuilder: (context, index) {
                 final message = displayMessages[index];
 
-                final previousMessage =
-                    index > 0 ? displayMessages[index - 1] : null;
-                final nextMessage = index < displayMessages.length - 1
-                    ? displayMessages[index + 1]
+                final chronoIndex =
+                    chronological.indexWhere((m) => m.id == message.id);
+
+                final prevChrono =
+                    chronoIndex > 0 ? chronological[chronoIndex - 1] : null;
+
+                final nextChrono = chronoIndex < chronological.length - 1
+                    ? chronological[chronoIndex + 1]
                     : null;
 
-                final isFirstInGroup = previousMessage == null ||
-                    previousMessage.senderId != message.senderId;
-                final isLastInGroup = nextMessage == null ||
-                    nextMessage.senderId != message.senderId;
+                final isFirstInGroup = prevChrono == null ||
+                    prevChrono.senderId != message.senderId;
+
+                final isLastInGroup = nextChrono == null ||
+                    nextChrono.senderId != message.senderId;
 
                 final sender = personState.persons.firstWhere(
                   (person) => person.id == message.senderId,
