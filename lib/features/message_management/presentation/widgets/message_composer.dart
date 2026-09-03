@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 class MessageComposer extends StatefulWidget {
   final List<Person> participants;
   final String selectedSenderId;
+  final String ownerId;
   final ValueChanged<String> onSenderChanged;
   final Function(
     String senderId,
@@ -24,6 +25,7 @@ class MessageComposer extends StatefulWidget {
     super.key,
     required this.participants,
     required this.selectedSenderId,
+    required this.ownerId,
     required this.onSenderChanged,
     required this.onSend,
     required this.onImageSelected,
@@ -273,7 +275,14 @@ class _MessageComposerState extends State<MessageComposer> {
                     minLines: 1,
                     maxLines: 5,
                     onChanged: (value) {
-                      _recordTypingChange(value);
+                      if (widget.selectedSenderId == widget.ownerId) {
+                        _recordTypingChange(value);
+                      } else {
+                        // Keep the local text state synchronized while the other
+                        // participant is composing, but don't record their typing.
+                        _previousText = value;
+                        _lastTypingTime = null;
+                      }
 
                       if (value.trim().isNotEmpty) {
                         widget.onTypingStarted?.call();

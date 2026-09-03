@@ -49,6 +49,7 @@ class ConversationComposerSection extends StatelessWidget {
           onCancelReply: onCancelReply,
           participants: participants,
           selectedSenderId: selectedSenderId,
+          ownerId: project.ownerId,
           onSenderChanged: onSenderChanged,
           onTypingStarted: onTypingStarted,
           onTypingStopped: onTypingStopped,

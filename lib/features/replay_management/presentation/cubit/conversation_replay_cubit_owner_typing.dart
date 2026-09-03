@@ -100,6 +100,18 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
 
     final events = message.typingEvents;
 
+    if (state.pressedKey != null ||
+        state.pressedEmoji != null ||
+        state.lastPressedEmoji != null) {
+      emit(
+        state.copyWith(
+          pressedKey: null,
+          pressedEmoji: null,
+          lastPressedEmoji: null,
+        ),
+      );
+    }
+
     if (eventIndex >= events.length) {
       final messageToShow = message.isDeleted
           ? message.copyWith(

@@ -42,28 +42,9 @@ class PlaybackKeyboard extends StatelessWidget {
 
     return Expanded(
       flex: (flex * 10).toInt(),
-      child: Padding(
-        padding: const EdgeInsets.all(2),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 70),
-          height: 42,
-          decoration: BoxDecoration(
-            color: isPressed ? const Color(0xffC7CCD2) : Colors.white,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Center(
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 70),
-              scale: isPressed ? 0.92 : 1,
-              child: Text(
-                displayText,
-                style: const TextStyle(
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ),
-        ),
+      child: _PlaybackKey(
+        text: displayText,
+        isPressed: isPressed,
       ),
     );
   }
@@ -151,6 +132,82 @@ class PlaybackKeyboard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PlaybackKey extends StatefulWidget {
+  final String text;
+  final bool isPressed;
+
+  const _PlaybackKey({
+    required this.text,
+    required this.isPressed,
+  });
+
+  @override
+  State<_PlaybackKey> createState() => _PlaybackKeyState();
+}
+
+class _PlaybackKeyState extends State<_PlaybackKey> {
+  bool _flash = false;
+  Timer? _timer;
+
+  @override
+  void didUpdateWidget(_PlaybackKey oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isPressed && !oldWidget.isPressed) {
+      _triggerFlash();
+    }
+  }
+
+  void _triggerFlash() {
+    _timer?.cancel();
+
+    setState(() {
+      _flash = true;
+    });
+
+    _timer = Timer(const Duration(milliseconds: 80), () {
+      if (mounted) {
+        setState(() {
+          _flash = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(2),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 40),
+        height: 42,
+        decoration: BoxDecoration(
+          color: _flash ? const Color(0xffC7CCD2) : Colors.white,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Center(
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 40),
+            scale: _flash ? 0.92 : 1,
+            child: Text(
+              widget.text,
+              style: const TextStyle(
+                fontSize: 18,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
