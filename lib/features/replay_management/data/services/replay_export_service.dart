@@ -104,6 +104,7 @@ class ReplayExportService {
       'send': 'assets/sounds/message-sent.wav',
       'receive': 'assets/sounds/incoming.aac',
       'notification': 'assets/sounds/notification.wav',
+      'keyPress': 'assets/sounds/keypress.wav',
     };
 
     final assetPaths = <String, String>{};
@@ -189,7 +190,6 @@ class ReplayExportService {
       '-y',
       _quote(outputPath),
     ].join(' ');
-
 
     final session = await FFmpegKit.execute(command);
     final returnCode = await session.getReturnCode();
