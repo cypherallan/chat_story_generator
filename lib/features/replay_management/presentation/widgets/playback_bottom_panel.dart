@@ -8,8 +8,6 @@ import 'playback_message_composer.dart';
 class PlaybackBottomPanel extends StatelessWidget {
   const PlaybackBottomPanel({super.key});
 
-  static const double _baseComposerHeight = 62;
-  static const double _replyPreviewHeight = 72;
   static const double _keyboardHeight = 228;
   static const double _emojiKeyboardHeight = 280;
 
@@ -21,19 +19,13 @@ class PlaybackBottomPanel extends StatelessWidget {
             state.keyboardVisible || state.emojiKeyboardVisible;
         final keyboardHeight =
             state.emojiKeyboardVisible ? _emojiKeyboardHeight : _keyboardHeight;
-        final hasReplyPreview = state.replyPreviewText != null;
-        final composerHeight =
-            _baseComposerHeight + (hasReplyPreview ? _replyPreviewHeight : 0);
 
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: composerHeight,
-              child: PlaybackMessageComposer(
-                text: state.composerText,
-                keyboardVisible: keyboardVisible,
-              ),
+            PlaybackMessageComposer(
+              text: state.composerText,
+              keyboardVisible: keyboardVisible,
             ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),

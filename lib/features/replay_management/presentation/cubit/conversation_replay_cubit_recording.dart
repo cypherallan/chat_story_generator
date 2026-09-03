@@ -89,7 +89,14 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
     }
 
     final replayStartIndex = _replayStartIndex.clamp(0, _messages.length);
-    final initialVisibleMessages = _messages.take(replayStartIndex).toList();
+
+    final initialVisibleMessages = _messages
+        .take(replayStartIndex)
+        .where((message) =>
+            state.currentProjectId == null ||
+            message.projectId == state.currentProjectId)
+        .toList();
+
     _startRecordingAudioTracking();
 
     emit(state.copyWith(

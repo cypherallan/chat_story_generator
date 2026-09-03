@@ -40,6 +40,8 @@ class _MessageComposerState extends State<MessageComposer> {
   bool _showAttachments = false;
   bool _showParticipants = false; // NEW for Task 1
   bool hasText = false;
+  final List<int> _typingDelays = [];
+  DateTime? _lastTypingTime;
 
   @override
   void initState() {
@@ -64,6 +66,8 @@ class _MessageComposerState extends State<MessageComposer> {
     if (text.isEmpty) return;
     widget.onSend(widget.selectedSenderId, text);
     controller.clear();
+    _typingDelays.clear();
+    _lastTypingTime = null;
     // FIX Task 1: keep keyboard on screen
     FocusScope.of(context).requestFocus(_focusNode);
     setState(() {
@@ -195,6 +199,21 @@ class _MessageComposerState extends State<MessageComposer> {
                     minLines: 1,
                     maxLines: 5,
                     onChanged: (value) {
+                      final now = DateTime.now();
+
+                      if (value.isNotEmpty) {
+                        if (_lastTypingTime != null) {
+                          _typingDelays.add(
+                            now.difference(_lastTypingTime!).inMilliseconds,
+                          );
+                        } else {
+                          // Delay before the first character.
+                          _typingDelays.add(0);
+                        }
+
+                        _lastTypingTime = now;
+                      }
+
                       if (value.trim().isNotEmpty) {
                         widget.onTypingStarted?.call();
                       }

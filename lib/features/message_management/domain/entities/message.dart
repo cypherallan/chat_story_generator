@@ -7,6 +7,7 @@ class Message extends Equatable {
   final String senderId;
   final String? senderName;
   final String text;
+  final List<int> typingDelays;
   final String? imagePath;
   final DateTime createdAt;
   final MessageStatus status;
@@ -28,6 +29,7 @@ class Message extends Equatable {
     required this.senderId,
     this.senderName,
     required this.text,
+    this.typingDelays = const [],
     this.imagePath,
     required this.createdAt,
     this.status = MessageStatus.sent,
@@ -49,6 +51,7 @@ class Message extends Equatable {
     String? senderId,
     String? senderName,
     String? text,
+    List<int>? typingDelays,
     String? imagePath,
     DateTime? createdAt,
     MessageStatus? status,
@@ -69,6 +72,7 @@ class Message extends Equatable {
       senderId: senderId ?? this.senderId,
       senderName: senderName ?? this.senderName,
       text: text ?? this.text,
+      typingDelays: typingDelays ?? this.typingDelays,
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
@@ -92,6 +96,7 @@ class Message extends Equatable {
         senderId,
         senderName,
         text,
+        typingDelays,
         imagePath,
         createdAt,
         status,

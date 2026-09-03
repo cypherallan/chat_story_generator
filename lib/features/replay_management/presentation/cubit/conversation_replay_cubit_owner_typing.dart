@@ -244,11 +244,26 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
     _timer = Timer(
       delay,
       () {
-        _typeNextOwnerCharacter(
-          message,
-          characters,
-          characterIndex,
-          typedText,
+        if (!state.playing) return;
+
+        emit(
+          state.copyWith(
+            pressedKey: null,
+          ),
+        );
+
+        _timer = Timer(
+          const Duration(milliseconds: 30),
+          () {
+            if (!state.playing) return;
+
+            _typeNextOwnerCharacter(
+              message,
+              characters,
+              characterIndex,
+              typedText,
+            );
+          },
         );
       },
     );

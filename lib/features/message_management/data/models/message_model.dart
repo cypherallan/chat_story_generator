@@ -8,6 +8,7 @@ class MessageModel extends Message {
     required super.senderId,
     super.senderName,
     required super.text,
+    super.typingDelays = const [],
     super.imagePath,
     required super.createdAt,
     super.status = MessageStatus.sent,
@@ -30,6 +31,7 @@ class MessageModel extends Message {
       senderId: message.senderId,
       senderName: message.senderName,
       text: message.text,
+      typingDelays: message.typingDelays,
       imagePath: message.imagePath,
       createdAt: message.createdAt,
       status: message.status,
@@ -53,6 +55,9 @@ class MessageModel extends Message {
       senderId: json['senderId'] as String,
       senderName: json['senderName'] as String?,
       text: json['text'] as String,
+      typingDelays: List<int>.from(
+        json['typingDelays'] ?? const [],
+      ),
       imagePath: json['imagePath'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       status: MessageStatus.values.byName(
@@ -82,6 +87,7 @@ class MessageModel extends Message {
       'senderId': senderId,
       'senderName': senderName,
       'text': text,
+      'typingDelays': typingDelays,
       'imagePath': imagePath,
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,

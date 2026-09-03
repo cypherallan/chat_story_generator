@@ -101,21 +101,29 @@ class PlaybackMessageComposer extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Row(
-                                children: [
-                                  if (state.composerText.isNotEmpty)
-                                    Flexible(
-                                      child: Text(
-                                        state.composerText,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 2),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: state.composerText,
                                         style: const TextStyle(
                                           fontSize: 16,
                                           color: Colors.black,
                                         ),
-                                        overflow: TextOverflow.visible,
                                       ),
-                                    ),
-                                  const BlinkingCursor(),
-                                ],
+                                      const WidgetSpan(
+                                        alignment: PlaceholderAlignment.middle,
+                                        child: const BlinkingCursor(),
+                                      ),
+                                    ],
+                                  ),
+                                  softWrap: true,
+                                  maxLines: 5,
+                                  overflow: TextOverflow.visible,
+                                ),
                               ),
                             ),
                             const Icon(

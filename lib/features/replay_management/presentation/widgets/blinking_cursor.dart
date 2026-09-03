@@ -40,9 +40,8 @@ class _BlinkingCursorState extends State<BlinkingCursor> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedOpacity(
+    return Opacity(
       opacity: _visible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 80),
       child: Container(
         width: 2,
         height: 20,
