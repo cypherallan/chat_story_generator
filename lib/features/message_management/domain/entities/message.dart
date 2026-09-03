@@ -1,13 +1,35 @@
 import 'package:equatable/equatable.dart';
 import 'message_status.dart';
 
+class MessageTypingEvent extends Equatable {
+  final String type;
+  final String? text;
+  final int position;
+  final int delayMs;
+
+  const MessageTypingEvent({
+    required this.type,
+    this.text,
+    required this.position,
+    required this.delayMs,
+  });
+
+  @override
+  List<Object?> get props => [
+        type,
+        text,
+        position,
+        delayMs,
+      ];
+}
+
 class Message extends Equatable {
   final String id;
   final String projectId;
   final String senderId;
   final String? senderName;
   final String text;
-  final List<int> typingDelays;
+  final List<MessageTypingEvent> typingEvents;
   final String? imagePath;
   final DateTime createdAt;
   final MessageStatus status;
@@ -29,7 +51,7 @@ class Message extends Equatable {
     required this.senderId,
     this.senderName,
     required this.text,
-    this.typingDelays = const [],
+    this.typingEvents = const [],
     this.imagePath,
     required this.createdAt,
     this.status = MessageStatus.sent,
@@ -51,7 +73,7 @@ class Message extends Equatable {
     String? senderId,
     String? senderName,
     String? text,
-    List<int>? typingDelays,
+    List<MessageTypingEvent>? typingEvents,
     String? imagePath,
     DateTime? createdAt,
     MessageStatus? status,
@@ -72,7 +94,7 @@ class Message extends Equatable {
       senderId: senderId ?? this.senderId,
       senderName: senderName ?? this.senderName,
       text: text ?? this.text,
-      typingDelays: typingDelays ?? this.typingDelays,
+      typingEvents: typingEvents ?? this.typingEvents,
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
@@ -96,7 +118,7 @@ class Message extends Equatable {
         senderId,
         senderName,
         text,
-        typingDelays,
+        typingEvents,
         imagePath,
         createdAt,
         status,

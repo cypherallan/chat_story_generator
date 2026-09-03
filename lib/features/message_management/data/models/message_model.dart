@@ -8,7 +8,7 @@ class MessageModel extends Message {
     required super.senderId,
     super.senderName,
     required super.text,
-    super.typingDelays = const [],
+    super.typingEvents = const [],
     super.imagePath,
     required super.createdAt,
     super.status = MessageStatus.sent,
@@ -31,7 +31,7 @@ class MessageModel extends Message {
       senderId: message.senderId,
       senderName: message.senderName,
       text: message.text,
-      typingDelays: message.typingDelays,
+      typingEvents: message.typingEvents,
       imagePath: message.imagePath,
       createdAt: message.createdAt,
       status: message.status,
@@ -55,9 +55,16 @@ class MessageModel extends Message {
       senderId: json['senderId'] as String,
       senderName: json['senderName'] as String?,
       text: json['text'] as String,
-      typingDelays: List<int>.from(
-        json['typingDelays'] ?? const [],
-      ),
+      typingEvents: (json['typingEvents'] as List<dynamic>? ?? const [])
+          .map(
+            (event) => MessageTypingEvent(
+              type: event['type'] as String,
+              text: event['text'] as String?,
+              position: event['position'] as int,
+              delayMs: event['delayMs'] as int,
+            ),
+          )
+          .toList(),
       imagePath: json['imagePath'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       status: MessageStatus.values.byName(
@@ -87,7 +94,16 @@ class MessageModel extends Message {
       'senderId': senderId,
       'senderName': senderName,
       'text': text,
-      'typingDelays': typingDelays,
+      'typingEvents': typingEvents
+          .map(
+            (event) => {
+              'type': event.type,
+              'text': event.text,
+              'position': event.position,
+              'delayMs': event.delayMs,
+            },
+          )
+          .toList(),
       'imagePath': imagePath,
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,

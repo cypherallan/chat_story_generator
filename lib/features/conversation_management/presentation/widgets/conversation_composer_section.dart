@@ -15,7 +15,11 @@ class ConversationComposerSection extends StatelessWidget {
   final VoidCallback onTypingStarted;
   final VoidCallback onTypingStopped;
   final void Function(Map<String, dynamic>) onImageSelected;
-  final void Function(String senderId, String text) onSend;
+  final void Function(
+    String senderId,
+    String text,
+    List<MessageTypingEvent> typingEvents,
+  ) onSend;
 
   const ConversationComposerSection({
     super.key,

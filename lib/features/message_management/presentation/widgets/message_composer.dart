@@ -9,7 +9,11 @@ class MessageComposer extends StatefulWidget {
   final List<Person> participants;
   final String selectedSenderId;
   final ValueChanged<String> onSenderChanged;
-  final Function(String senderId, String text) onSend;
+  final Function(
+    String senderId,
+    String text,
+    List<MessageTypingEvent> typingEvents,
+  ) onSend;
   final ValueChanged<Map<String, dynamic>> onImageSelected;
   final VoidCallback? onTypingStarted;
   final Message? replyingTo;
@@ -40,8 +44,9 @@ class _MessageComposerState extends State<MessageComposer> {
   bool _showAttachments = false;
   bool _showParticipants = false; // NEW for Task 1
   bool hasText = false;
-  final List<int> _typingDelays = [];
+  final List<MessageTypingEvent> _typingEvents = [];
   DateTime? _lastTypingTime;
+  String _previousText = '';
 
   @override
   void initState() {
@@ -61,12 +66,81 @@ class _MessageComposerState extends State<MessageComposer> {
     });
   }
 
+  void _recordTypingChange(String newText) {
+    final now = DateTime.now();
+
+    final delayMs = _lastTypingTime == null
+        ? 0
+        : now.difference(_lastTypingTime!).inMilliseconds;
+
+    final oldText = _previousText;
+
+    if (newText == oldText) {
+      return;
+    }
+
+    // Find the first character position where the texts differ.
+    int prefixLength = 0;
+    while (prefixLength < oldText.length &&
+        prefixLength < newText.length &&
+        oldText.codeUnitAt(prefixLength) == newText.codeUnitAt(prefixLength)) {
+      prefixLength++;
+    }
+
+    // Find the unchanged suffix.
+    int oldSuffixIndex = oldText.length;
+    int newSuffixIndex = newText.length;
+
+    while (oldSuffixIndex > prefixLength &&
+        newSuffixIndex > prefixLength &&
+        oldText.codeUnitAt(oldSuffixIndex - 1) ==
+            newText.codeUnitAt(newSuffixIndex - 1)) {
+      oldSuffixIndex--;
+      newSuffixIndex--;
+    }
+
+    final deletedText = oldText.substring(prefixLength, oldSuffixIndex);
+    final insertedText = newText.substring(prefixLength, newSuffixIndex);
+
+    // Record deletion first.
+    if (deletedText.isNotEmpty) {
+      _typingEvents.add(
+        MessageTypingEvent(
+          type: 'delete',
+          text: deletedText,
+          position: prefixLength,
+          delayMs: delayMs,
+        ),
+      );
+    }
+
+    // Record insertion.
+    if (insertedText.isNotEmpty) {
+      _typingEvents.add(
+        MessageTypingEvent(
+          type: 'insert',
+          text: insertedText,
+          position: prefixLength,
+          delayMs: deletedText.isNotEmpty ? 0 : delayMs,
+        ),
+      );
+    }
+
+    _lastTypingTime = now;
+    _previousText = newText;
+  }
+
   void _send() {
     final text = controller.text.trim();
     if (text.isEmpty) return;
-    widget.onSend(widget.selectedSenderId, text);
+    widget.onSend(
+      widget.selectedSenderId,
+      text,
+      List<MessageTypingEvent>.from(_typingEvents),
+    );
     controller.clear();
-    _typingDelays.clear();
+    _previousText = '';
+    _typingEvents.clear();
     _lastTypingTime = null;
     // FIX Task 1: keep keyboard on screen
     FocusScope.of(context).requestFocus(_focusNode);
@@ -199,20 +273,7 @@ class _MessageComposerState extends State<MessageComposer> {
                     minLines: 1,
                     maxLines: 5,
                     onChanged: (value) {
-                      final now = DateTime.now();
-
-                      if (value.isNotEmpty) {
-                        if (_lastTypingTime != null) {
-                          _typingDelays.add(
-                            now.difference(_lastTypingTime!).inMilliseconds,
-                          );
-                        } else {
-                          // Delay before the first character.
-                          _typingDelays.add(0);
-                        }
-
-                        _lastTypingTime = now;
-                      }
+                      _recordTypingChange(value);
 
                       if (value.trim().isNotEmpty) {
                         widget.onTypingStarted?.call();

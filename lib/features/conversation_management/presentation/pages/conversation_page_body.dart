@@ -311,7 +311,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                   setState(() => replyingTo = null);
                   _notifyParent();
                 },
-                onSend: (senderId, text) {
+                onSend: (senderId, text, typingEvents) {
                   final participants = (context.read<PersonCubit>().state
                           as PersonLoaded)
                       .persons
@@ -336,6 +336,7 @@ class ConversationPageBodyState extends State<ConversationPageBody> {
                             .firstWhere((p) => p.id == senderId)
                             .name,
                         text: text,
+                        typingEvents: typingEvents,
                         replyingTo: replyingTo,
                         isUnread: senderId != widget.project.ownerId,
                       );
