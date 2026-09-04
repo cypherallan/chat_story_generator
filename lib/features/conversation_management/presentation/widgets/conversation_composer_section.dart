@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../injection_container.dart' as di;
+import '../../../../core/services/sound_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../group_management/domain/entities/project.dart';
@@ -50,6 +52,7 @@ class ConversationComposerSection extends StatelessWidget {
           participants: participants,
           selectedSenderId: selectedSenderId,
           ownerId: project.ownerId,
+          soundService: di.sl<SoundService>(),
           onSenderChanged: onSenderChanged,
           onTypingStarted: onTypingStarted,
           onTypingStopped: onTypingStopped,

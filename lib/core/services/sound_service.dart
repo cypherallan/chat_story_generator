@@ -5,11 +5,12 @@ class SoundService {
   final AudioPlayer _sendPlayer = AudioPlayer();
   final AudioPlayer _receivePlayer = AudioPlayer();
   final AudioPlayer _keyPressPlayer = AudioPlayer();
-
+  final AudioPlayer _keyPressPlayer2 = AudioPlayer();
   SoundService() {
     _sendPlayer.setReleaseMode(ReleaseMode.stop);
     _receivePlayer.setReleaseMode(ReleaseMode.stop);
     _keyPressPlayer.setReleaseMode(ReleaseMode.stop);
+    _keyPressPlayer2.setReleaseMode(ReleaseMode.stop);
   }
   Future<void> playSend() async {
     try {
@@ -35,12 +36,18 @@ class SoundService {
     } catch (_) {}
   }
 
+  bool _keyPressToggle = false;
+
   Future<void> playKeyPress() async {
     try {
-      await _keyPressPlayer.stop();
-      await _keyPressPlayer.play(
+      final player = _keyPressToggle ? _keyPressPlayer : _keyPressPlayer2;
+
+      _keyPressToggle = !_keyPressToggle;
+
+      await player.play(
         AssetSource('sounds/keypress.wav'),
       );
+
       onSoundPlayed?.call('keyPress');
     } catch (_) {}
   }
@@ -49,5 +56,6 @@ class SoundService {
     _sendPlayer.dispose();
     _receivePlayer.dispose();
     _keyPressPlayer.dispose();
+    _keyPressPlayer2.dispose();
   }
 }

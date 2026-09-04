@@ -280,8 +280,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
 
           final keyToShow = lastCharacter == ' ' ? 'space' : lastCharacter;
 
-          soundService.playKeyPress();
-
           emit(
             state.copyWith(
               composerText: updatedText,
@@ -296,6 +294,8 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
               shiftPressed: false,
             ),
           );
+
+          soundService.playKeyPress();
 
           _timer = Timer(
             const Duration(milliseconds: 30),

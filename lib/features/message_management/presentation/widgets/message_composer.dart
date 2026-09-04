@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/sound_service.dart';
 import '../../../person_management/domain/entities/person.dart';
 import 'expression_panel.dart';
 import 'attachment_sheet.dart';
@@ -9,6 +10,7 @@ class MessageComposer extends StatefulWidget {
   final List<Person> participants;
   final String selectedSenderId;
   final String ownerId;
+  final SoundService soundService;
   final ValueChanged<String> onSenderChanged;
   final Function(
     String senderId,
@@ -26,6 +28,7 @@ class MessageComposer extends StatefulWidget {
     required this.participants,
     required this.selectedSenderId,
     required this.ownerId,
+    required this.soundService,
     required this.onSenderChanged,
     required this.onSend,
     required this.onImageSelected,
@@ -115,8 +118,8 @@ class _MessageComposerState extends State<MessageComposer> {
         ),
       );
     }
+    if (deletedText.isNotEmpty) {}
 
-    // Record insertion.
     if (insertedText.isNotEmpty) {
       _typingEvents.add(
         MessageTypingEvent(
@@ -126,6 +129,8 @@ class _MessageComposerState extends State<MessageComposer> {
           delayMs: deletedText.isNotEmpty ? 0 : delayMs,
         ),
       );
+
+      widget.soundService.playKeyPress();
     }
 
     _lastTypingTime = now;
