@@ -189,8 +189,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
           Timer(
             const Duration(milliseconds: 30),
             () {
-              if (!state.playing) return;
-
               emit(
                 state.copyWith(
                   pressedKey: null,

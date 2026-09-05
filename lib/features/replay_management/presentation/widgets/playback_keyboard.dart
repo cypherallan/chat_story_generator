@@ -137,7 +137,7 @@ class PlaybackKeyboard extends StatelessWidget {
   }
 }
 
-class _PlaybackKey extends StatefulWidget {
+class _PlaybackKey extends StatelessWidget {
   final String text;
   final bool isPressed;
 
@@ -147,61 +147,20 @@ class _PlaybackKey extends StatefulWidget {
   });
 
   @override
-  State<_PlaybackKey> createState() => _PlaybackKeyState();
-}
-
-class _PlaybackKeyState extends State<_PlaybackKey> {
-  bool _flash = false;
-  Timer? _timer;
-
-  @override
-  void didUpdateWidget(_PlaybackKey oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.isPressed && !oldWidget.isPressed) {
-      _triggerFlash();
-    }
-  }
-
-  void _triggerFlash() {
-    _timer?.cancel();
-
-    setState(() {
-      _flash = true;
-    });
-
-    _timer = Timer(const Duration(milliseconds: 80), () {
-      if (mounted) {
-        setState(() {
-          _flash = false;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(2),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 40),
+      child: Container(
         height: 42,
         decoration: BoxDecoration(
-          color: _flash ? const Color(0xffC7CCD2) : Colors.white,
+          color: isPressed ? const Color(0xffC7CCD2) : Colors.white,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Center(
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 40),
-            scale: _flash ? 0.92 : 1,
+          child: Transform.scale(
+            scale: isPressed ? 0.92 : 1,
             child: Text(
-              widget.text,
+              text,
               style: const TextStyle(
                 fontSize: 18,
               ),
