@@ -121,6 +121,9 @@ class _MessageComposerState extends State<MessageComposer> {
     if (deletedText.isNotEmpty) {}
 
     if (insertedText.isNotEmpty) {
+      debugPrint(
+        '[TypingEvent] char="$insertedText" delayMs=${deletedText.isNotEmpty ? 0 : delayMs}',
+      );
       _typingEvents.add(
         MessageTypingEvent(
           type: 'insert',
@@ -207,8 +210,9 @@ class _MessageComposerState extends State<MessageComposer> {
               child: Row(children: [
                 // FIX Task 1: replaced PopupMenuButton with panel that keeps keyboard
                 Builder(builder: (context) {
-                  if (widget.participants.isEmpty)
+                  if (widget.participants.isEmpty) {
                     return const SizedBox.shrink();
+                  }
                   final currentPerson = widget.participants.firstWhere(
                       (p) => p.id == widget.selectedSenderId,
                       orElse: () => widget.participants.first);

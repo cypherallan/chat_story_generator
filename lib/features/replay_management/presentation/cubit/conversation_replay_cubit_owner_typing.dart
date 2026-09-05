@@ -181,7 +181,7 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
             ),
           );
 
-          _timer = Timer(
+          Timer(
             const Duration(milliseconds: 30),
             () {
               if (!state.playing) return;
@@ -191,13 +191,13 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
                   pressedKey: null,
                 ),
               );
-
-              _typeNextRecordedEvent(
-                message,
-                eventIndex + 1,
-                updatedText,
-              );
             },
+          );
+
+          _typeNextRecordedEvent(
+            message,
+            eventIndex + 1,
+            updatedText,
           );
 
           return;
