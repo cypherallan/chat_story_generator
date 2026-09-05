@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
@@ -150,7 +151,7 @@ class ReplayExportService {
         _quote(soundPath),
       ]);
 
-      final delay = event.offset.inMilliseconds;
+      final delay = max(0, event.offset.inMilliseconds - 800);
 
       filterParts.add(
         '[${i + 1}:a]adelay=${delay}|${delay}[a$i]',

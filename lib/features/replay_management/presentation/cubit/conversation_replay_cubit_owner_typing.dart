@@ -170,6 +170,7 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
           updatedText = updatedText.replaceRange(start, end, '');
           soundService.playKeyPress();
 
+          soundService.playKeyPress();
           emit(
             state.copyWith(
               composerText: updatedText,
@@ -180,9 +181,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
               lastPressedEmoji: null,
             ),
           );
-
-          Timer(
-            const Duration(milliseconds: 30),
+// ...
+          _timer = Timer(
+            const Duration(milliseconds: 85), // was 30
             () {
               emit(
                 state.copyWith(
@@ -278,6 +279,7 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
 
           final keyToShow = lastCharacter == ' ' ? 'space' : lastCharacter;
 
+          soundService.playKeyPress(); // play BEFORE emit = no delay
           emit(
             state.copyWith(
               composerText: updatedText,
@@ -293,10 +295,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
             ),
           );
 
-          soundService.playKeyPress();
-
           _timer = Timer(
-            const Duration(milliseconds: 30),
+            const Duration(
+                milliseconds: 85), // was 30 = too short for video frame
             () {
               if (!state.playing) return;
 
@@ -456,6 +457,9 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
 
     typedText += character;
 
+    typedText += character;
+    soundService.playKeyPress(); // <-- you had no sound here
+
     final keyToShow = character == ' ' ? 'space' : character;
     emit(
       state.copyWith(
@@ -479,7 +483,7 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
           : null,
     );
 
-    const keyPressDuration = Duration(milliseconds: 30);
+    const keyPressDuration = Duration(milliseconds: 85);
 
     _timer = Timer(
       keyPressDuration,

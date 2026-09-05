@@ -11,8 +11,8 @@ class SoundService {
   SoundService() {
     _sendPlayer.setReleaseMode(ReleaseMode.stop);
     _receivePlayer.setReleaseMode(ReleaseMode.stop);
-
     _keyPressPoolReady = _initializeKeyPressPool();
+    _keyPressPoolReady.then((_) => _keyPressPool.start()); // warm
   }
   Future<void> playSend() async {
     try {
@@ -40,18 +40,17 @@ class SoundService {
 
   Future<void> playKeyPress() async {
     try {
-      onSoundPlayed?.call('keyPress');
-
-      await _keyPressPoolReady;
-      await _keyPressPool.start();
+      onSoundPlayed?.call('keyPress'); // sync for tracking
+      _keyPressPoolReady
+          .then((_) => _keyPressPool.start()); // no await = no delay
     } catch (_) {}
   }
 
   Future<void> _initializeKeyPressPool() async {
     _keyPressPool = await AudioPool.create(
       source: AssetSource('sounds/keypress.wav'),
-      minPlayers: 4,
-      maxPlayers: 12,
+      minPlayers: 6,
+      maxPlayers: 16,
     );
   }
 

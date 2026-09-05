@@ -87,6 +87,14 @@ mixin _PlaybackMixin on _ConversationReplayCubitBase, _NavigationMixin {
   @override
   Duration _compressRealGap(Duration real) {
     if (real.isNegative || real == Duration.zero) return Duration.zero;
+
+    // During recording, keep real timing = popup + sound stay synced to video
+    if (state.isRecording) {
+      return Duration(
+        milliseconds: real.inMilliseconds.clamp(0, 3000),
+      );
+    }
+
     final s = real.inMilliseconds / 1000.0;
     var rs = 0.8 + (log(s + 1) * 1.2);
     rs = rs.clamp(0.8, 6.0);

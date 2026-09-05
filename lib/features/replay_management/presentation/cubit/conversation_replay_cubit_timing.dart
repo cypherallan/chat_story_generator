@@ -1,11 +1,31 @@
 part of 'conversation_replay_cubit.dart';
 
 mixin _TimingMixin on _ConversationReplayCubitBase {
+  List<Duration> _realCharDelays = [];
+  int _realDelayIndex = 0;
+
+  void setRealTypingDelays(List<Duration> delays) {
+    _realCharDelays = delays;
+    _realDelayIndex = 0;
+  }
+
+  void clearRealTypingDelays() {
+    _realCharDelays = [];
+    _realDelayIndex = 0;
+  }
+
   @override
   Duration _humanCharacterDelay({
     required String character,
     required String? nextCharacter,
   }) {
+    // USE REAL TIMING IF AVAILABLE - 1:1 with normal conversation
+    if (_realDelayIndex < _realCharDelays.length) {
+      final real = _realCharDelays[_realDelayIndex++];
+      // clamp to avoid 0ms on fast typing
+      return Duration(milliseconds: real.inMilliseconds.clamp(15, 600));
+    }
+
     var milliseconds = 75 + _random.nextInt(120);
 
     if (character == ' ') {

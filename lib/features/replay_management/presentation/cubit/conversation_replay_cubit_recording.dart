@@ -15,6 +15,9 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
 
     soundService.onSoundPlayed = (sound) {
       final clock = _recordingAudioClock;
+      print(
+        '[AudioSync] sound=$sound offset=${clock?.elapsedMilliseconds}ms',
+      );
 
       if (clock == null || !clock.isRunning) return;
 
