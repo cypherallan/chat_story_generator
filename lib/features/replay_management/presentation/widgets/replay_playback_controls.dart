@@ -144,7 +144,11 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     if (!mounted) return;
 
     try {
-      debugPrint('[Replay] Starting recorder before replay');
+      debugPrint('[Replay] Preparing recording timeline');
+
+      widget.replayCubit.prepareRecordingAudioTracking();
+
+      debugPrint('[Replay] Starting recorder after audio timeline');
 
       if (!widget.recorderController.isRecording) {
         await widget.recorderController.start();

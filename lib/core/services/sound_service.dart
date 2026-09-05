@@ -1,16 +1,18 @@
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 
 class SoundService {
   void Function(String sound)? onSoundPlayed;
   final AudioPlayer _sendPlayer = AudioPlayer();
   final AudioPlayer _receivePlayer = AudioPlayer();
-  final AudioPlayer _keyPressPlayer = AudioPlayer();
-  final AudioPlayer _keyPressPlayer2 = AudioPlayer();
+  late final AudioPool _keyPressPool;
+  late final Future<void> _keyPressPoolReady;
+
   SoundService() {
     _sendPlayer.setReleaseMode(ReleaseMode.stop);
     _receivePlayer.setReleaseMode(ReleaseMode.stop);
-    _keyPressPlayer.setReleaseMode(ReleaseMode.stop);
-    _keyPressPlayer2.setReleaseMode(ReleaseMode.stop);
+
+    _keyPressPoolReady = _initializeKeyPressPool();
   }
   Future<void> playSend() async {
     try {
@@ -36,26 +38,26 @@ class SoundService {
     } catch (_) {}
   }
 
-  bool _keyPressToggle = false;
-
   Future<void> playKeyPress() async {
     try {
-      final player = _keyPressToggle ? _keyPressPlayer : _keyPressPlayer2;
-
-      _keyPressToggle = !_keyPressToggle;
-
-      await player.play(
-        AssetSource('sounds/keypress.wav'),
-      );
-
       onSoundPlayed?.call('keyPress');
+
+      await _keyPressPoolReady;
+      await _keyPressPool.start();
     } catch (_) {}
+  }
+
+  Future<void> _initializeKeyPressPool() async {
+    _keyPressPool = await AudioPool.create(
+      source: AssetSource('sounds/keypress.wav'),
+      minPlayers: 4,
+      maxPlayers: 12,
+    );
   }
 
   void dispose() {
     _sendPlayer.dispose();
     _receivePlayer.dispose();
-    _keyPressPlayer.dispose();
-    _keyPressPlayer2.dispose();
+    _keyPressPool.dispose();
   }
 }

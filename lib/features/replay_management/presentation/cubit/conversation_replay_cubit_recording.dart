@@ -4,6 +4,10 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
   final List<ReplayAudioEvent> _recordingAudioEvents = [];
   Stopwatch? _recordingAudioClock;
 
+  void prepareRecordingAudioTracking() {
+    _startRecordingAudioTracking();
+  }
+
   void _startRecordingAudioTracking() {
     _recordingAudioEvents.clear();
 
@@ -96,8 +100,6 @@ mixin _RecordingMixin on _ConversationReplayCubitBase, _NavigationMixin {
             state.currentProjectId == null ||
             message.projectId == state.currentProjectId)
         .toList();
-
-    _startRecordingAudioTracking();
 
     emit(state.copyWith(
       visibleMessages: initialVisibleMessages,
