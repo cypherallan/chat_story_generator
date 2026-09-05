@@ -168,11 +168,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
               .clamp(start, updatedText.length);
 
           updatedText = updatedText.replaceRange(start, end, '');
-          print(
-            '[ReplayKey] event=$eventIndex BACKSPACE '
-            'text="${event.text}" '
-            'delayMs=${event.delayMs}',
-          );
           soundService.playKeyPress();
 
           emit(
@@ -296,12 +291,6 @@ mixin _OwnerTypingMixin on _ConversationReplayCubitBase {
                   lastCharacter != lastCharacter.toLowerCase(),
               shiftPressed: false,
             ),
-          );
-
-          print(
-            '[ReplayKey] event=$eventIndex '
-            'char="$lastCharacter" '
-            'delayMs=${event.delayMs}',
           );
 
           soundService.playKeyPress();

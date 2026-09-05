@@ -58,11 +58,9 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
     _recorderController = WidgetRecorderController(
       recordAudio: false,
       onComplete: (p) {
-        debugPrint('[Parent] onComplete $p');
         _replayCubit.onRecordingCompleted(p);
       },
       onError: (e) {
-        debugPrint('[Parent] onError $e');
         _replayCubit.onRecordingFailed(e);
       },
     );
@@ -80,7 +78,6 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
         _recorderController.applyVideoQuality(VideoQuality.high);
         break;
     }
-    debugPrint('[Parent] created controller quality=$q');
   }
 
   @override
@@ -112,13 +109,10 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
                 p.finished != c.finished,
             listener: (ctx, state) async {
               if (state.selectedQuality != _currentQ && !state.isRecording) {
-                debugPrint(
-                    '[Parent] quality change ${_currentQ} -> ${state.selectedQuality}');
                 _recorderController.dispose();
                 _createController(state.selectedQuality);
               }
               if (state.finished && _recorderController.isRecording) {
-                debugPrint('[Parent] finished=true -> stop recording');
                 await _recorderController.stop();
               }
             },
@@ -154,8 +148,9 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   Widget _buildHome(BuildContext context, ConversationReplayState replayState) {
     final personState = context.watch<PersonCubit>().state;
     final projectState = context.watch<GroupCubit>().state;
-    if (personState is! PersonLoaded || projectState is! ProjectLoaded)
+    if (personState is! PersonLoaded || projectState is! ProjectLoaded) {
       return const Center(child: CircularProgressIndicator());
+    }
     return ReplayHomeView(
       projects: projectState.projects,
       ownerId: widget.ownerId,
@@ -169,12 +164,14 @@ class _ConversationPlaybackPageState extends State<ConversationPlaybackPage> {
   Widget _buildConversation(
       BuildContext context, ConversationReplayState replayState) {
     final projectId = replayState.currentProjectId;
-    if (projectId == null)
+    if (projectId == null) {
       return const Center(child: Text('Conversation not selected.'));
+    }
     final projectState = context.watch<GroupCubit>().state;
     final personState = context.watch<PersonCubit>().state;
-    if (projectState is! ProjectLoaded || personState is! PersonLoaded)
+    if (projectState is! ProjectLoaded || personState is! PersonLoaded) {
       return const Center(child: CircularProgressIndicator());
+    }
     Project? project;
     for (final item in projectState.projects) {
       if (item.id == projectId) {

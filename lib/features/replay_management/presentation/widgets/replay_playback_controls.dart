@@ -52,21 +52,18 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     final isFailed =
         widget.state.recordingStatus == ReplayRecordingStatus.failed;
 
-    // Recording has genuinely completed.
     if (!wasRecorded && isRecorded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showPostRecordDialog();
       });
     }
 
-    // Export started.
     if (!wasExporting && isExporting) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showExportingDialog();
       });
     }
 
-    // Export completed.
     if (!wasExported && isExported) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _closeExporting();
@@ -78,7 +75,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
       });
     }
 
-    // Export/recording failed.
     if (!wasFailed && isFailed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _closeExporting();
@@ -97,11 +93,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     }
   }
 
-  /// Called when the user presses PLAY.
-  ///
-  /// This is the preview decision:
-  /// - No  -> replay only
-  /// - Yes -> recording + replay
   Future<void> _showPlayOptionsDialog() async {
     await showDialog(
       context: context,
@@ -116,8 +107,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
             onPressed: () {
               Navigator.of(dCtx).pop();
 
-              // IMPORTANT:
-              // This is replay-only. The recorder is never started.
               widget.replayCubit.play();
             },
             child: const Text('No, just replay'),
@@ -126,8 +115,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
             onPressed: () async {
               Navigator.of(dCtx).pop();
 
-              // Start recording immediately before starting
-              // the replay so the beginning is not missed.
               await _startRecordingReplay();
             },
             child: const Text('Yes'),
@@ -137,40 +124,22 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     );
   }
 
-  /// Starts the recorder first, then starts the replay.
-  ///
-  /// This replaces the old quality-selection flow.
   Future<void> _startRecordingReplay() async {
     if (!mounted) return;
 
     try {
-      debugPrint('[Replay] Preparing recording timeline');
-
       widget.replayCubit.prepareRecordingAudioTracking();
-
-      debugPrint('[Replay] Starting recorder after audio timeline');
 
       if (!widget.recorderController.isRecording) {
         await widget.recorderController.start();
       }
 
       if (!widget.recorderController.isRecording) {
-        debugPrint(
-          '[Replay] Recorder did not start. Recording will not begin.',
-        );
         return;
       }
 
-      debugPrint('[Replay] Recorder started successfully');
-
-      // The Cubit changes its state to "recording" and starts
-      // the replay from the selected conversation/start point.
       await widget.replayCubit.startRecordReplay();
-
-      debugPrint('[Replay] Recording + replay started');
     } catch (e) {
-      debugPrint('[Replay] Failed to start recording: $e');
-
       if (widget.recorderController.isRecording) {
         await widget.recorderController.stop();
       }
@@ -179,10 +148,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     }
   }
 
-  /// Shows while the actual export operation is running.
-  ///
-  /// We deliberately don't display a fake percentage because
-  /// ReplayExportService currently doesn't provide real progress.
   void _showExportingDialog() {
     if (!mounted) return;
 
@@ -221,8 +186,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
     _exportCtx = null;
   }
 
-  /// Shown after the recording has finished and the recorder
-  /// has returned the temporary MP4 file.
   Future<void> _showPostRecordDialog() async {
     if (!mounted) return;
 
@@ -237,8 +200,6 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
       );
       return;
     }
-
-    debugPrint('[Replay] Recording completed: $tempPath');
 
     await showDialog(
       context: context,
@@ -366,17 +327,13 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
               onPressed:
                   s.playing || isRec || isExp ? null : _showPlayOptionsDialog,
             ),
-
             const SizedBox(width: 8),
-
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.pause),
               onPressed: s.playing ? () => widget.replayCubit.pause() : null,
             ),
-
             const SizedBox(width: 8),
-
             IconButton(
               iconSize: 32,
               icon: const Icon(Icons.stop),
@@ -390,10 +347,7 @@ class _ReplayPlaybackControlsState extends State<ReplayPlaybackControls> {
                 widget.replayCubit.resetRecording();
               },
             ),
-
             const SizedBox(width: 12),
-
-            // Recording indicator/button remains visible.
             FilledButton.icon(
               icon: Icon(
                 isRec

@@ -6,7 +6,7 @@ import '../../../person_management/domain/entities/person.dart';
 
 class MessageSenderAvatar extends StatelessWidget {
   final Person sender;
-  final bool isFirstInGroup; // changed from isLastInGroup
+  final bool isFirstInGroup;
 
   const MessageSenderAvatar({
     super.key,
@@ -25,7 +25,6 @@ class MessageSenderAvatar extends StatelessWidget {
       return CachedNetworkImageProvider(avatarPath);
     }
 
-    // FIX: load local file instantly - WhatsApp style
     try {
       final file = File(avatarPath);
       if (file.existsSync()) {

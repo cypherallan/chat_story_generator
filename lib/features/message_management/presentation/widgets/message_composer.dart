@@ -47,7 +47,7 @@ class _MessageComposerState extends State<MessageComposer> {
   final FocusNode _focusNode = FocusNode();
   bool _showEmoji = false;
   bool _showAttachments = false;
-  bool _showParticipants = false; // NEW for Task 1
+  bool _showParticipants = false;
   bool hasText = false;
   final List<MessageTypingEvent> _typingEvents = [];
   DateTime? _lastTypingTime;
@@ -84,7 +84,6 @@ class _MessageComposerState extends State<MessageComposer> {
       return;
     }
 
-    // Find the first character position where the texts differ.
     int prefixLength = 0;
     while (prefixLength < oldText.length &&
         prefixLength < newText.length &&
@@ -92,7 +91,6 @@ class _MessageComposerState extends State<MessageComposer> {
       prefixLength++;
     }
 
-    // Find the unchanged suffix.
     int oldSuffixIndex = oldText.length;
     int newSuffixIndex = newText.length;
 
@@ -107,7 +105,6 @@ class _MessageComposerState extends State<MessageComposer> {
     final deletedText = oldText.substring(prefixLength, oldSuffixIndex);
     final insertedText = newText.substring(prefixLength, newSuffixIndex);
 
-    // Record deletion first.
     if (deletedText.isNotEmpty) {
       _typingEvents.add(
         MessageTypingEvent(
@@ -121,9 +118,6 @@ class _MessageComposerState extends State<MessageComposer> {
     if (deletedText.isNotEmpty) {}
 
     if (insertedText.isNotEmpty) {
-      debugPrint(
-        '[TypingEvent] char="$insertedText" delayMs=${deletedText.isNotEmpty ? 0 : delayMs}',
-      );
       _typingEvents.add(
         MessageTypingEvent(
           type: 'insert',
@@ -152,7 +146,6 @@ class _MessageComposerState extends State<MessageComposer> {
     _previousText = '';
     _typingEvents.clear();
     _lastTypingTime = null;
-    // FIX Task 1: keep keyboard on screen
     FocusScope.of(context).requestFocus(_focusNode);
     setState(() {
       hasText = false;
@@ -208,7 +201,6 @@ class _MessageComposerState extends State<MessageComposer> {
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(24)),
               child: Row(children: [
-                // FIX Task 1: replaced PopupMenuButton with panel that keeps keyboard
                 Builder(builder: (context) {
                   if (widget.participants.isEmpty) {
                     return const SizedBox.shrink();
@@ -287,8 +279,6 @@ class _MessageComposerState extends State<MessageComposer> {
                       if (widget.selectedSenderId == widget.ownerId) {
                         _recordTypingChange(value);
                       } else {
-                        // Keep the local text state synchronized while the other
-                        // participant is composing, but don't record their typing.
                         _previousText = value;
                         _lastTypingTime = null;
                       }
@@ -332,7 +322,6 @@ class _MessageComposerState extends State<MessageComposer> {
                             onPressed: () {}))),
           ]),
         ),
-        // FIX Task 1: participants list appears ABOVE keyboard, not behind it
         if (_showParticipants)
           Container(
             height: 180,
